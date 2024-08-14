@@ -1,0 +1,23 @@
+query GetModelsAndChildren {
+    records: model {
+        model_id
+        cell_line_name
+        stripped_cell_line_name
+        model_conditions {
+            model_condition_id
+            omics_profiles {
+                profile_id
+                main_sequencing_id
+                datatype
+                omics_sequencings {
+                    sequencing_id
+                    legacy_size
+                    sequencing_id
+                    expected_type
+                    bam_filepath
+                    bai_filepath
+                }
+            }
+        }
+    }
+}

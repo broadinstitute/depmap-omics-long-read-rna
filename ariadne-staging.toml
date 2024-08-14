@@ -1,0 +1,12 @@
+[tool.ariadne-codegen]
+remote_schema_url = "https://gumbo-gql-service-staging-nerhhociqa-uc.a.run.app/v1/graphql"
+remote_schema_headers = {"X-Hasura-Admin-Secret" = "$HASURA_ADMIN_SECRET"}
+queries_path = "gql/"
+target_package_name = "gumbo_gql_client"
+client_name = "GumboClient"
+client_file_name = "gumbo_client"
+async_client = false
+include_comments = false
+
+[tool.ariadne-codegen.scalars.bigint]
+type = "int"

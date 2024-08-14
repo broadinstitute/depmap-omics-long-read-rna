@@ -1,0 +1,11 @@
+mutation InsertOmicsSequencings(
+  $_username: String!
+  $objects: [omics_sequencing_insert_input!]!
+) {
+  set_username(args: { _username: $_username }) {
+    username
+  }
+  insert_omics_sequencing(objects: $objects) {
+    affected_rows
+  }
+}

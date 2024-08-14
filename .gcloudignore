@@ -1,0 +1,6 @@
+#!include:.gitignore
+.gcloudignore
+.git
+.gitignore
+.github/
+tests/
