@@ -23,6 +23,7 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
     profile_id: str
     main_sequencing_id: Optional[str]
     datatype: Optional[str]
+    blacklist_omics: bool
     omics_sequencings: List[
         "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings"
     ]
@@ -37,6 +38,8 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     expected_type: Optional[str]
     bam_filepath: Optional[str]
     bai_filepath: Optional[str]
+    blacklist: bool
+    source: Optional[str]
 
 
 GetModelsAndChildren.model_rebuild()

@@ -25,6 +25,7 @@ class GumboClient(BaseClient):
                     profile_id
                     main_sequencing_id
                     datatype
+                    blacklist_omics
                     omics_sequencings {
                       sequencing_id
                       legacy_size
@@ -32,6 +33,8 @@ class GumboClient(BaseClient):
                       expected_type
                       bam_filepath
                       bai_filepath
+                      blacklist
+                      source
                     }
                   }
                 }

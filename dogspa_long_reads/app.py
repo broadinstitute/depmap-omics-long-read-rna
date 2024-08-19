@@ -22,6 +22,7 @@ from dogspa_long_reads.utils.metadata import (
     explode_and_expand_models,
     id_bams,
     increment_sample_versions,
+    join_metadata,
     upload_to_gumbo,
 )
 from dogspa_long_reads.utils.terra import TerraWorkspace
@@ -99,6 +100,9 @@ def entrypoint(cloud_event: CloudEvent) -> None:
             config,
         )
         return
+
+    # join metadata to current samples
+    samples = join_metadata(samples, seq_table)
 
     # check that BAM file sizes are above minimum threshold
     samples, blacklisted = check_file_sizes(samples)

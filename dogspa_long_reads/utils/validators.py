@@ -56,6 +56,8 @@ class SeqTable(CoercedDataFrame):
     legacy_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     sequencing_id: Series[pd.StringDtype]
     is_main_sequencing_id: Series[pd.BooleanDtype]
+    blacklist_omics: Series[pd.BooleanDtype]
+    blacklist: Series[pd.BooleanDtype]
     expected_type: Series[pd.StringDtype]
     bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
     bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
@@ -80,6 +82,14 @@ class IdentifiedSrcBam(CoercedDataFrame):
 
 class SamplesMaybeInGumbo(IdentifiedSrcBam):
     already_in_gumbo: Series[pd.BooleanDtype]
+
+
+class SamplesWithMetadata(SamplesMaybeInGumbo):
+    profile_id: Series[pd.StringDtype]
+    model_condition_id: Series[pd.StringDtype]
+    main_sequencing_id: Series[pd.StringDtype]
+    sr_bam_filepath: Series[pd.StringDtype]
+    sr_bai_filepath: Series[pd.StringDtype]
 
 
 class SamplesWithCDSIDs(IdentifiedSrcBam):
