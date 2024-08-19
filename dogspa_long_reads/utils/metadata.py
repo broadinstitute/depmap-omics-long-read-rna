@@ -21,8 +21,8 @@ from dogspa_long_reads.utils.validators import (
     SamplesForGumbo,
     SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
-    SamplesWithMetadata,
     SamplesWithRgUpdatedAt,
+    SamplesWithShortReadMetadata,
     SeqTable,
     VersionedSamples,
 )
@@ -57,15 +57,7 @@ def explode_and_expand_models(
         models = models.explode(c).reset_index(drop=True)
         models = expand_dict_columns(models, name_columns_with_parent=False)
 
-    models = models.dropna(
-        subset=[
-            "model_condition_id",
-            "profile_id",
-            "sequencing_id",
-            "datatype",
-            "expected_type",
-        ]
-    )
+    models = models.dropna(subset=["model_condition_id", "profile_id"])
 
     models["is_main_sequencing_id"] = models["main_sequencing_id"].eq(
         models["sequencing_id"]
@@ -74,9 +66,9 @@ def explode_and_expand_models(
     return TypedDataFrame[SeqTable](models.drop(columns="main_sequencing_id"))
 
 
-def join_metadata(
+def join_short_read_metadata(
     samples: TypedDataFrame[SamplesMaybeInGumbo], seq_table: TypedDataFrame[SeqTable]
-) -> TypedDataFrame[SamplesWithMetadata]:
+) -> TypedDataFrame[SamplesWithShortReadMetadata]:
     # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
     source_priority = [
         "BROAD",
@@ -96,45 +88,18 @@ def join_metadata(
         }
     )
 
-    # dna_priority = ["wgs", "wes", ""]
-    #
-    # dnap_df = pd.DataFrame(
-    #     {
-    #         "datatype": dna_priority,
-    #         "datatype_priority": list(range(len(dna_priority))),
-    #     }
-    # )
+    seq_table = seq_table.loc[
+        seq_table["model_id"].isin(samples["model_id"])
+        & ~seq_table["blacklist"]
+        & ~seq_table["blacklist_omics"]
+    ].merge(sp_df, how="left", on="source")
 
-    seq_table_orig = seq_table.copy()
-    seq_table = seq_table_orig.copy()
+    sr = seq_table.loc[seq_table["datatype"].eq("rna")]
 
-    seq_table["datatype"] = seq_table["datatype"].fillna("")
-
-    seq_table = (
-        seq_table.loc[
-            seq_table["model_id"].isin(samples["model_id"])
-            & (
-                seq_table["datatype"].isin({"wgs", "rna", "wes"})
-                | seq_table["datatype"].isna()
-            )
-            & ~seq_table["blacklist"]
-            & ~seq_table["blacklist_omics"]
-        ].merge(sp_df, how="left", on="source")
-        # .merge(dnap_df, how="left", on="datatype")
-    )
-
-    assert seq_table["source_priority"].notna().all()
-    assert (
-        seq_table.loc[seq_table["datatype"].ne("rna"), "datatype_priority"]
-        .notna()
-        .all()
-    )
+    assert sr["source_priority"].notna().all()
 
     main_seq_ids = (
-        seq_table.loc[
-            seq_table["datatype"].eq("rna") & seq_table["is_main_sequencing_id"],
-            ["model_id", "sequencing_id"],
-        ]
+        sr.loc[sr["is_main_sequencing_id"], ["model_id", "sequencing_id"]]
         .drop_duplicates()
         .rename(columns={"sequencing_id": "main_sequencing_id"})
     )
@@ -143,17 +108,11 @@ def join_metadata(
 
     samples = samples.merge(main_seq_ids, how="left", on="model_id")
 
-    sr_rna = (
-        seq_table.loc[seq_table["datatype"].eq("rna")]
-        .sort_values("source_priority")
-        .groupby("model_id")
-        .nth(0)
-    )
+    sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
 
-    sr_rna = sr_rna[
-        ["model_id", "profile_id", "model_condition_id", "bai_filepath", "bam_filepath"]
-    ].rename(
+    sr_rna = sr_rna[["model_id", "profile_id", "bai_filepath", "bam_filepath"]].rename(
         columns={
+            "profile_id": "sr_profile_id",
             "bai_filepath": "sr_bai_filepath",
             "bam_filepath": "sr_bam_filepath",
         }
@@ -161,24 +120,15 @@ def join_metadata(
 
     samples = samples.merge(sr_rna, how="left", on="model_id")
 
-    # dna = (
-    #     seq_table.loc[seq_table["datatype"].ne("rna")]
-    #     .sort_values("datatype_priority")
-    #     .groupby("model_id")
-    #     .nth(0)
-    # )
-
     assert (
-        samples[
-            ["profile_id", "model_condition_id", "sr_bai_filepath", "sr_bam_filepath"]
-        ]
+        samples[["sr_profile_id", "sr_bai_filepath", "sr_bam_filepath"]]
         .notna()
         .all(axis=None)
     )
 
-    assert ~samples["profile_id"].duplicated(keep=False).any()
+    assert ~samples["sr_profile_id"].duplicated(keep=False).any()
 
-    return TypedDataFrame[SamplesWithMetadata](samples)
+    return TypedDataFrame[SamplesWithShortReadMetadata](samples)
 
 
 def assign_hashed_uuids(
