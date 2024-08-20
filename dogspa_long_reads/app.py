@@ -22,6 +22,7 @@ from dogspa_long_reads.utils.metadata import (
     explode_and_expand_models,
     id_bams,
     increment_sample_versions,
+    join_metadata,
     join_short_read_metadata,
     upload_to_gumbo,
 )
@@ -102,6 +103,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
         return
 
     # join metadata to current samples
+    samples = join_metadata(samples, seq_table)
     samples = join_short_read_metadata(samples, seq_table)
 
     # check that BAM file sizes are above minimum threshold

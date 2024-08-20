@@ -21,6 +21,7 @@ from dogspa_long_reads.utils.validators import (
     SamplesForGumbo,
     SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
+    SamplesWithMetadata,
     SamplesWithRgUpdatedAt,
     SamplesWithShortReadMetadata,
     SeqTable,
@@ -63,11 +64,34 @@ def explode_and_expand_models(
         models["sequencing_id"]
     )
 
+    models[["blacklist_omics", "blacklist"]] = models[
+        ["blacklist_omics", "blacklist"]
+    ].fillna(False)
+
     return TypedDataFrame[SeqTable](models.drop(columns="main_sequencing_id"))
 
 
+def join_metadata(
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    seq_table: TypedDataFrame[SeqTable],
+) -> TypedDataFrame[SamplesWithMetadata]:
+    seq_table = seq_table.loc[
+        seq_table["datatype"].eq("long_read_rna")
+        & ~seq_table["blacklist"]
+        & ~seq_table["blacklist_omics"]
+    ]
+
+    samples = samples.merge(
+        seq_table[["model_id", "model_condition_id", "profile_id"]],
+        how="left",
+        on="model_id",
+    )
+
+    return TypedDataFrame[SamplesWithMetadata](samples)
+
+
 def join_short_read_metadata(
-    samples: TypedDataFrame[SamplesMaybeInGumbo], seq_table: TypedDataFrame[SeqTable]
+    samples: TypedDataFrame[SamplesWithMetadata], seq_table: TypedDataFrame[SeqTable]
 ) -> TypedDataFrame[SamplesWithShortReadMetadata]:
     # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
     source_priority = [
