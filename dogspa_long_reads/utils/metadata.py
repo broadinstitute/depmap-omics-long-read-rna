@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 import pathlib
-import uuid
 
 import pandas as pd
 from pandera.typing import DataFrame as TypedDataFrame
 
 from dogspa_long_reads.utils.terra import TerraWorkspace
 from dogspa_long_reads.utils.utils import (
+    assign_hashed_uuids,
     df_to_model,
     expand_dict_columns,
     uuid_to_base62,
@@ -22,7 +22,6 @@ from dogspa_long_reads.utils.validators import (
     SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
     SamplesWithMetadata,
-    SamplesWithRgUpdatedAt,
     SamplesWithShortReadMetadata,
     SeqTable,
     VersionedSamples,
@@ -75,17 +74,14 @@ def join_metadata(
     samples: TypedDataFrame[SamplesWithShortReadMetadata],
     seq_table: TypedDataFrame[SeqTable],
 ) -> TypedDataFrame[SamplesWithMetadata]:
-    seq_table = seq_table.loc[
+    metadata = seq_table.loc[
         seq_table["datatype"].eq("long_read_rna")
         & ~seq_table["blacklist"]
-        & ~seq_table["blacklist_omics"]
+        & ~seq_table["blacklist_omics"],
+        ["model_id", "model_condition_id", "profile_id"],
     ]
 
-    samples = samples.merge(
-        seq_table[["model_id", "model_condition_id", "profile_id"]],
-        how="left",
-        on="model_id",
-    )
+    samples = samples.merge(metadata, how="left", on="model_id")
 
     return TypedDataFrame[SamplesWithMetadata](samples)
 
@@ -153,28 +149,6 @@ def join_short_read_metadata(
     assert ~samples["sr_profile_id"].duplicated(keep=False).any()
 
     return TypedDataFrame[SamplesWithShortReadMetadata](samples)
-
-
-def assign_hashed_uuids(
-    df: pd.DataFrame, uuid_namespace: str, uuid_col_name: str, subset: list[str]
-) -> pd.DataFrame:
-    """
-    Compute and add a consistent UUID-formatted ID column to a data frame.
-
-    :param df: a data frame
-    :param uuid_namespace: a namespace for generated UUIDv3s
-    :param uuid_col_name: the name for the UUID column
-    :param subset: the subset of columns to use for hashing
-    :return: `df` with the new UUID column
-    """
-
-    df[uuid_col_name] = (
-        df[sorted(subset)]
-        .apply(lambda x: uuid.uuid3(uuid.UUID(uuid_namespace), x.to_json()), axis=1)
-        .astype("string")
-    )
-
-    return df
 
 
 def assign_cds_ids(

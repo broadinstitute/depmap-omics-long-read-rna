@@ -96,26 +96,12 @@ class SamplesWithShortReadMetadata(SamplesWithMetadata):
     sr_bai_filepath: Series[pd.StringDtype]
 
 
-class SamplesWithCDSIDs(IdentifiedSrcBam):
+class SamplesWithCDSIDs(SamplesWithShortReadMetadata):
     sequencing_id: Series[pd.StringDtype]
 
 
-class TerraSample(CoercedDataFrame):
-    sample_id: Series[pd.StringDtype]
-
-
-class SamplesWithProfileIds(ObjectMetadata):
-    profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
-class SamplesWithRgUpdatedAt(SamplesWithProfileIds):
-    rg_updated_at: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
-class CopiedSampleFiles(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype]
-    url_kind: Series[pd.StringDtype]
-    url: Series[pd.StringDtype]
+class CopiedSampleFiles(SamplesWithCDSIDs):
+    new_url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
 
 

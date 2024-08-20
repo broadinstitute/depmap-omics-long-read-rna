@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import string
+import uuid
 from functools import partial
 from math import ceil, sqrt
 from time import sleep
@@ -425,3 +426,25 @@ def send_slack_message(
         slack_webhook_url_errors, data=json.dumps({"blocks": results_blocks})
     )
     r.raise_for_status()
+
+
+def assign_hashed_uuids(
+    df: pd.DataFrame, uuid_namespace: str, uuid_col_name: str, subset: list[str]
+) -> pd.DataFrame:
+    """
+    Compute and add a consistent UUID-formatted ID column to a data frame.
+
+    :param df: a data frame
+    :param uuid_namespace: a namespace for generated UUIDv3s
+    :param uuid_col_name: the name for the UUID column
+    :param subset: the subset of columns to use for hashing
+    :return: `df` with the new UUID column
+    """
+
+    df[uuid_col_name] = (
+        df[sorted(subset)]
+        .apply(lambda x: uuid.uuid3(uuid.UUID(uuid_namespace), x.to_json()), axis=1)
+        .astype("string")
+    )
+
+    return df

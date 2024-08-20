@@ -17,9 +17,7 @@ from dogspa_long_reads.utils.validators import (
     DogspaConfig,
     IdentifiedSrcBam,
     ObjectMetadata,
-    SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
-    SamplesWithProfileIds,
 )
 
 
@@ -151,14 +149,6 @@ def copy_to_cclebams(
 
     storage_client = storage.Client(project=config.gcp_project)
 
-    # collect all BAI files to copy
-    sample_files = samples.melt(
-        id_vars="sequencing_id",
-        value_vars=["bam_url"],
-        var_name="uri_kind",
-        value_name="uri",
-    ).rename(columns={"sequencing_id": "sequencing_id"})
-
     # all copied files will have same destination bucket and prefix
     dest_bucket = storage_client.bucket(
         config.gcs_destination.bucket, user_project=config.gcp_project
@@ -168,15 +158,15 @@ def copy_to_cclebams(
     # keep track of copy attempts
     copy_results = []
 
-    logging.info(f"Checking {len(sample_files)} files to copy...")
+    logging.info(f"Checking {len(samples)} files to copy...")
 
     # can't use rewrite in a batch context, so do plain iteration
-    for r in tqdm(sample_files.itertuples(index=False), total=len(sample_files)):
-        uri = r[sample_files.columns.get_loc("uri")]
+    for r in tqdm(samples.itertuples(index=False), total=len(samples)):
+        url = r[samples.columns.get_loc("bam_url")]
 
         try:
             # construct the source blob
-            src_blob = storage.Blob.from_string(uri, client=storage_client)
+            src_blob = storage.Blob.from_string(url, client=storage_client)
 
             # construct the destination blob (named by sample ID)
             dest_file_ext = pathlib.Path(str(src_blob.name)).suffix
@@ -184,7 +174,7 @@ def copy_to_cclebams(
                 "/".join(
                     [
                         prefix,
-                        str(r[sample_files.columns.get_loc("sequencing_id")]),
+                        str(r[samples.columns.get_loc("sequencing_id")]),
                     ]
                 )
                 + dest_file_ext
@@ -196,11 +186,11 @@ def copy_to_cclebams(
                 src_blob.name
             ).storage_class
 
-            new_uri = urlunsplit(("gs", dest_bucket.name, dest_obj_key, "", ""))
+            new_url = urlunsplit(("gs", dest_bucket.name, dest_obj_key, "", ""))
 
             if dest_blob.exists():
                 logging.info(f"{dest_blob.name} already exists in {dest_bucket.name}")
-                copy_results.append({"uri": uri, "new_uri": new_uri, "copied": True})
+                copy_results.append({"url": url, "new_url": new_url, "copied": True})
 
             else:
                 if config.dry_run:
@@ -211,15 +201,17 @@ def copy_to_cclebams(
                     logging.info(f"Copying {dest_blob.name} to {dest_bucket.name}")
                     rewrite_blob(src_blob, dest_blob)
 
-                copy_results.append({"uri": uri, "new_uri": new_uri, "copied": True})
+                copy_results.append({"url": url, "new_url": new_url, "copied": True})
 
         except Exception as e:
-            logging.error(f"Error copying {uri} to {dest_bucket}: {e}")
-            copy_results.append({"uri": uri, "new_uri": None, "copied": False})
+            logging.error(f"Error copying {url} to {dest_bucket}: {e}")
+            copy_results.append({"url": url, "new_url": None, "copied": False})
 
-    sample_files = sample_files.merge(pd.DataFrame(copy_results), how="inner", on="uri")
+    samples = samples.merge(
+        pd.DataFrame(copy_results), how="inner", left_on="bam_url", right_on="url"
+    )
 
-    return TypedDataFrame[CopiedSampleFiles](sample_files)
+    return TypedDataFrame[CopiedSampleFiles](samples)
 
 
 def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:

@@ -5,7 +5,6 @@ import os
 from collections import OrderedDict
 
 import functions_framework
-import pandas as pd
 from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 
@@ -31,11 +30,7 @@ from dogspa_long_reads.utils.utils import (
     model_to_df,
     send_slack_message,
 )
-from dogspa_long_reads.utils.validators import (
-    DogspaConfig,
-    ModelsAndChildren,
-    PanderaBaseSchema,
-)
+from dogspa_long_reads.utils.validators import DogspaConfig, ModelsAndChildren
 from gumbo_gql_client import GumboClient
 
 

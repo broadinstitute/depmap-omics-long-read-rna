@@ -38,7 +38,7 @@ if __name__ == "__main__":
         },
         "gcp_project": "depmap-omics",
         "uuid_namespace": "00000000-0000-0000-0000-000000000000",
-        "dry_run": True,
+        "dry_run": False,
     }
 
     # encode to match pub/sub functionality
