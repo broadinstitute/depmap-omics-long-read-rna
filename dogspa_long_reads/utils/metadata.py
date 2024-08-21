@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import pathlib
 
@@ -78,7 +79,13 @@ def join_metadata(
         seq_table["datatype"].eq("long_read_rna")
         & ~seq_table["blacklist"]
         & ~seq_table["blacklist_omics"],
-        ["model_id", "model_condition_id", "profile_id"],
+        [
+            "model_id",
+            "model_condition_id",
+            "profile_id",
+            "cell_line_name",
+            "stripped_cell_line_name",
+        ],
     ]
 
     samples = samples.merge(metadata, how="left", on="model_id")
@@ -208,25 +215,25 @@ def check_already_in_gumbo(
 
 
 def apply_col_map(
-    samples: TypedDataFrame[SamplesWithCDSIDs], config: DogspaConfig
+    samples: TypedDataFrame[SamplesWithCDSIDs],
 ) -> TypedDataFrame[SamplesForGumbo]:
     """
     Rename the columns in the samples data frame to their corresponding names in Gumbo.
 
     :param samples: the data frame of samples
-    :param config: the dogspa configuration
     :return: the data frame with just the relevant renamed columns
     """
 
     logging.info("Renaming columns for Gumbo...")
 
-    samples["source"] = "DEPMAP"
-    samples["expected_type"] = "long_read_rna"
-    samples["sequencing_date"] = samples["gcs_obj_updated_at"]
-    samples["stranded"] = True
+    gumbo_samples = samples.copy()
+    gumbo_samples["source"] = "DEPMAP"
+    gumbo_samples["expected_type"] = "long_read_rna"
+    gumbo_samples["sequencing_date"] = gumbo_samples["gcs_obj_updated_at"]
+    gumbo_samples["stranded"] = True
 
     # rename columns for Gumbo
-    gumbo_samples = samples.rename(
+    gumbo_samples = gumbo_samples.rename(
         columns={
             "bam_url": "bam_filepath",
             "size": "legacy_size",
@@ -243,30 +250,58 @@ def apply_col_map(
     return TypedDataFrame[SamplesForGumbo](gumbo_samples)
 
 
-def upsert_terra_samples(tw: TerraWorkspace, samples: pd.DataFrame) -> None:
-    """
-    CellLineName
-    LR_bam_filepath
-    LongReadProfileID
-    MainSequencingID
-    ModelCondition
-    ShortReadProfileID
-    StrippedCellLineName
-    participant
-    """
+def upsert_terra_samples(
+    tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs]
+) -> None:
+    renames = {
+        "sequencing_id": "entity:test_sample_id",
+        "model_id": "participant_id",
+        "bam_url": "LR_bam_filepath",
+        "cell_line_name": "CellLineName",
+        "stripped_cell_line_name": "StrippedCellLineName",
+        "model_condition_id": "ModelCondition",
+        "profile_id": "LongReadProfileID",
+        "sr_profile_id": "ShortReadProfileID",
+        "main_sequencing_id": "MainSequencingID",
+    }
 
-    terra_samples = samples.rename(
-        columns={
-            "model_id": "entity:sample_id",
-            "bam_url": "bam_filepath",
-        }
+    terra_samples = samples.rename(columns=renames)[renames.values()]
+
+    # upsert participants
+    participants = (
+        terra_samples[["participant_id"]]
+        .rename(columns={"participant_id": "entity:participant_id"})
+        .drop_duplicates()
     )
+
+    tw.upload_entities(participants)
+
+    # upsert the samples
+    tw.upload_entities(terra_samples)
+
+    # upsert the join table between participants and samples
+    participant_samples = (
+        terra_samples.groupby("participant_id")["entity:test_sample_id"]
+        .agg(list)
+        .apply(
+            lambda x: json.dumps(
+                [{"entityType": "test_sample", "entityName": y} for y in x]
+            )
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "participant": "entity:participant_id",
+                "entity:test_sample_id": "test_samples",
+            }
+        )
+    )
+
+    tw.upload_entities(participant_samples)
 
 
 def increment_sample_versions(
-    samples: TypedDataFrame[SamplesForGumbo],
-    seq_table: TypedDataFrame[SeqTable],
-    config: DogspaConfig,
+    samples: TypedDataFrame[SamplesForGumbo], seq_table: TypedDataFrame[SeqTable]
 ) -> TypedDataFrame[VersionedSamples]:
     """
     For sample profile IDs that already exist in the Gumbo profiles table, increment
@@ -274,7 +309,6 @@ def increment_sample_versions(
 
     :param samples: the data frame of samples
     :param seq_table: the data frame of Gumbo sequence data
-    :param config: the dogspa configuration
     :return: the samples data frame with optionally incremented version numbers
     """
 
