@@ -99,6 +99,7 @@ def join_short_read_metadata(
         "PRISM",
         "CCLF",
         "CHORDOMA",
+        "",
     ]
 
     sp_df = pd.DataFrame(
@@ -108,23 +109,28 @@ def join_short_read_metadata(
         }
     )
 
-    seq_table = seq_table.loc[
+    sr = seq_table.loc[
         seq_table["model_id"].isin(samples["model_id"])
+        & seq_table["datatype"].eq("rna")
         & ~seq_table["blacklist"]
         & ~seq_table["blacklist_omics"]
-    ].merge(sp_df, how="left", on="source")
+    ]
 
-    sr = seq_table.loc[seq_table["datatype"].eq("rna")]
+    sr["source"] = sr["source"].fillna("")
+    sr = sr.merge(sp_df, how="left", on="source")
 
     assert sr["source_priority"].notna().all()
 
     main_seq_ids = (
-        sr.loc[sr["is_main_sequencing_id"], ["model_id", "sequencing_id"]]
-        .drop_duplicates()
+        sr.loc[
+            sr["is_main_sequencing_id"],
+            ["model_id", "sequencing_id", "source_priority"],
+        ]
+        .sort_values("source_priority")
+        .groupby("model_id")
+        .nth(0)
         .rename(columns={"sequencing_id": "main_sequencing_id"})
     )
-
-    assert ~main_seq_ids["model_id"].duplicated().any()
 
     samples = samples.merge(main_seq_ids, how="left", on="model_id")
 
@@ -139,14 +145,6 @@ def join_short_read_metadata(
     )
 
     samples = samples.merge(sr_rna, how="left", on="model_id")
-
-    assert (
-        samples[["sr_profile_id", "sr_bai_filepath", "sr_bam_filepath"]]
-        .notna()
-        .all(axis=None)
-    )
-
-    assert ~samples["sr_profile_id"].duplicated(keep=False).any()
 
     return TypedDataFrame[SamplesWithShortReadMetadata](samples)
 

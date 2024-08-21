@@ -89,10 +89,10 @@ class SamplesWithMetadata(IdentifiedSrcBam):
 
 
 class SamplesWithShortReadMetadata(SamplesWithMetadata):
-    main_sequencing_id: Series[pd.StringDtype]
-    sr_profile_id: Series[pd.StringDtype]
-    sr_bam_filepath: Series[pd.StringDtype]
-    sr_bai_filepath: Series[pd.StringDtype]
+    main_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
 class SamplesWithCDSIDs(SamplesWithShortReadMetadata):
