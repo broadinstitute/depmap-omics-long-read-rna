@@ -279,13 +279,10 @@ def update_sample_file_uris(
 
     samples_updated = samples
 
-    for c in ["bam_url"]:
-        sample_file_uris = sample_files.loc[sample_files["copied"], ["uri", "new_uri"]]
-        samples_updated = samples_updated.merge(
-            sample_file_uris, how="left", left_on=c, right_on="uri"
-        )
-        samples_updated[c] = samples_updated["new_uri"]
-        samples_updated = samples_updated.drop(columns=["uri", "new_uri"])
+    sample_file_uris = sample_files.loc[sample_files["copied"], ["bam_url", "new_url"]]
+    samples_updated = samples_updated.merge(sample_file_uris, how="left", on="bam_url")
+    samples_updated["bam_url"] = samples_updated["new_url"]
+    samples_updated = samples_updated.drop(columns=["new_url"])
 
     missing_files = pd.Series(samples_updated[["bam_url"]].isna().any(axis=1))
     samples_updated.loc[missing_files, "issue"] = samples_updated.loc[

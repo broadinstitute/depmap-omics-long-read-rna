@@ -74,13 +74,6 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     src_bams = list_bams(config.gcs_source.bucket, glob=config.gcs_source.glob)
     samples = id_bams(src_bams)
 
-    # get existing destination BAM files
-    # dest_bams = list_bams(config.gcs_destination.bucket, config.gcs_destination.prefix)
-    # dest_bams = id_bams(dest_bams)
-
-    # remove existing objects
-    # samples = src_bams.loc[~src_bams["crc32c"].isin(dest_bams["crc32c"])]
-
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(samples, seq_table, size_col_name="legacy_size")
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
