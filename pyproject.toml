@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Depmap Omics Gumbo Syncing, Pre-processing, and Attestation (Long Reads)"
 authors = []
 readme = "README.md"
-packages = [{include = "dogspa-long-reads"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -23,7 +22,7 @@ python-dotenv = "^1.0.1"
 psutil = "^5.9.8"
 google-auth = "^2.26.2"
 ariadne-codegen = "^0.13.0"
-firecloud = "^0.16.37"
+nebelung = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.1.14"

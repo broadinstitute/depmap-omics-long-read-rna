@@ -5,9 +5,9 @@ import logging
 import pathlib
 
 import pandas as pd
+from nebelung.terra_workspace import TerraWorkspace
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.utils.terra import TerraWorkspace
 from dogspa_long_reads.utils.utils import (
     assign_hashed_uuids,
     df_to_model,

@@ -7,6 +7,7 @@ from collections import OrderedDict
 import functions_framework
 from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
+from nebelung.terra_workspace import TerraWorkspace
 
 from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
@@ -26,7 +27,6 @@ from dogspa_long_reads.utils.metadata import (
     upload_to_gumbo,
     upsert_terra_samples,
 )
-from dogspa_long_reads.utils.terra import TerraWorkspace
 from dogspa_long_reads.utils.utils import (
     model_to_df,
     send_slack_message,
