@@ -262,6 +262,8 @@ def upsert_terra_samples(
         "model_condition_id": "ModelCondition",
         "profile_id": "LongReadProfileID",
         "sr_profile_id": "ShortReadProfileID",
+        "sr_bai_filepath": "SR_bai_filepath",
+        "sr_bam_filepath": "SR_bam_filepath",
         "main_sequencing_id": "MainSequencingID",
     }
 

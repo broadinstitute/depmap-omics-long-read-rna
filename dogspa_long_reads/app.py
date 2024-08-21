@@ -24,6 +24,7 @@ from dogspa_long_reads.utils.metadata import (
     join_metadata,
     join_short_read_metadata,
     upload_to_gumbo,
+    upsert_terra_samples,
 )
 from dogspa_long_reads.utils.terra import TerraWorkspace
 from dogspa_long_reads.utils.utils import (
@@ -110,16 +111,19 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     stats["n with failed file copies"] = blacklisted.sum()
     report["failed copies"] = samples.loc[blacklisted]
 
-    # rename some columns for Gumbo
-    samples = apply_col_map(samples, config)
+    # rename and set some columns for Gumbo
+    gumbo_samples = apply_col_map(samples)
 
     # increment version numbers for samples with profile IDs already in seq table
-    samples = increment_sample_versions(samples, seq_table, config)
+    gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
 
-    # finally upload the samples to the Gumbo sequencing table
-    samples = upload_to_gumbo(gumbo_client, samples, config)
-    stats["n successfully uploaded"] = len(samples)
-    report["successfully uploaded"] = samples
+    # upload the samples to the Gumbo sequencing table
+    gumbo_samples = upload_to_gumbo(gumbo_client, gumbo_samples, config)
+    stats["n successfully uploaded"] = len(gumbo_samples)
+    report["successfully uploaded"] = gumbo_samples
+
+    # upload the samples to Terra
+    upsert_terra_samples(tw, samples)
 
     send_slack_message(
         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
