@@ -21,23 +21,40 @@ from dogspa_long_reads.utils.validators import (
 )
 
 
-def list_bams(bucket_name: str, prefix: str = "") -> TypedDataFrame[ObjectMetadata]:
+def list_bams(
+    bucket_name: str, prefix: str | None = None, glob: str | None = None
+) -> TypedDataFrame[ObjectMetadata]:
     """
     Get the names and sizes of existing BAMs in a GCS bucket.
 
     :param bucket_name: the name of the GCS bucket for the Terra workspace
-    :param prefix: an optional blob prefix for listing
+    :param prefix: an optional prefix for listing
+    :param glob: an optional glob for listing
     :return: a data frame of object names and sizes
     """
 
     storage_client = storage.Client()
 
-    pages = storage_client.list_blobs(
-        bucket_or_name=bucket_name,
-        prefix=prefix,
-        delimiter="/",
-        fields="items(name,crc32c,size,updated),nextPageToken",
-    ).pages
+    if prefix is not None and glob is not None:
+        raise ValueError("At most one of `prefix` and `glob` can be specified")
+    elif prefix is not None:
+        pages = storage_client.list_blobs(
+            bucket_or_name=bucket_name,
+            prefix=prefix,
+            delimiter="/",
+            fields="items(name,crc32c,size,updated),nextPageToken",
+        ).pages
+    elif glob is not None:
+        pages = storage_client.list_blobs(
+            bucket_or_name=bucket_name,
+            match_glob=glob,
+            fields="items(name,crc32c,size,updated),nextPageToken",
+        ).pages
+    else:
+        pages = storage_client.list_blobs(
+            bucket_or_name=bucket_name,
+            fields="items(name,crc32c,size,updated),nextPageToken",
+        ).pages
 
     blobs = []
 
@@ -51,9 +68,9 @@ def list_bams(bucket_name: str, prefix: str = "") -> TypedDataFrame[ObjectMetada
                     "gcs_obj_updated_at": x.updated,
                 }
                 for x in page
-                if x.name.endswith(".bam")
             ]
         )
+    print(blobs)
 
     if len(blobs) == 0:
         return TypedDataFrame[ObjectMetadata](

@@ -30,7 +30,7 @@ if __name__ == "__main__":
         },
         "gcs_source": {
             "bucket": "fc-aaf4de93-c104-45c4-a01a-a036869119c6",
-            "prefix": "tag2028/merge/",
+            "glob": "tag*/merge/*.bam",
         },
         "gcs_destination": {
             "bucket": "cclebams",

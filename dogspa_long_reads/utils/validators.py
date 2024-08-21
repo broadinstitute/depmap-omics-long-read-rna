@@ -13,7 +13,12 @@ class Workspace(BaseModel):
     name: str
 
 
-class GcsBucket(BaseModel):
+class GcsSource(BaseModel):
+    bucket: str
+    glob: str
+
+
+class GcsDest(BaseModel):
     bucket: str
     prefix: str
 
@@ -21,17 +26,11 @@ class GcsBucket(BaseModel):
 class DogspaConfig(BaseModel):
     workspace: Workspace
     gcp_project: str
-    gcs_source: GcsBucket
-    gcs_destination: GcsBucket
+    gcs_source: GcsSource
+    gcs_destination: GcsDest
     uuid_namespace: str = "00000000-0000-0000-0000-000000000000"
     ncpus: int = psutil.cpu_count()
     dry_run: bool = True
-
-
-class BamUpdatedAt(BaseModel):
-    url: str
-    rg_updated_at: Optional[str] = None
-    new_issue: Optional[str] = None
 
 
 class CoercedDataFrame(pa.DataFrameModel):
@@ -64,18 +63,18 @@ class SeqTable(CoercedDataFrame):
 
 
 class ObjectMetadata(CoercedDataFrame):
-    url: Series[pd.StringDtype]
-    crc32c: Series[pd.StringDtype]
-    size: Series[pd.Int64Dtype]
+    url: Series[pd.StringDtype] = pa.Field(unique=True)
+    crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     gcs_obj_updated_at: Series[pd.StringDtype]
 
 
 class IdentifiedSrcBam(CoercedDataFrame):
-    bam_url: Series[pd.StringDtype]
-    crc32c: Series[pd.StringDtype]
-    size: Series[pd.Int64Dtype]
+    bam_url: Series[pd.StringDtype] = pa.Field(unique=True)
+    crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     gcs_obj_updated_at: Series[pd.StringDtype]
-    model_id: Series[pd.StringDtype]
+    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
     issue: Series[pd.StringDtype] = pa.Field(nullable=True)
     blacklist: Series[pd.BooleanDtype]
 

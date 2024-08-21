@@ -71,7 +71,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     seq_table = explode_and_expand_models(models)
 
     # get source BAM files
-    src_bams = list_bams(config.gcs_source.bucket, config.gcs_source.prefix)
+    src_bams = list_bams(config.gcs_source.bucket, glob=config.gcs_source.glob)
     samples = id_bams(src_bams)
 
     # get existing destination BAM files
