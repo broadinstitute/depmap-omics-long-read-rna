@@ -233,7 +233,7 @@ def apply_col_map(
             "gcs_obj_updated_at": "update_time",
             "crc32c": "crc32c_hash",
         }
-    ).drop(columns="sample_id")
+    )[SamplesForGumbo.get_metadata()["SamplesForGumbo"]["columns"].keys()]
 
     # concat issues for each sample into single string
     gumbo_samples["issue"] = gumbo_samples["issue"].apply(
@@ -284,7 +284,7 @@ def increment_sample_versions(
     # current batch of samples
     existing_profile_id_counts = (
         seq_table.loc[
-            seq_table["expected_type"].eq(config.data_type)
+            seq_table["expected_type"].eq("long_read_rna")
             & seq_table["profile_id"].isin(samples["profile_id"]),
             "profile_id",
         ]

@@ -75,7 +75,7 @@ class IdentifiedSrcBam(CoercedDataFrame):
     size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     gcs_obj_updated_at: Series[pd.StringDtype]
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    issue: Series[pd.StringDtype] = pa.Field(nullable=True)
+    issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
     blacklist: Series[pd.BooleanDtype]
 
 
@@ -106,7 +106,6 @@ class CopiedSampleFiles(SamplesWithCDSIDs):
 
 class SamplesForGumbo(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
-    sm_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     legacy_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     update_time: Series[pd.StringDtype] = pa.Field(nullable=True)
