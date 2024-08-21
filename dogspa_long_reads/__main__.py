@@ -34,7 +34,7 @@ if __name__ == "__main__":
         },
         "gcs_destination": {
             "bucket": "cclebams",
-            "prefix": "rna_long_read/",
+            "prefix": "long_read_rna/",
         },
         "gcp_project": "depmap-omics",
         "uuid_namespace": "00000000-0000-0000-0000-000000000000",

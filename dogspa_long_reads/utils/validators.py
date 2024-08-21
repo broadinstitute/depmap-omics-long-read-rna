@@ -106,12 +106,13 @@ class CopiedSampleFiles(SamplesWithCDSIDs):
 
 class SamplesForGumbo(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    legacy_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
-    update_time: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sequencing_date: Series[pd.StringDtype] = pa.Field(nullable=True)
+    bam_filepath: Series[pd.StringDtype]
+    profile_id: Series[pd.StringDtype]
+    legacy_size: Series[pd.Int64Dtype]
+    update_time: Series[pd.StringDtype]
+    sequencing_date: Series[pd.StringDtype]
     source: Series[pd.StringDtype]
-    crc32c_hash: Series[pd.StringDtype] = pa.Field(nullable=True)
+    crc32c_hash: Series[pd.StringDtype]
     expected_type: Series[pd.StringDtype]
     issue: Series[pd.StringDtype] = pa.Field(nullable=True)
     blacklist: Series[pd.BooleanDtype]

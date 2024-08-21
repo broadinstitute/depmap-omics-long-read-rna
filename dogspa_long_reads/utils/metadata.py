@@ -221,7 +221,7 @@ def apply_col_map(
     logging.info("Renaming columns for Gumbo...")
 
     samples["source"] = "DEPMAP"
-    samples["expected_type"] = "rna_long_read"
+    samples["expected_type"] = "long_read_rna"
     samples["sequencing_date"] = samples["gcs_obj_updated_at"]
     samples["stranded"] = True
 
@@ -317,10 +317,6 @@ def upload_to_gumbo(
     :param config: the dogspa configuration
     :return: the samples data frame that was uploaded to Gumbo
     """
-
-    # set custom hard-coded values if applicable
-    for k, v in config.gumbo_custom_values.items():
-        samples[k] = v
 
     # match historical behavior to exclude bad records except for too-small
     # BAM files (so that other types of bad records like missing GCS
