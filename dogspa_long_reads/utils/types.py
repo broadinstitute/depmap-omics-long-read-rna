@@ -3,6 +3,7 @@ from typing import TypeVar
 import pandas as pd
 import pandera as pa
 import psutil
+from nebelung.types import CoercedDataFrame
 from pandera.api.pandas.model_config import BaseConfig as PaBaseConfig
 from pandera.typing import Series
 from pydantic import BaseModel
@@ -31,11 +32,6 @@ class DogspaConfig(BaseModel):
     uuid_namespace: str = "00000000-0000-0000-0000-000000000000"
     ncpus: int = psutil.cpu_count()
     dry_run: bool = True
-
-
-class CoercedDataFrame(pa.DataFrameModel):
-    class Config(PaBaseConfig):
-        coerce = True  # convert to indicated dtype upon TypedDataFrame init
 
 
 class ModelsAndChildren(CoercedDataFrame):

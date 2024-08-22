@@ -27,11 +27,8 @@ from dogspa_long_reads.utils.metadata import (
     upload_to_gumbo,
     upsert_terra_samples,
 )
-from dogspa_long_reads.utils.utils import (
-    model_to_df,
-    send_slack_message,
-)
-from dogspa_long_reads.utils.validators import DogspaConfig, ModelsAndChildren
+from dogspa_long_reads.utils.types import DogspaConfig, ModelsAndChildren
+from dogspa_long_reads.utils.utils import model_to_df, send_slack_message
 from gumbo_gql_client import GumboClient
 
 

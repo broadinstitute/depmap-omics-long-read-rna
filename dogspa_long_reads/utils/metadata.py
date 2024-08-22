@@ -1,20 +1,13 @@
-from __future__ import annotations
-
 import json
 import logging
 import pathlib
 
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
+from nebelung.utils import expand_dict_columns
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.utils.utils import (
-    assign_hashed_uuids,
-    df_to_model,
-    expand_dict_columns,
-    uuid_to_base62,
-)
-from dogspa_long_reads.utils.validators import (
+from dogspa_long_reads.utils.types import (
     DogspaConfig,
     IdentifiedSrcBam,
     ModelsAndChildren,
@@ -26,6 +19,11 @@ from dogspa_long_reads.utils.validators import (
     SamplesWithShortReadMetadata,
     SeqTable,
     VersionedSamples,
+)
+from dogspa_long_reads.utils.utils import (
+    assign_hashed_uuids,
+    df_to_model,
+    uuid_to_base62,
 )
 from gumbo_gql_client import GumboClient, omics_sequencing_insert_input
 

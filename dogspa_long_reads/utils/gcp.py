@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import pathlib
 from typing import Optional, Tuple
@@ -12,7 +10,7 @@ from google.cloud import storage
 from pandera.typing import DataFrame as TypedDataFrame
 from tqdm import tqdm
 
-from dogspa_long_reads.utils.validators import (
+from dogspa_long_reads.utils.types import (
     CopiedSampleFiles,
     DogspaConfig,
     IdentifiedSrcBam,
