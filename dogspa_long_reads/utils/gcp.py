@@ -19,13 +19,13 @@ from dogspa_long_reads.utils.types import (
 )
 
 
-def list_bams(
+def list_blobs(
     bucket_name: str, prefix: str | None = None, glob: str | None = None
 ) -> TypedDataFrame[ObjectMetadata]:
     """
-    Get the names and sizes of existing BAMs in a GCS bucket.
+    Get the names and sizes of existing blobs in a GCS bucket.
 
-    :param bucket_name: the name of the GCS bucket for the Terra workspace
+    :param bucket_name: the name of the GCS bucket
     :param prefix: an optional prefix for listing
     :param glob: an optional glob for listing
     :return: a data frame of object names and sizes
@@ -68,7 +68,6 @@ def list_bams(
                 for x in page
             ]
         )
-    print(blobs)
 
     if len(blobs) == 0:
         return TypedDataFrame[ObjectMetadata](

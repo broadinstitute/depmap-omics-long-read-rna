@@ -1,6 +1,6 @@
 import json
 import logging
-import pathlib
+from pathlib import Path
 
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
@@ -29,18 +29,19 @@ from gumbo_gql_client import GumboClient, omics_sequencing_insert_input
 
 
 def id_bams(
-    bams: TypedDataFrame[ObjectMetadata],
+    bams: TypedDataFrame[ObjectMetadata], legacy_bams_f: Path
 ) -> TypedDataFrame[IdentifiedSrcBam]:
     bams["model_id"] = (
-        bams["url"]
-        .apply(lambda x: pathlib.Path(x).name)
-        .str.extract(r"^(ACH-[A-Z 0-9]+)")
+        bams["url"].apply(lambda x: Path(x).name).str.extract(r"^(ACH-[A-Z 0-9]+)")
     )
 
     if bams["model_id"].isna().any():
         raise ValueError("There are BAM files not named with model IDs (ACH-*)")
 
     bams = bams.rename(columns={"url": "bam_url"})
+
+    legacy_bams = pd.read_csv(legacy_bams_f)
+    bams = pd.concat([bams, legacy_bams])
 
     # start tracking issues to store in Gumbo seq table
     bams["issue"] = pd.Series([set()] * len(bams))

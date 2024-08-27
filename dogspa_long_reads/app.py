@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections import OrderedDict
+from pathlib import Path
 
 import functions_framework
 from cloudevents.http import CloudEvent
@@ -12,7 +13,7 @@ from nebelung.terra_workspace import TerraWorkspace
 from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
     copy_to_cclebams,
-    list_bams,
+    list_blobs,
     update_sample_file_uris,
 )
 from dogspa_long_reads.utils.metadata import (
@@ -68,9 +69,14 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
 
+    # get legacy BAM files path (created before expected GCS depository methods)
+    legacy_bams_csv = Path(
+        os.path.join(os.path.dirname(__file__), "..", "data", "legacy_bams.csv")
+    ).resolve()
+
     # get source BAM files
-    src_bams = list_bams(config.gcs_source.bucket, glob=config.gcs_source.glob)
-    samples = id_bams(src_bams)
+    src_bams = list_blobs(config.gcs_source.bucket, glob=config.gcs_source.glob)
+    samples = id_bams(src_bams, legacy_bams_csv)
 
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(samples, seq_table, size_col_name="legacy_size")
@@ -122,11 +128,11 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # upload the samples to Terra
     upsert_terra_samples(tw, samples)
 
-    send_slack_message(
-        os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-        os.getenv("SLACK_WEBHOOK_URL_STATS"),
-        stats,
-        report,
-        config,
-    )
+    # send_slack_message(
+    #     os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+    #     os.getenv("SLACK_WEBHOOK_URL_STATS"),
+    #     stats,
+    #     report,
+    #     config,
+    # )
     logging.info("Done.")
