@@ -4,7 +4,6 @@ import pandas as pd
 import pandera as pa
 import psutil
 from nebelung.types import CoercedDataFrame
-from pandera.api.pandas.model_config import BaseConfig as PaBaseConfig
 from pandera.typing import Series
 from pydantic import BaseModel
 

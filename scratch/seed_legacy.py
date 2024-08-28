@@ -152,6 +152,15 @@ df2_dedup = (
 
 legacy = pd.concat([df, df2_dedup]).rename(columns={"url": "bam_url"})
 legacy["size"] = legacy["size"].astype("int64")
-legacy[["model_id", "bam_url", "crc32c", "size", "gcs_obj_updated_at"]].to_csv(
-    "./data/legacy_bams.csv", index=False
+legacy = legacy[["model_id", "bam_url", "crc32c", "size", "gcs_obj_updated_at"]]
+
+pilot_bams = list_blobs(
+    "fc-aaf4de93-c104-45c4-a01a-a036869119c6", glob="pilot/merge/*.sorted.bam"
 )
+
+pilot_bams = pilot_bams.rename(columns={"url": "bam_url"})
+pilot_bams["model_id"] = pilot_bams["bam_url"].str.extract(r"(ACH-.+).sorted.bam$")
+
+legacy = pd.concat((legacy, pilot_bams))
+
+legacy.to_csv("./data/legacy_bams.csv", index=False)
