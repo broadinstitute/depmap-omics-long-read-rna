@@ -78,7 +78,7 @@ class SamplesMaybeInGumbo(IdentifiedSrcBam):
     already_in_gumbo: Series[pd.BooleanDtype]
 
 
-class SamplesWithMetadata(IdentifiedSrcBam):
+class SamplesWithMetadata(SamplesMaybeInGumbo):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
 

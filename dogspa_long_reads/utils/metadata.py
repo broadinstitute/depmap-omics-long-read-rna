@@ -1,7 +1,9 @@
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
+import numpy as np
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import expand_dict_columns
@@ -71,7 +73,7 @@ def explode_and_expand_models(
 
 
 def join_metadata(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    samples: TypedDataFrame[SamplesMaybeInGumbo],
     seq_table: TypedDataFrame[SeqTable],
 ) -> TypedDataFrame[SamplesWithMetadata]:
     metadata = seq_table.loc[
@@ -249,6 +251,21 @@ def apply_col_map(
     return TypedDataFrame[SamplesForGumbo](gumbo_samples)
 
 
+def extract_nested_dict(x: Any) -> Any:
+    if isinstance(x, dict):
+        if x["itemsType"] == "AttributeValue":
+            items = [y for y in x["items"] if y is not None]
+
+            if len(items) > 0:
+                return json.dumps(items)
+            else:
+                return pd.NA
+        else:
+            raise NotImplementedError(f"Unsupported itemsType {x['itemsType']}")
+
+    return x
+
+
 def upsert_terra_samples(
     tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs]
 ) -> None:
@@ -268,17 +285,45 @@ def upsert_terra_samples(
 
     terra_samples = samples.rename(columns=renames)[renames.values()]
 
+    terra_samples["participant"] = terra_samples["participant_id"].apply(
+        lambda x: json.dumps({"entityType": "participant", "entityName": x})
+    )
+
+    # TODO: remove
+    old_samples = tw.get_entities("sample")
+
+    old_samples["participant_id"] = old_samples["participant"].apply(
+        lambda x: x["entityName"]
+    )
+
+    terra_samples = terra_samples.merge(
+        old_samples.drop(
+            columns=list(
+                {
+                    "sample_id",
+                    *old_samples.columns[
+                        old_samples.columns.isin(terra_samples.columns)
+                    ],
+                }.difference({"participant_id"})
+            )
+        ),
+        how="left",
+        on="participant_id",
+    )
+
     # upsert participants
     participants = (
         terra_samples[["participant_id"]]
-        .rename(columns={"participant_id": "entity:participant_id"})
+        .rename(columns={"participant": "entity:participant_id"})
         .drop_duplicates()
     )
 
     tw.upload_entities(participants)
 
+    terra_samples = terra_samples.map(extract_nested_dict)
+
     # upsert the samples
-    tw.upload_entities(terra_samples)
+    tw.upload_entities(terra_samples.drop(columns="participant_id"))
 
     # upsert the join table between participants and samples
     participant_samples = (
@@ -365,7 +410,7 @@ def upload_to_gumbo(
         logging.info(f"(skipping) Inserting {len(samples_to_upload)} samples")
         return samples_to_upload
 
-    logging.info(f"Inserting {len(samples_to_upload)} samples to")
+    logging.info(f"Inserting {len(samples_to_upload)} samples to omics_sequencing")
 
     if len(samples) > 0:
         objects = df_to_model(samples_to_upload, omics_sequencing_insert_input)

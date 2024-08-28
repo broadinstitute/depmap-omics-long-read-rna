@@ -162,5 +162,6 @@ pilot_bams = pilot_bams.rename(columns={"url": "bam_url"})
 pilot_bams["model_id"] = pilot_bams["bam_url"].str.extract(r"(ACH-.+).sorted.bam$")
 
 legacy = pd.concat((legacy, pilot_bams))
+legacy["gcs_obj_updated_at"] = legacy["gcs_obj_updated_at"].dt.date.astype("str")
 
 legacy.to_csv("./data/legacy_bams.csv", index=False)
