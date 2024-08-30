@@ -7,20 +7,20 @@ repos:
     - id: ruff-format
 
 - repo: https://github.com/RobertCraigie/pyright-python
-  rev: v1.1.359
+  rev: v1.1.378
   hooks:
   - id: pyright
 
--   repo: https://github.com/python-poetry/poetry
-    rev: '1.7.1'
-    hooks:
-    - id: poetry-export
-      args: [
-        "-f",
-        "requirements.txt",
-        "-o",
-        "requirements.txt",
-        "--without-hashes",
-        "--without",
-        "dev,test"
-      ]
+- repo: https://github.com/python-poetry/poetry
+  rev: '1.8.3'
+  hooks:
+  - id: poetry-export
+    args: [
+      "-f",
+      "requirements.txt",
+      "-o",
+      "requirements.txt",
+      "--without-hashes",
+      "--only",
+      "main"
+    ]

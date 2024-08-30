@@ -17,6 +17,6 @@ def run(cloud_event: CloudEvent) -> None:
     """
 
     client = google.cloud.logging.Client()
-    client.setup_logging(log_level=logging.INFO) 
+    client.setup_logging(log_level=logging.INFO)
 
     entrypoint(cloud_event)
