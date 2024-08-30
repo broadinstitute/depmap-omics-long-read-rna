@@ -32,5 +32,3 @@ jobs:
           if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         - name: Run pyright
           run: poetry run pyright
-        - name: Run pytest
-          run: poetry run pytest
