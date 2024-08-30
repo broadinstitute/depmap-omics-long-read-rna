@@ -81,7 +81,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(samples, seq_table, size_col_name="legacy_size")
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
-    report["not yet in Gumbo"] = samples
+    report["not yet in Gumbo"] = samples.loc[~samples["already_in_gumbo"]]
 
     if len(samples) == 0:
         send_slack_message(
