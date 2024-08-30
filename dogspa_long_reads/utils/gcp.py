@@ -169,14 +169,30 @@ def copy_to_cclebams(
     )
     prefix = config.gcs_destination.prefix.strip("/")
 
+    # get already-copied BAMs
+    existing_bams = (
+        list_blobs(config.gcs_destination.bucket, prefix=config.gcs_destination.prefix)
+        .rename(columns={"url": "new_url"})
+        .loc[:, ["size", "new_url"]]
+    )
+
+    # split into copied and to-do
+    check_copied = samples.merge(existing_bams, how="left", on="size")
+    already_copied = check_copied.loc[check_copied["new_url"].notna()]
+    already_copied["copied"] = True
+    to_copy = check_copied.loc[check_copied["new_url"].isna()]
+
+    if len(to_copy) == 0:
+        return TypedDataFrame[CopiedSampleFiles](already_copied)
+
     # keep track of copy attempts
     copy_results = []
 
-    logging.info(f"Checking {len(samples)} files to copy...")
+    logging.info(f"Coping {len(to_copy)} BAMs...")
 
     # can't use rewrite in a batch context, so do plain iteration
-    for r in tqdm(samples.itertuples(index=False), total=len(samples)):
-        url = r[samples.columns.get_loc("bam_url")]
+    for r in tqdm(to_copy.itertuples(index=False), total=len(to_copy)):
+        url = r[to_copy.columns.get_loc("bam_url")]
 
         try:
             # construct the source blob
@@ -188,7 +204,7 @@ def copy_to_cclebams(
                 "/".join(
                     [
                         prefix,
-                        str(r[samples.columns.get_loc("sequencing_id")]),
+                        str(r[to_copy.columns.get_loc("sequencing_id")]),
                     ]
                 )
                 + dest_file_ext
@@ -202,30 +218,25 @@ def copy_to_cclebams(
 
             new_url = urlunsplit(("gs", dest_bucket.name, dest_obj_key, "", ""))
 
-            if dest_blob.exists():
-                logging.info(f"{dest_blob.name} already exists in {dest_bucket.name}")
-                copy_results.append({"url": url, "new_url": new_url, "copied": True})
-
+            if config.dry_run:
+                logging.info(
+                    f"(skipping) Copying {dest_blob.name} to {dest_bucket.name}"
+                )
             else:
-                if config.dry_run:
-                    logging.info(
-                        f"(skipping) Copying {dest_blob.name} to {dest_bucket.name}"
-                    )
-                else:
-                    logging.info(f"Copying {dest_blob.name} to {dest_bucket.name}")
-                    rewrite_blob(src_blob, dest_blob)
+                logging.info(f"Copying {dest_blob.name} to {dest_bucket.name}")
+                rewrite_blob(src_blob, dest_blob)
 
-                copy_results.append({"url": url, "new_url": new_url, "copied": True})
+            copy_results.append({"url": url, "new_url": new_url, "copied": True})
 
         except Exception as e:
             logging.error(f"Error copying {url} to {dest_bucket}: {e}")
             copy_results.append({"url": url, "new_url": None, "copied": False})
 
-    sample_files = samples.merge(
+    to_copy = to_copy.merge(
         pd.DataFrame(copy_results), how="inner", left_on="bam_url", right_on="url"
     )
 
-    return TypedDataFrame[CopiedSampleFiles](sample_files)
+    return TypedDataFrame[CopiedSampleFiles](pd.concat([already_copied, to_copy]))
 
 
 def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
