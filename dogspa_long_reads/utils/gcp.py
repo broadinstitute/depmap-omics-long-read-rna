@@ -13,7 +13,6 @@ from tqdm import tqdm
 from dogspa_long_reads.utils.types import (
     CopiedSampleFiles,
     DogspaConfig,
-    IdentifiedSrcBam,
     ObjectMetadata,
     SamplesWithCDSIDs,
     SamplesWithShortReadMetadata,
