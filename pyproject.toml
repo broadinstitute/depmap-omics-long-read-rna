@@ -20,14 +20,14 @@ python-baseconv = "^1.2.2"
 google-cloud-logging = "^3.9.0"
 python-dotenv = "^1.0.1"
 psutil = "^5.9.8"
-google-auth = "^2.26.2"
+google-auth = "2.29.0"
 ariadne-codegen = "^0.13.0"
 nebelung = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.1.14"
 ipython = "^8.12"
-pyright = "^1.1.359"
+pyright = "^1.1.378"
 
 
 [[tool.poetry.source]]
@@ -48,5 +48,5 @@ exclude = ["gumbo_gql_client"]
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include  = ["main.py", "dogspa", "tests"]
+include  = ["main.py", "dogspa_long_reads"]
 reportInvalidTypeVarUse = "none"

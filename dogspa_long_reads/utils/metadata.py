@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, reveal_type
 
 import numpy as np
 import pandas as pd
@@ -33,43 +33,49 @@ from gumbo_gql_client import GumboClient, omics_sequencing_insert_input
 def id_bams(
     bams: TypedDataFrame[ObjectMetadata], legacy_bams_f: Path
 ) -> TypedDataFrame[IdentifiedSrcBam]:
-    bams["model_id"] = (
-        bams["url"].apply(lambda x: Path(x).name).str.extract(r"^(ACH-[A-Z 0-9]+)")
+    bams_w_ids = bams.copy()
+
+    bams_w_ids["model_id"] = (
+        bams_w_ids["url"]
+        .apply(lambda x: Path(x).name)
+        .str.extract(r"^(ACH-[A-Z 0-9]+)")
     )
 
-    if bams["model_id"].isna().any():
+    if bool(bams_w_ids["model_id"].isna().any()):
         raise ValueError("There are BAM files not named with model IDs (ACH-*)")
 
-    bams = bams.rename(columns={"url": "bam_url"})
+    bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
 
     legacy_bams = pd.read_csv(legacy_bams_f)
-    bams = pd.concat([bams, legacy_bams])
+    bams_w_ids = pd.concat([bams_w_ids, legacy_bams])
 
     # start tracking issues to store in Gumbo seq table
-    bams["issue"] = pd.Series([set()] * len(bams))
-    bams["blacklist"] = False
+    bams_w_ids["issue"] = pd.Series([set()] * len(bams_w_ids))
+    bams_w_ids["blacklist"] = False
 
-    return TypedDataFrame[IdentifiedSrcBam](bams)
+    return TypedDataFrame[IdentifiedSrcBam](bams_w_ids)
 
 
 def explode_and_expand_models(
     models: TypedDataFrame[ModelsAndChildren],
 ) -> TypedDataFrame[SeqTable]:
+    seq_table = models.copy()
+
     for c in ["model_conditions", "omics_profiles", "omics_sequencings"]:
-        models = models.explode(c).reset_index(drop=True)
-        models = expand_dict_columns(models, name_columns_with_parent=False)
+        seq_table = seq_table.explode(c).reset_index(drop=True)
+        seq_table = expand_dict_columns(seq_table, name_columns_with_parent=False)
 
-    models = models.dropna(subset=["model_condition_id", "profile_id"])
+    seq_table = seq_table.dropna(subset=["model_condition_id", "profile_id"])
 
-    models["is_main_sequencing_id"] = models["main_sequencing_id"].eq(
-        models["sequencing_id"]
+    seq_table["is_main_sequencing_id"] = seq_table["main_sequencing_id"].eq(
+        seq_table["sequencing_id"]
     )
 
-    models[["blacklist_omics", "blacklist"]] = models[
+    seq_table[["blacklist_omics", "blacklist"]] = seq_table[
         ["blacklist_omics", "blacklist"]
     ].fillna(False)
 
-    return TypedDataFrame[SeqTable](models.drop(columns="main_sequencing_id"))
+    return TypedDataFrame[SeqTable](seq_table.drop(columns="main_sequencing_id"))
 
 
 def join_metadata(
@@ -89,9 +95,9 @@ def join_metadata(
         ],
     ]
 
-    samples = samples.merge(metadata, how="left", on="model_id")
+    samples_annot = samples.merge(metadata, how="left", on="model_id")
 
-    return TypedDataFrame[SamplesWithMetadata](samples)
+    return TypedDataFrame[SamplesWithMetadata](samples_annot)
 
 
 def join_short_read_metadata(
@@ -140,7 +146,7 @@ def join_short_read_metadata(
         .rename(columns={"sequencing_id": "main_sequencing_id"})
     )
 
-    samples = samples.merge(main_seq_ids, how="left", on="model_id")
+    samples_annot = samples.merge(main_seq_ids, how="left", on="model_id")
 
     sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
 
@@ -152,13 +158,13 @@ def join_short_read_metadata(
         }
     )
 
-    samples = samples.merge(sr_rna, how="left", on="model_id")
+    samples_annot = samples_annot.merge(sr_rna, how="left", on="model_id")
 
-    return TypedDataFrame[SamplesWithShortReadMetadata](samples)
+    return TypedDataFrame[SamplesWithShortReadMetadata](samples_annot)
 
 
 def assign_cds_ids(
-    samples: TypedDataFrame[IdentifiedSrcBam], config: DogspaConfig
+    samples: TypedDataFrame[SamplesWithShortReadMetadata], config: DogspaConfig
 ) -> TypedDataFrame[SamplesWithCDSIDs]:
     """
     Assign a "CDS-" ID to each sample by hashing relevant columns.
@@ -241,7 +247,22 @@ def apply_col_map(
             "gcs_obj_updated_at": "update_time",
             "crc32c": "crc32c_hash",
         }
-    )[SamplesForGumbo.get_metadata()["SamplesForGumbo"]["columns"].keys()]
+    ).loc[
+        :,
+        [
+            "sequencing_id",
+            "bam_filepath",
+            "profile_id",
+            "legacy_size",
+            "update_time",
+            "sequencing_date",
+            "source",
+            "crc32c_hash",
+            "expected_type",
+            "issue",
+            "blacklist",
+        ],
+    ]
 
     # concat issues for each sample into single string
     gumbo_samples["issue"] = gumbo_samples["issue"].apply(
@@ -268,7 +289,7 @@ def upsert_terra_samples(
         "main_sequencing_id": "MainSequencingID",
     }
 
-    terra_samples = samples.rename(columns=renames)[renames.values()]
+    terra_samples = samples.rename(columns=renames).loc[:, renames.values()]
 
     terra_samples["participant"] = terra_samples["participant_id"].apply(
         lambda x: json.dumps({"entityType": "participant", "entityName": x})

@@ -4,7 +4,7 @@ import pandas as pd
 import pandera as pa
 import psutil
 from nebelung.types import CoercedDataFrame
-from pandera.typing import Series
+from pandera.typing import Series  # pyright: ignore
 from pydantic import BaseModel
 
 
@@ -119,4 +119,4 @@ class VersionedSamples(SamplesForGumbo):
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)
 PanderaBaseSchema = TypeVar("PanderaBaseSchema", bound=CoercedDataFrame)
-TypedDataFrame = pa.typing.DataFrame
+TypedDataFrame = pa.typing.DataFrame  # pyright: ignore

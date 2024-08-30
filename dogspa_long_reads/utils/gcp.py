@@ -16,6 +16,7 @@ from dogspa_long_reads.utils.types import (
     IdentifiedSrcBam,
     ObjectMetadata,
     SamplesWithCDSIDs,
+    SamplesWithShortReadMetadata,
 )
 
 
@@ -126,8 +127,8 @@ def get_gcp_access_token() -> str:
 
 
 def check_file_sizes(
-    samples: TypedDataFrame[IdentifiedSrcBam],
-) -> Tuple[TypedDataFrame[IdentifiedSrcBam], pd.Series]:
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+) -> Tuple[TypedDataFrame[SamplesWithShortReadMetadata], pd.Series]:
     """
     Check whether BAM file sizes are above configured minimum threshold.
 
@@ -145,7 +146,7 @@ def check_file_sizes(
     )
     samples.loc[bam_too_small, "blacklist"] = True
 
-    return TypedDataFrame[IdentifiedSrcBam](samples), bam_too_small
+    return TypedDataFrame[SamplesWithShortReadMetadata](samples), bam_too_small
 
 
 def copy_to_cclebams(
@@ -221,11 +222,11 @@ def copy_to_cclebams(
             logging.error(f"Error copying {url} to {dest_bucket}: {e}")
             copy_results.append({"url": url, "new_url": None, "copied": False})
 
-    samples = samples.merge(
+    sample_files = samples.merge(
         pd.DataFrame(copy_results), how="inner", left_on="bam_url", right_on="url"
     )
 
-    return TypedDataFrame[CopiedSampleFiles](samples)
+    return TypedDataFrame[CopiedSampleFiles](sample_files)
 
 
 def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
