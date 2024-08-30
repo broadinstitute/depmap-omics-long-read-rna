@@ -251,26 +251,11 @@ def apply_col_map(
     return TypedDataFrame[SamplesForGumbo](gumbo_samples)
 
 
-def extract_nested_dict(x: Any) -> Any:
-    if isinstance(x, dict):
-        if x["itemsType"] == "AttributeValue":
-            items = [y for y in x["items"] if y is not None]
-
-            if len(items) > 0:
-                return json.dumps(items)
-            else:
-                return pd.NA
-        else:
-            raise NotImplementedError(f"Unsupported itemsType {x['itemsType']}")
-
-    return x
-
-
 def upsert_terra_samples(
     tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs]
 ) -> None:
     renames = {
-        "sequencing_id": "entity:test_sample_id",
+        "sequencing_id": "entity:sample_id",
         "model_id": "participant_id",
         "bam_url": "LR_bam_filepath",
         "cell_line_name": "CellLineName",
@@ -289,28 +274,6 @@ def upsert_terra_samples(
         lambda x: json.dumps({"entityType": "participant", "entityName": x})
     )
 
-    # TODO: remove
-    old_samples = tw.get_entities("sample")
-
-    old_samples["participant_id"] = old_samples["participant"].apply(
-        lambda x: x["entityName"]
-    )
-
-    terra_samples = terra_samples.merge(
-        old_samples.drop(
-            columns=list(
-                {
-                    "sample_id",
-                    *old_samples.columns[
-                        old_samples.columns.isin(terra_samples.columns)
-                    ],
-                }.difference({"participant_id"})
-            )
-        ),
-        how="left",
-        on="participant_id",
-    )
-
     # upsert participants
     participants = (
         terra_samples[["participant_id"]]
@@ -320,25 +283,21 @@ def upsert_terra_samples(
 
     tw.upload_entities(participants)
 
-    terra_samples = terra_samples.map(extract_nested_dict)
-
     # upsert the samples
     tw.upload_entities(terra_samples.drop(columns="participant_id"))
 
     # upsert the join table between participants and samples
     participant_samples = (
-        terra_samples.groupby("participant_id")["entity:test_sample_id"]
+        terra_samples.groupby("participant_id")["entity:sample_id"]
         .agg(list)
         .apply(
-            lambda x: json.dumps(
-                [{"entityType": "test_sample", "entityName": y} for y in x]
-            )
+            lambda x: json.dumps([{"entityType": "sample", "entityName": y} for y in x])
         )
         .reset_index()
         .rename(
             columns={
                 "participant": "entity:participant_id",
-                "entity:test_sample_id": "test_samples",
+                "entity:sample_id": "samples",
             }
         )
     )

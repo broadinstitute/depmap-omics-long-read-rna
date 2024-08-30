@@ -800,3 +800,93 @@ class str_profile_update_column(str, Enum):
     tpox = "tpox"
     updated_at = "updated_at"
     vwa = "vwa"
+
+
+class task_entity_constraint(str, Enum):
+    task_entity_pkey = "task_entity_pkey"
+
+
+class task_entity_select_column(str, Enum):
+    id = "id"
+    sequencing_id = "sequencing_id"
+
+
+class task_entity_update_column(str, Enum):
+    id = "id"
+    sequencing_id = "sequencing_id"
+
+
+class task_result_constraint(str, Enum):
+    task_result_pkey = "task_result_pkey"
+
+
+class task_result_select_column(str, Enum):
+    crc32c_hash = "crc32c_hash"
+    created_at = "created_at"
+    format = "format"
+    id = "id"
+    label = "label"
+    size = "size"
+    task_entity_id = "task_entity_id"
+    terra_entity_name = "terra_entity_name"
+    terra_entity_type = "terra_entity_type"
+    terra_method_config_name = "terra_method_config_name"
+    terra_method_config_namespace = "terra_method_config_namespace"
+    terra_submission_id = "terra_submission_id"
+    terra_sync_id = "terra_sync_id"
+    terra_workflow_id = "terra_workflow_id"
+    terra_workflow_inputs = "terra_workflow_inputs"
+    terra_workflow_root_dir = "terra_workflow_root_dir"
+    terra_workspace_id = "terra_workspace_id"
+    terra_workspace_name = "terra_workspace_name"
+    terra_workspace_namespace = "terra_workspace_namespace"
+    url = "url"
+    value = "value"
+    workflow_name = "workflow_name"
+    workflow_source_url = "workflow_source_url"
+    workflow_version = "workflow_version"
+
+
+class task_result_update_column(str, Enum):
+    crc32c_hash = "crc32c_hash"
+    created_at = "created_at"
+    format = "format"
+    id = "id"
+    label = "label"
+    size = "size"
+    task_entity_id = "task_entity_id"
+    terra_entity_name = "terra_entity_name"
+    terra_entity_type = "terra_entity_type"
+    terra_method_config_name = "terra_method_config_name"
+    terra_method_config_namespace = "terra_method_config_namespace"
+    terra_submission_id = "terra_submission_id"
+    terra_sync_id = "terra_sync_id"
+    terra_workflow_id = "terra_workflow_id"
+    terra_workflow_inputs = "terra_workflow_inputs"
+    terra_workflow_root_dir = "terra_workflow_root_dir"
+    terra_workspace_id = "terra_workspace_id"
+    terra_workspace_name = "terra_workspace_name"
+    terra_workspace_namespace = "terra_workspace_namespace"
+    url = "url"
+    value = "value"
+    workflow_name = "workflow_name"
+    workflow_source_url = "workflow_source_url"
+    workflow_version = "workflow_version"
+
+
+class terra_sync_constraint(str, Enum):
+    terra_sync_pkey = "terra_sync_pkey"
+
+
+class terra_sync_select_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    terra_workspace_name = "terra_workspace_name"
+    terra_workspace_namespace = "terra_workspace_namespace"
+
+
+class terra_sync_update_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    terra_workspace_name = "terra_workspace_name"
+    terra_workspace_namespace = "terra_workspace_namespace"

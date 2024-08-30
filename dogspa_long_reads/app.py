@@ -81,7 +81,6 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(samples, seq_table, size_col_name="legacy_size")
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
-    samples = samples.loc[~samples["already_in_gumbo"]].drop(columns="already_in_gumbo")
     report["not yet in Gumbo"] = samples
 
     if len(samples) == 0:
@@ -115,7 +114,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     report["failed copies"] = samples.loc[blacklisted]
 
     # rename and set some columns for Gumbo
-    gumbo_samples = apply_col_map(samples)
+    gumbo_samples = apply_col_map(samples.loc[~samples["already_in_gumbo"]])
 
     # increment version numbers for samples with profile IDs already in seq table
     gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
@@ -128,11 +127,11 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # upload the samples to Terra
     upsert_terra_samples(tw, samples)
 
-    # send_slack_message(
-    #     os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-    #     os.getenv("SLACK_WEBHOOK_URL_STATS"),
-    #     stats,
-    #     report,
-    #     config,
-    # )
+    send_slack_message(
+        os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+        os.getenv("SLACK_WEBHOOK_URL_STATS"),
+        stats,
+        report,
+        config,
+    )
     logging.info("Done.")
