@@ -133,7 +133,3 @@ dmypy.json
 
 .DS_Store
 .ruff_cache
-
-/data/*
-/data/**/*
-!/data/**/.gitkeep
