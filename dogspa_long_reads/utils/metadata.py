@@ -126,7 +126,7 @@ def join_short_read_metadata(
         & seq_table["datatype"].eq("rna")
         & ~seq_table["blacklist"]
         & ~seq_table["blacklist_omics"]
-    ]
+    ].copy()
 
     sr["source"] = sr["source"].fillna("")
     sr = sr.merge(sp_df, how="left", on="source")
@@ -270,60 +270,6 @@ def apply_col_map(
     return TypedDataFrame[SamplesForGumbo](gumbo_samples)
 
 
-def upsert_terra_samples(
-    tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs]
-) -> None:
-    renames = {
-        "sequencing_id": "entity:sample_id",
-        "model_id": "participant_id",
-        "bam_url": "LR_bam_filepath",
-        "cell_line_name": "CellLineName",
-        "stripped_cell_line_name": "StrippedCellLineName",
-        "model_condition_id": "ModelCondition",
-        "profile_id": "LongReadProfileID",
-        "sr_profile_id": "ShortReadProfileID",
-        "sr_bai_filepath": "SR_bai_filepath",
-        "sr_bam_filepath": "SR_bam_filepath",
-        "main_sequencing_id": "MainSequencingID",
-    }
-
-    terra_samples = samples.rename(columns=renames).loc[:, renames.values()]
-
-    terra_samples["participant"] = terra_samples["participant_id"].apply(
-        lambda x: json.dumps({"entityType": "participant", "entityName": x})
-    )
-
-    # upsert participants
-    participants = (
-        terra_samples[["participant_id"]]
-        .rename(columns={"participant": "entity:participant_id"})
-        .drop_duplicates()
-    )
-
-    tw.upload_entities(participants)
-
-    # upsert the samples
-    tw.upload_entities(terra_samples.drop(columns="participant_id"))
-
-    # upsert the join table between participants and samples
-    participant_samples = (
-        terra_samples.groupby("participant_id")["entity:sample_id"]
-        .agg(list)
-        .apply(
-            lambda x: json.dumps([{"entityType": "sample", "entityName": y} for y in x])
-        )
-        .reset_index()
-        .rename(
-            columns={
-                "participant": "entity:participant_id",
-                "entity:sample_id": "samples",
-            }
-        )
-    )
-
-    tw.upload_entities(participant_samples)
-
-
 def increment_sample_versions(
     samples: TypedDataFrame[SamplesForGumbo], seq_table: TypedDataFrame[SeqTable]
 ) -> TypedDataFrame[VersionedSamples]:
@@ -397,3 +343,79 @@ def upload_to_gumbo(
         logging.info(f"Inserted {affected_rows} samples to Gumbo")
 
     return samples_to_upload
+
+
+def upsert_terra_samples(
+    tw: TerraWorkspace,
+    samples: TypedDataFrame[SamplesWithCDSIDs],
+    config: DogspaConfig,
+) -> None:
+    """
+    Upsert sample and participant data to Terra data tables.
+
+    :param samples: the data frame of samples
+    :param config: the dogspa configuration
+    """
+
+    logging.info(f"Upserting data to {tw.workspace_name} data tables")
+
+    renames = {
+        "sequencing_id": "entity:sample_id",
+        "model_id": "participant_id",
+        "bam_url": "LR_bam_filepath",
+        "cell_line_name": "CellLineName",
+        "stripped_cell_line_name": "StrippedCellLineName",
+        "model_condition_id": "ModelCondition",
+        "profile_id": "LongReadProfileID",
+        "sr_profile_id": "ShortReadProfileID",
+        "sr_bai_filepath": "SR_bai_filepath",
+        "sr_bam_filepath": "SR_bam_filepath",
+        "main_sequencing_id": "MainSequencingID",
+    }
+
+    terra_samples = samples.rename(columns=renames).loc[:, renames.values()]
+
+    terra_samples["participant"] = terra_samples["participant_id"].apply(
+        lambda x: json.dumps({"entityType": "participant", "entityName": x})
+    )
+
+    # upsert participants
+    participants = (
+        terra_samples[["participant_id"]]
+        .rename(columns={"participant": "entity:participant_id"})
+        .drop_duplicates()
+    )
+
+    if config.dry_run:
+        logging.info(f"(skipping) Upserting {len(participants)} participants")
+    else:
+        tw.upload_entities(participants)
+
+    # upsert samples
+    if config.dry_run:
+        logging.info(f"(skipping) Upserting {len(terra_samples)} samples")
+    else:
+        tw.upload_entities(terra_samples.drop(columns="participant_id"))
+
+    # upsert the join table between participants and samples
+    participant_samples = (
+        terra_samples.groupby("participant_id")["entity:sample_id"]
+        .agg(list)
+        .apply(
+            lambda x: json.dumps([{"entityType": "sample", "entityName": y} for y in x])
+        )
+        .reset_index()
+        .rename(
+            columns={
+                "participant": "entity:participant_id",
+                "entity:sample_id": "samples",
+            }
+        )
+    )
+
+    if config.dry_run:
+        logging.info(
+            f"(skipping) Upserting {len(participant_samples)} participant-samples"
+        )
+    else:
+        tw.upload_entities(participant_samples)

@@ -125,7 +125,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     report["successfully uploaded"] = gumbo_samples
 
     # upload the samples to Terra
-    upsert_terra_samples(tw, samples)
+    upsert_terra_samples(tw, samples, config)
 
     send_slack_message(
         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
