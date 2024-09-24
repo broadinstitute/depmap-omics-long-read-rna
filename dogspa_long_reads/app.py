@@ -14,7 +14,7 @@ from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
     copy_to_cclebams,
     list_blobs,
-    update_sample_file_uris,
+    update_sample_file_urls,
 )
 from dogspa_long_reads.utils.metadata import (
     apply_col_map,
@@ -79,7 +79,7 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     samples = id_bams(src_bams, legacy_bams_csv)
 
     # compare file sizes to filter out samples that are in Gumbo already
-    samples = check_already_in_gumbo(samples, seq_table, size_col_name="legacy_size")
+    samples = check_already_in_gumbo(samples, seq_table, size_col_name="bam_size")
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
     report["not yet in Gumbo"] = samples.loc[~samples["already_in_gumbo"]]
 
@@ -108,8 +108,8 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # copy files to our own bucket
     sample_files = copy_to_cclebams(samples, config)
 
-    # replace URIs with ones for our bucket whenever the copy operation succeeded
-    samples, blacklisted = update_sample_file_uris(samples, sample_files)
+    # replace URLs with ones for our bucket whenever the copy operation succeeded
+    samples, blacklisted = update_sample_file_urls(samples, sample_files)
     stats["n with failed file copies"] = blacklisted.sum()
     report["failed copies"] = samples.loc[blacklisted]
 

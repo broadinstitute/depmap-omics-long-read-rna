@@ -360,11 +360,13 @@ class media_bool_exp(BaseModel):
     or_: Optional[List["media_bool_exp"]] = Field(alias="_or", default=None)
     formulation: Optional["String_comparison_exp"] = None
     media_id: Optional["String_comparison_exp"] = None
+    serum_free: Optional["Boolean_comparison_exp"] = None
 
 
 class media_insert_input(BaseModel):
     formulation: Optional[str] = None
     media_id: Optional[str] = None
+    serum_free: Optional[bool] = None
 
 
 class media_obj_rel_insert_input(BaseModel):
@@ -381,6 +383,7 @@ class media_on_conflict(BaseModel):
 class media_order_by(BaseModel):
     formulation: Optional[order_by] = None
     media_id: Optional[order_by] = None
+    serum_free: Optional[order_by] = None
 
 
 class media_pk_columns_input(BaseModel):
@@ -390,6 +393,7 @@ class media_pk_columns_input(BaseModel):
 class media_set_input(BaseModel):
     formulation: Optional[str] = None
     media_id: Optional[str] = None
+    serum_free: Optional[bool] = None
 
 
 class media_stream_cursor_input(BaseModel):
@@ -400,6 +404,7 @@ class media_stream_cursor_input(BaseModel):
 class media_stream_cursor_value_input(BaseModel):
     formulation: Optional[str] = None
     media_id: Optional[str] = None
+    serum_free: Optional[bool] = None
 
 
 class media_updates(BaseModel):
@@ -426,6 +431,7 @@ class model_bool_exp(BaseModel):
     consent_2015: Optional["String_comparison_exp"] = None
     converge_id: Optional["String_comparison_exp"] = None
     cosmic_id: Optional["Int_comparison_exp"] = None
+    cultured_drug_resistance: Optional["String_comparison_exp"] = None
     date_cell_line_received: Optional["date_comparison_exp"] = None
     date_first_publication: Optional["date_comparison_exp"] = None
     date_model_derived: Optional["date_comparison_exp"] = None
@@ -434,6 +440,7 @@ class model_bool_exp(BaseModel):
     depmap_model_type_id: Optional["String_comparison_exp"] = None
     derived_outside_us: Optional["Boolean_comparison_exp"] = None
     engineered_model: Optional["String_comparison_exp"] = None
+    engineered_model_details: Optional["String_comparison_exp"] = None
     first_publication_link: Optional["String_comparison_exp"] = None
     geo_loc: Optional["String_comparison_exp"] = None
     growth_pattern: Optional["String_comparison_exp"] = None
@@ -451,6 +458,7 @@ class model_bool_exp(BaseModel):
     model_transfer: Optional["String_comparison_exp"] = None
     model_transfer_comments: Optional["String_comparison_exp"] = None
     model_transferred_to_stjude: Optional["String_comparison_exp"] = None
+    model_type: Optional["String_comparison_exp"] = None
     molecular_subtype: Optional["String_comparison_exp"] = None
     ncit_code: Optional["String_comparison_exp"] = None
     ncit_subtype: Optional["String_comparison_exp"] = None
@@ -489,11 +497,13 @@ class model_bool_exp(BaseModel):
     stage: Optional["String_comparison_exp"] = None
     staging_system: Optional["String_comparison_exp"] = None
     stated_race: Optional["String_comparison_exp"] = None
+    stjude_derived: Optional["Boolean_comparison_exp"] = None
     stripped_cell_line_name: Optional["String_comparison_exp"] = None
     sub_subtype: Optional["String_comparison_exp"] = None
     subtype: Optional["String_comparison_exp"] = None
     the_depmap_model_type: Optional["depmap_model_type_bool_exp"] = None
     tissue_origin: Optional["String_comparison_exp"] = None
+    transformed_type: Optional["String_comparison_exp"] = None
     treatment_details: Optional["String_comparison_exp"] = None
     treatment_status: Optional["String_comparison_exp"] = None
     tumor_regression_score: Optional["String_comparison_exp"] = None
@@ -994,6 +1004,7 @@ class model_insert_input(BaseModel):
     consent_2015: Optional[str] = None
     converge_id: Optional[str] = None
     cosmic_id: Optional[int] = None
+    cultured_drug_resistance: Optional[str] = None
     date_cell_line_received: Optional[Any] = None
     date_first_publication: Optional[Any] = None
     date_model_derived: Optional[Any] = None
@@ -1002,6 +1013,7 @@ class model_insert_input(BaseModel):
     depmap_model_type_id: Optional[str] = None
     derived_outside_us: Optional[bool] = None
     engineered_model: Optional[str] = None
+    engineered_model_details: Optional[str] = None
     first_publication_link: Optional[str] = None
     geo_loc: Optional[str] = None
     growth_pattern: Optional[str] = None
@@ -1018,6 +1030,7 @@ class model_insert_input(BaseModel):
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
     model_transferred_to_stjude: Optional[str] = None
+    model_type: Optional[str] = None
     molecular_subtype: Optional[str] = None
     ncit_code: Optional[str] = None
     ncit_subtype: Optional[str] = None
@@ -1056,11 +1069,13 @@ class model_insert_input(BaseModel):
     stage: Optional[str] = None
     staging_system: Optional[str] = None
     stated_race: Optional[str] = None
+    stjude_derived: Optional[bool] = None
     stripped_cell_line_name: Optional[str] = None
     sub_subtype: Optional[str] = None
     subtype: Optional[str] = None
     the_depmap_model_type: Optional["depmap_model_type_obj_rel_insert_input"] = None
     tissue_origin: Optional[str] = None
+    transformed_type: Optional[str] = None
     treatment_details: Optional[str] = None
     treatment_status: Optional[str] = None
     tumor_regression_score: Optional[str] = None
@@ -1095,6 +1110,7 @@ class model_order_by(BaseModel):
     consent_2015: Optional[order_by] = None
     converge_id: Optional[order_by] = None
     cosmic_id: Optional[order_by] = None
+    cultured_drug_resistance: Optional[order_by] = None
     date_cell_line_received: Optional[order_by] = None
     date_first_publication: Optional[order_by] = None
     date_model_derived: Optional[order_by] = None
@@ -1103,6 +1119,7 @@ class model_order_by(BaseModel):
     depmap_model_type_id: Optional[order_by] = None
     derived_outside_us: Optional[order_by] = None
     engineered_model: Optional[order_by] = None
+    engineered_model_details: Optional[order_by] = None
     first_publication_link: Optional[order_by] = None
     geo_loc: Optional[order_by] = None
     growth_pattern: Optional[order_by] = None
@@ -1119,6 +1136,7 @@ class model_order_by(BaseModel):
     model_transfer: Optional[order_by] = None
     model_transfer_comments: Optional[order_by] = None
     model_transferred_to_stjude: Optional[order_by] = None
+    model_type: Optional[order_by] = None
     molecular_subtype: Optional[order_by] = None
     ncit_code: Optional[order_by] = None
     ncit_subtype: Optional[order_by] = None
@@ -1157,11 +1175,13 @@ class model_order_by(BaseModel):
     stage: Optional[order_by] = None
     staging_system: Optional[order_by] = None
     stated_race: Optional[order_by] = None
+    stjude_derived: Optional[order_by] = None
     stripped_cell_line_name: Optional[order_by] = None
     sub_subtype: Optional[order_by] = None
     subtype: Optional[order_by] = None
     the_depmap_model_type: Optional["depmap_model_type_order_by"] = None
     tissue_origin: Optional[order_by] = None
+    transformed_type: Optional[order_by] = None
     treatment_details: Optional[order_by] = None
     treatment_status: Optional[order_by] = None
     tumor_regression_score: Optional[order_by] = None
@@ -1189,6 +1209,7 @@ class model_set_input(BaseModel):
     consent_2015: Optional[str] = None
     converge_id: Optional[str] = None
     cosmic_id: Optional[int] = None
+    cultured_drug_resistance: Optional[str] = None
     date_cell_line_received: Optional[Any] = None
     date_first_publication: Optional[Any] = None
     date_model_derived: Optional[Any] = None
@@ -1197,6 +1218,7 @@ class model_set_input(BaseModel):
     depmap_model_type_id: Optional[str] = None
     derived_outside_us: Optional[bool] = None
     engineered_model: Optional[str] = None
+    engineered_model_details: Optional[str] = None
     first_publication_link: Optional[str] = None
     geo_loc: Optional[str] = None
     growth_pattern: Optional[str] = None
@@ -1211,6 +1233,7 @@ class model_set_input(BaseModel):
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
     model_transferred_to_stjude: Optional[str] = None
+    model_type: Optional[str] = None
     molecular_subtype: Optional[str] = None
     ncit_code: Optional[str] = None
     ncit_subtype: Optional[str] = None
@@ -1249,10 +1272,12 @@ class model_set_input(BaseModel):
     stage: Optional[str] = None
     staging_system: Optional[str] = None
     stated_race: Optional[str] = None
+    stjude_derived: Optional[bool] = None
     stripped_cell_line_name: Optional[str] = None
     sub_subtype: Optional[str] = None
     subtype: Optional[str] = None
     tissue_origin: Optional[str] = None
+    transformed_type: Optional[str] = None
     treatment_details: Optional[str] = None
     treatment_status: Optional[str] = None
     tumor_regression_score: Optional[str] = None
@@ -1281,6 +1306,7 @@ class model_stream_cursor_value_input(BaseModel):
     consent_2015: Optional[str] = None
     converge_id: Optional[str] = None
     cosmic_id: Optional[int] = None
+    cultured_drug_resistance: Optional[str] = None
     date_cell_line_received: Optional[Any] = None
     date_first_publication: Optional[Any] = None
     date_model_derived: Optional[Any] = None
@@ -1289,6 +1315,7 @@ class model_stream_cursor_value_input(BaseModel):
     depmap_model_type_id: Optional[str] = None
     derived_outside_us: Optional[bool] = None
     engineered_model: Optional[str] = None
+    engineered_model_details: Optional[str] = None
     first_publication_link: Optional[str] = None
     geo_loc: Optional[str] = None
     growth_pattern: Optional[str] = None
@@ -1303,6 +1330,7 @@ class model_stream_cursor_value_input(BaseModel):
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
     model_transferred_to_stjude: Optional[str] = None
+    model_type: Optional[str] = None
     molecular_subtype: Optional[str] = None
     ncit_code: Optional[str] = None
     ncit_subtype: Optional[str] = None
@@ -1341,10 +1369,12 @@ class model_stream_cursor_value_input(BaseModel):
     stage: Optional[str] = None
     staging_system: Optional[str] = None
     stated_race: Optional[str] = None
+    stjude_derived: Optional[bool] = None
     stripped_cell_line_name: Optional[str] = None
     sub_subtype: Optional[str] = None
     subtype: Optional[str] = None
     tissue_origin: Optional[str] = None
+    transformed_type: Optional[str] = None
     treatment_details: Optional[str] = None
     treatment_status: Optional[str] = None
     tumor_regression_score: Optional[str] = None
@@ -1416,6 +1446,7 @@ class omics_profile_bool_exp(BaseModel):
     datatype: Optional["String_comparison_exp"] = None
     deliverables: Optional["String_comparison_exp"] = None
     destination_datasets: Optional["String_comparison_exp"] = None
+    drop_reason: Optional["String_comparison_exp"] = None
     eta_for_omics_completion: Optional["date_comparison_exp"] = None
     extraction_needed: Optional["Boolean_comparison_exp"] = None
     ibm_release_date: Optional["date_comparison_exp"] = None
@@ -1482,6 +1513,7 @@ class omics_profile_insert_input(BaseModel):
     datatype: Optional[str] = None
     deliverables: Optional[str] = None
     destination_datasets: Optional[str] = None
+    drop_reason: Optional[str] = None
     eta_for_omics_completion: Optional[Any] = None
     extraction_needed: Optional[bool] = None
     ibm_release_date: Optional[Any] = None
@@ -1544,6 +1576,7 @@ class omics_profile_max_order_by(BaseModel):
     datatype: Optional[order_by] = None
     deliverables: Optional[order_by] = None
     destination_datasets: Optional[order_by] = None
+    drop_reason: Optional[order_by] = None
     eta_for_omics_completion: Optional[order_by] = None
     ibm_release_date: Optional[order_by] = None
     internal_release_date: Optional[order_by] = None
@@ -1599,6 +1632,7 @@ class omics_profile_min_order_by(BaseModel):
     datatype: Optional[order_by] = None
     deliverables: Optional[order_by] = None
     destination_datasets: Optional[order_by] = None
+    drop_reason: Optional[order_by] = None
     eta_for_omics_completion: Optional[order_by] = None
     ibm_release_date: Optional[order_by] = None
     internal_release_date: Optional[order_by] = None
@@ -1668,6 +1702,7 @@ class omics_profile_order_by(BaseModel):
     datatype: Optional[order_by] = None
     deliverables: Optional[order_by] = None
     destination_datasets: Optional[order_by] = None
+    drop_reason: Optional[order_by] = None
     eta_for_omics_completion: Optional[order_by] = None
     extraction_needed: Optional[order_by] = None
     ibm_release_date: Optional[order_by] = None
@@ -1737,6 +1772,7 @@ class omics_profile_set_input(BaseModel):
     datatype: Optional[str] = None
     deliverables: Optional[str] = None
     destination_datasets: Optional[str] = None
+    drop_reason: Optional[str] = None
     eta_for_omics_completion: Optional[Any] = None
     extraction_needed: Optional[bool] = None
     ibm_release_date: Optional[Any] = None
@@ -1805,6 +1841,7 @@ class omics_profile_stream_cursor_value_input(BaseModel):
     datatype: Optional[str] = None
     deliverables: Optional[str] = None
     destination_datasets: Optional[str] = None
+    drop_reason: Optional[str] = None
     eta_for_omics_completion: Optional[Any] = None
     extraction_needed: Optional[bool] = None
     ibm_release_date: Optional[Any] = None
@@ -1903,9 +1940,10 @@ class omics_sequencing_arr_rel_insert_input(BaseModel):
 
 
 class omics_sequencing_avg_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -1917,42 +1955,50 @@ class omics_sequencing_bool_exp(BaseModel):
     not_: Optional["omics_sequencing_bool_exp"] = Field(alias="_not", default=None)
     or_: Optional[List["omics_sequencing_bool_exp"]] = Field(alias="_or", default=None)
     bai_filepath: Optional["String_comparison_exp"] = None
+    bam_crc_32_c_hash: Optional["String_comparison_exp"] = Field(
+        alias="bam_crc32c_hash", default=None
+    )
     bam_filepath: Optional["String_comparison_exp"] = None
     bam_qc: Optional["String_comparison_exp"] = None
+    bam_size: Optional["bigint_comparison_exp"] = None
     blacklist: Optional["Boolean_comparison_exp"] = None
-    crc_32_c_hash: Optional["String_comparison_exp"] = Field(
-        alias="crc32c_hash", default=None
-    )
     expected_type: Optional["String_comparison_exp"] = None
     gp_alignment: Optional["String_comparison_exp"] = None
     hg_19_bai_filepath: Optional["String_comparison_exp"] = Field(
         alias="hg19_bai_filepath", default=None
     )
+    hg_19_bam_crc_32_c_hash: Optional["String_comparison_exp"] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
+    )
     hg_19_bam_filepath: Optional["String_comparison_exp"] = Field(
         alias="hg19_bam_filepath", default=None
+    )
+    hg_19_bam_size: Optional["bigint_comparison_exp"] = Field(
+        alias="hg19_bam_size", default=None
     )
     hg_38_crai_filepath: Optional["String_comparison_exp"] = Field(
         alias="hg38_crai_filepath", default=None
     )
+    hg_38_cram_crc_32_c_hash: Optional["String_comparison_exp"] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
+    )
     hg_38_cram_filepath: Optional["String_comparison_exp"] = Field(
         alias="hg38_cram_filepath", default=None
     )
-    issue: Optional["String_comparison_exp"] = None
-    legacy_crc_32_c_hash: Optional["String_comparison_exp"] = Field(
-        alias="legacy_crc32c_hash", default=None
+    hg_38_cram_size: Optional["bigint_comparison_exp"] = Field(
+        alias="hg38_cram_size", default=None
     )
-    legacy_size: Optional["bigint_comparison_exp"] = None
+    issue: Optional["String_comparison_exp"] = None
     low_quality: Optional["Boolean_comparison_exp"] = None
-    md_5_hash: Optional["String_comparison_exp"] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional["Int_comparison_exp"] = None
     omics_profile: Optional["omics_profile_bool_exp"] = None
     pdo_id: Optional["String_comparison_exp"] = None
     prioritized: Optional["Boolean_comparison_exp"] = None
+    processed_sequence: Optional["Boolean_comparison_exp"] = None
     processing_qc: Optional["String_comparison_exp"] = None
     profile_id: Optional["String_comparison_exp"] = None
     sequencing_date: Optional["date_comparison_exp"] = None
     sequencing_id: Optional["String_comparison_exp"] = None
-    size: Optional["bigint_comparison_exp"] = None
     sm_id: Optional["String_comparison_exp"] = None
     source: Optional["String_comparison_exp"] = None
     str_profile: Optional["String_comparison_exp"] = None
@@ -1963,41 +2009,46 @@ class omics_sequencing_bool_exp(BaseModel):
 
 
 class omics_sequencing_inc_input(BaseModel):
-    legacy_size: Optional[int] = None
+    bam_size: Optional[int] = None
+    hg_19_bam_size: Optional[int] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[int] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[int] = None
-    size: Optional[int] = None
     version: Optional[int] = None
     year_sequencing_billed: Optional[int] = None
 
 
 class omics_sequencing_insert_input(BaseModel):
     bai_filepath: Optional[str] = None
+    bam_crc_32_c_hash: Optional[str] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[str] = None
     bam_qc: Optional[str] = None
+    bam_size: Optional[int] = None
     blacklist: Optional[bool] = None
-    crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     expected_type: Optional[str] = None
     gp_alignment: Optional[str] = None
     hg_19_bai_filepath: Optional[str] = Field(alias="hg19_bai_filepath", default=None)
-    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
-    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
-    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
-    issue: Optional[str] = None
-    legacy_crc_32_c_hash: Optional[str] = Field(
-        alias="legacy_crc32c_hash", default=None
+    hg_19_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
     )
-    legacy_size: Optional[int] = None
+    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
+    hg_19_bam_size: Optional[int] = Field(alias="hg19_bam_size", default=None)
+    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
+    hg_38_cram_crc_32_c_hash: Optional[str] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
+    )
+    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
+    hg_38_cram_size: Optional[int] = Field(alias="hg38_cram_size", default=None)
+    issue: Optional[str] = None
     low_quality: Optional[bool] = None
-    md_5_hash: Optional[str] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[int] = None
     omics_profile: Optional["omics_profile_obj_rel_insert_input"] = None
     pdo_id: Optional[str] = None
     prioritized: Optional[bool] = None
+    processed_sequence: Optional[bool] = None
     processing_qc: Optional[str] = None
     profile_id: Optional[str] = None
     sequencing_date: Optional[Any] = None
     sequencing_id: Optional[str] = None
-    size: Optional[int] = None
     sm_id: Optional[str] = None
     source: Optional[str] = None
     str_profile: Optional[str] = None
@@ -2009,36 +2060,39 @@ class omics_sequencing_insert_input(BaseModel):
 
 class omics_sequencing_max_order_by(BaseModel):
     bai_filepath: Optional[order_by] = None
+    bam_crc_32_c_hash: Optional[order_by] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[order_by] = None
     bam_qc: Optional[order_by] = None
-    crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
+    bam_size: Optional[order_by] = None
     expected_type: Optional[order_by] = None
     gp_alignment: Optional[order_by] = None
     hg_19_bai_filepath: Optional[order_by] = Field(
         alias="hg19_bai_filepath", default=None
     )
+    hg_19_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
+    )
     hg_19_bam_filepath: Optional[order_by] = Field(
         alias="hg19_bam_filepath", default=None
     )
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_crai_filepath: Optional[order_by] = Field(
         alias="hg38_crai_filepath", default=None
+    )
+    hg_38_cram_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
     )
     hg_38_cram_filepath: Optional[order_by] = Field(
         alias="hg38_cram_filepath", default=None
     )
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     issue: Optional[order_by] = None
-    legacy_crc_32_c_hash: Optional[order_by] = Field(
-        alias="legacy_crc32c_hash", default=None
-    )
-    legacy_size: Optional[order_by] = None
-    md_5_hash: Optional[order_by] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[order_by] = None
     pdo_id: Optional[order_by] = None
     processing_qc: Optional[order_by] = None
     profile_id: Optional[order_by] = None
     sequencing_date: Optional[order_by] = None
     sequencing_id: Optional[order_by] = None
-    size: Optional[order_by] = None
     sm_id: Optional[order_by] = None
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
@@ -2049,36 +2103,39 @@ class omics_sequencing_max_order_by(BaseModel):
 
 class omics_sequencing_min_order_by(BaseModel):
     bai_filepath: Optional[order_by] = None
+    bam_crc_32_c_hash: Optional[order_by] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[order_by] = None
     bam_qc: Optional[order_by] = None
-    crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
+    bam_size: Optional[order_by] = None
     expected_type: Optional[order_by] = None
     gp_alignment: Optional[order_by] = None
     hg_19_bai_filepath: Optional[order_by] = Field(
         alias="hg19_bai_filepath", default=None
     )
+    hg_19_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
+    )
     hg_19_bam_filepath: Optional[order_by] = Field(
         alias="hg19_bam_filepath", default=None
     )
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_crai_filepath: Optional[order_by] = Field(
         alias="hg38_crai_filepath", default=None
+    )
+    hg_38_cram_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
     )
     hg_38_cram_filepath: Optional[order_by] = Field(
         alias="hg38_cram_filepath", default=None
     )
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     issue: Optional[order_by] = None
-    legacy_crc_32_c_hash: Optional[order_by] = Field(
-        alias="legacy_crc32c_hash", default=None
-    )
-    legacy_size: Optional[order_by] = None
-    md_5_hash: Optional[order_by] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[order_by] = None
     pdo_id: Optional[order_by] = None
     processing_qc: Optional[order_by] = None
     profile_id: Optional[order_by] = None
     sequencing_date: Optional[order_by] = None
     sequencing_id: Optional[order_by] = None
-    size: Optional[order_by] = None
     sm_id: Optional[order_by] = None
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
@@ -2100,40 +2157,44 @@ class omics_sequencing_on_conflict(BaseModel):
 
 class omics_sequencing_order_by(BaseModel):
     bai_filepath: Optional[order_by] = None
+    bam_crc_32_c_hash: Optional[order_by] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[order_by] = None
     bam_qc: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
     blacklist: Optional[order_by] = None
-    crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
     expected_type: Optional[order_by] = None
     gp_alignment: Optional[order_by] = None
     hg_19_bai_filepath: Optional[order_by] = Field(
         alias="hg19_bai_filepath", default=None
     )
+    hg_19_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
+    )
     hg_19_bam_filepath: Optional[order_by] = Field(
         alias="hg19_bam_filepath", default=None
     )
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_crai_filepath: Optional[order_by] = Field(
         alias="hg38_crai_filepath", default=None
+    )
+    hg_38_cram_crc_32_c_hash: Optional[order_by] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
     )
     hg_38_cram_filepath: Optional[order_by] = Field(
         alias="hg38_cram_filepath", default=None
     )
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     issue: Optional[order_by] = None
-    legacy_crc_32_c_hash: Optional[order_by] = Field(
-        alias="legacy_crc32c_hash", default=None
-    )
-    legacy_size: Optional[order_by] = None
     low_quality: Optional[order_by] = None
-    md_5_hash: Optional[order_by] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[order_by] = None
     omics_profile: Optional["omics_profile_order_by"] = None
     pdo_id: Optional[order_by] = None
     prioritized: Optional[order_by] = None
+    processed_sequence: Optional[order_by] = None
     processing_qc: Optional[order_by] = None
     profile_id: Optional[order_by] = None
     sequencing_date: Optional[order_by] = None
     sequencing_id: Optional[order_by] = None
-    size: Optional[order_by] = None
     sm_id: Optional[order_by] = None
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
@@ -2149,31 +2210,35 @@ class omics_sequencing_pk_columns_input(BaseModel):
 
 class omics_sequencing_set_input(BaseModel):
     bai_filepath: Optional[str] = None
+    bam_crc_32_c_hash: Optional[str] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[str] = None
     bam_qc: Optional[str] = None
+    bam_size: Optional[int] = None
     blacklist: Optional[bool] = None
-    crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     expected_type: Optional[str] = None
     gp_alignment: Optional[str] = None
     hg_19_bai_filepath: Optional[str] = Field(alias="hg19_bai_filepath", default=None)
-    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
-    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
-    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
-    issue: Optional[str] = None
-    legacy_crc_32_c_hash: Optional[str] = Field(
-        alias="legacy_crc32c_hash", default=None
+    hg_19_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
     )
-    legacy_size: Optional[int] = None
+    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
+    hg_19_bam_size: Optional[int] = Field(alias="hg19_bam_size", default=None)
+    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
+    hg_38_cram_crc_32_c_hash: Optional[str] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
+    )
+    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
+    hg_38_cram_size: Optional[int] = Field(alias="hg38_cram_size", default=None)
+    issue: Optional[str] = None
     low_quality: Optional[bool] = None
-    md_5_hash: Optional[str] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[int] = None
     pdo_id: Optional[str] = None
     prioritized: Optional[bool] = None
+    processed_sequence: Optional[bool] = None
     processing_qc: Optional[str] = None
     profile_id: Optional[str] = None
     sequencing_date: Optional[Any] = None
     sequencing_id: Optional[str] = None
-    size: Optional[int] = None
     sm_id: Optional[str] = None
     source: Optional[str] = None
     str_profile: Optional[str] = None
@@ -2184,25 +2249,28 @@ class omics_sequencing_set_input(BaseModel):
 
 
 class omics_sequencing_stddev_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
 
 class omics_sequencing_stddev_pop_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
 
 class omics_sequencing_stddev_samp_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2214,31 +2282,35 @@ class omics_sequencing_stream_cursor_input(BaseModel):
 
 class omics_sequencing_stream_cursor_value_input(BaseModel):
     bai_filepath: Optional[str] = None
+    bam_crc_32_c_hash: Optional[str] = Field(alias="bam_crc32c_hash", default=None)
     bam_filepath: Optional[str] = None
     bam_qc: Optional[str] = None
+    bam_size: Optional[int] = None
     blacklist: Optional[bool] = None
-    crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     expected_type: Optional[str] = None
     gp_alignment: Optional[str] = None
     hg_19_bai_filepath: Optional[str] = Field(alias="hg19_bai_filepath", default=None)
-    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
-    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
-    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
-    issue: Optional[str] = None
-    legacy_crc_32_c_hash: Optional[str] = Field(
-        alias="legacy_crc32c_hash", default=None
+    hg_19_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="hg19_bam_crc32c_hash", default=None
     )
-    legacy_size: Optional[int] = None
+    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
+    hg_19_bam_size: Optional[int] = Field(alias="hg19_bam_size", default=None)
+    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
+    hg_38_cram_crc_32_c_hash: Optional[str] = Field(
+        alias="hg38_cram_crc32c_hash", default=None
+    )
+    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
+    hg_38_cram_size: Optional[int] = Field(alias="hg38_cram_size", default=None)
+    issue: Optional[str] = None
     low_quality: Optional[bool] = None
-    md_5_hash: Optional[str] = Field(alias="md5_hash", default=None)
     month_sequencing_billed: Optional[int] = None
     pdo_id: Optional[str] = None
     prioritized: Optional[bool] = None
+    processed_sequence: Optional[bool] = None
     processing_qc: Optional[str] = None
     profile_id: Optional[str] = None
     sequencing_date: Optional[Any] = None
     sequencing_id: Optional[str] = None
-    size: Optional[int] = None
     sm_id: Optional[str] = None
     source: Optional[str] = None
     str_profile: Optional[str] = None
@@ -2249,9 +2321,10 @@ class omics_sequencing_stream_cursor_value_input(BaseModel):
 
 
 class omics_sequencing_sum_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2263,25 +2336,28 @@ class omics_sequencing_updates(BaseModel):
 
 
 class omics_sequencing_var_pop_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
 
 class omics_sequencing_var_samp_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
 
 class omics_sequencing_variance_order_by(BaseModel):
-    legacy_size: Optional[order_by] = None
+    bam_size: Optional[order_by] = None
+    hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
+    hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
-    size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -3076,6 +3152,7 @@ class task_result_bool_exp(BaseModel):
     and_: Optional[List["task_result_bool_exp"]] = Field(alias="_and", default=None)
     not_: Optional["task_result_bool_exp"] = Field(alias="_not", default=None)
     or_: Optional[List["task_result_bool_exp"]] = Field(alias="_or", default=None)
+    completed_at: Optional["timestamptz_comparison_exp"] = None
     crc_32_c_hash: Optional["String_comparison_exp"] = Field(
         alias="crc32c_hash", default=None
     )
@@ -3128,6 +3205,7 @@ class task_result_inc_input(BaseModel):
 
 
 class task_result_insert_input(BaseModel):
+    completed_at: Optional[Any] = None
     crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[Any] = None
     format: Optional[str] = None
@@ -3157,6 +3235,7 @@ class task_result_insert_input(BaseModel):
 
 
 class task_result_max_order_by(BaseModel):
+    completed_at: Optional[order_by] = None
     crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[order_by] = None
     format: Optional[order_by] = None
@@ -3182,6 +3261,7 @@ class task_result_max_order_by(BaseModel):
 
 
 class task_result_min_order_by(BaseModel):
+    completed_at: Optional[order_by] = None
     crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[order_by] = None
     format: Optional[order_by] = None
@@ -3213,6 +3293,7 @@ class task_result_on_conflict(BaseModel):
 
 
 class task_result_order_by(BaseModel):
+    completed_at: Optional[order_by] = None
     crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[order_by] = None
     format: Optional[order_by] = None
@@ -3251,6 +3332,7 @@ class task_result_prepend_input(BaseModel):
 
 
 class task_result_set_input(BaseModel):
+    completed_at: Optional[Any] = None
     crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[Any] = None
     format: Optional[str] = None
@@ -3301,6 +3383,7 @@ class task_result_stream_cursor_input(BaseModel):
 
 
 class task_result_stream_cursor_value_input(BaseModel):
+    completed_at: Optional[Any] = None
     crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[Any] = None
     format: Optional[str] = None

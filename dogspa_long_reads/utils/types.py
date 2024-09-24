@@ -48,7 +48,7 @@ class SeqTable(CoercedDataFrame):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    legacy_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     is_main_sequencing_id: Series[pd.BooleanDtype]
     blacklist_omics: Series[pd.BooleanDtype]
@@ -104,11 +104,11 @@ class SamplesForGumbo(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
     bam_filepath: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
-    legacy_size: Series[pd.Int64Dtype]
+    bam_size: Series[pd.Int64Dtype]
     update_time: Series[pd.StringDtype]
     sequencing_date: Series[pd.StringDtype]
     source: Series[pd.StringDtype]
-    crc32c_hash: Series[pd.StringDtype]
+    bam_crc32c_hash: Series[pd.StringDtype]
     expected_type: Series[pd.StringDtype]
     issue: Series[pd.StringDtype] = pa.Field(nullable=True)
     blacklist: Series[pd.BooleanDtype]

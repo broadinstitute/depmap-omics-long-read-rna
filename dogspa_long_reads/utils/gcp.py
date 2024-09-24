@@ -270,12 +270,12 @@ def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
             break
 
 
-def update_sample_file_uris(
+def update_sample_file_urls(
     samples: TypedDataFrame[SamplesWithCDSIDs],
     sample_files: TypedDataFrame[CopiedSampleFiles],
 ) -> Tuple[TypedDataFrame[SamplesWithCDSIDs], pd.Series]:
     """
-    Replace BAM URIs with new ones used in `copy_to_depmap_omics_bucket`
+    Replace BAM URLs with new ones used in `copy_to_depmap_omics_bucket`
 
     :param samples: the data frame of samples
     :param sample_files: a data frame of files we attempted to copy
@@ -283,12 +283,12 @@ def update_sample_file_uris(
     rows with files we couldn't copy and a series indicating blacklisted rows
     """
 
-    logging.info("Updating GCS file URIs...")
+    logging.info("Updating GCS file URLs...")
 
     samples_updated = samples
 
-    sample_file_uris = sample_files.loc[sample_files["copied"], ["bam_url", "new_url"]]
-    samples_updated = samples_updated.merge(sample_file_uris, how="left", on="bam_url")
+    sample_file_urls = sample_files.loc[sample_files["copied"], ["bam_url", "new_url"]]
+    samples_updated = samples_updated.merge(sample_file_urls, how="left", on="bam_url")
     samples_updated["bam_url"] = samples_updated["new_url"]
     samples_updated = samples_updated.drop(columns=["new_url"])
 

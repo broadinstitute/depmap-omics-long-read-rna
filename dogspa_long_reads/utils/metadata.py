@@ -241,9 +241,9 @@ def apply_col_map(
     gumbo_samples = gumbo_samples.rename(
         columns={
             "bam_url": "bam_filepath",
-            "size": "legacy_size",
+            "size": "bam_size",
             "gcs_obj_updated_at": "update_time",
-            "crc32c": "crc32c_hash",
+            "crc32c": "bam_crc32c_hash",
         }
     ).loc[
         :,
@@ -251,11 +251,11 @@ def apply_col_map(
             "sequencing_id",
             "bam_filepath",
             "profile_id",
-            "legacy_size",
+            "bam_size",
             "update_time",
             "sequencing_date",
             "source",
-            "crc32c_hash",
+            "bam_crc32c_hash",
             "expected_type",
             "issue",
             "blacklist",

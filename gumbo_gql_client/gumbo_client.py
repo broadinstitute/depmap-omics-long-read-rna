@@ -28,7 +28,7 @@ class GumboClient(BaseClient):
                     blacklist_omics
                     omics_sequencings {
                       sequencing_id
-                      legacy_size
+                      bam_size
                       sequencing_id
                       expected_type
                       bam_filepath

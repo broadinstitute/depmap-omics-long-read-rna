@@ -48,5 +48,5 @@ exclude = ["gumbo_gql_client"]
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-include  = ["main.py", "dogspa_long_reads"]
+exclude  = ["gumbo_gql_client"]
 reportInvalidTypeVarUse = "none"

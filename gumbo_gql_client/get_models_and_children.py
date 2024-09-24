@@ -33,7 +33,7 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     BaseModel
 ):
     sequencing_id: str
-    legacy_size: Optional[int]
+    bam_size: Optional[int]
     sequencing_id: str
     expected_type: Optional[str]
     bam_filepath: Optional[str]
