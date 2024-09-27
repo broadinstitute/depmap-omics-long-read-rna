@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+from collections import OrderedDict
 from pathlib import Path
 
 import pandas as pd
@@ -7,11 +9,9 @@ from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import expand_dict_columns
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.utils.types import (
-    DogspaConfig,
-    IdentifiedSrcBam,
+from dogspa_long_reads.types import (
+    IdentifiedSrcBams,
     ModelsAndChildren,
-    ObjectMetadata,
     SamplesForGumbo,
     SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
@@ -20,38 +20,102 @@ from dogspa_long_reads.utils.types import (
     SeqTable,
     VersionedSamples,
 )
+from dogspa_long_reads.utils.bams import id_bams
+from dogspa_long_reads.utils.gcp import (
+    check_file_sizes,
+    copy_to_cclebams,
+    list_blobs,
+    update_sample_file_urls,
+)
 from dogspa_long_reads.utils.utils import (
     assign_hashed_uuids,
     df_to_model,
+    model_to_df,
+    send_slack_message,
     uuid_to_base62,
 )
 from gumbo_gql_client import GumboClient, omics_sequencing_insert_input
 
 
-def id_bams(
-    bams: TypedDataFrame[ObjectMetadata], legacy_bams_f: Path
-) -> TypedDataFrame[IdentifiedSrcBam]:
-    bams_w_ids = bams.copy()
+def do_onboard_samples(
+    gcp_project_id: str,
+    gcs_destination_bucket: str,
+    gcs_destination_prefix: str,
+    uuid_namespace: str,
+    terra_workspace: TerraWorkspace,
+    gumbo_client: GumboClient,
+    dry_run: bool = False,
+) -> None:
+    # keep track of filtering and quality control checks performed
+    stats = OrderedDict()
+    report = OrderedDict()
 
-    bams_w_ids["model_id"] = (
-        bams_w_ids["url"]
-        .apply(lambda x: Path(x).name)
-        .str.extract(r"^(ACH-[A-Z 0-9]+)")
-    )
+    # get the sequencing and profile tables from Gumbo
+    models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
+    seq_table = explode_and_expand_models(models)
 
-    if bool(bams_w_ids["model_id"].isna().any()):
-        raise ValueError("There are BAM files not named with model IDs (ACH-*)")
-
-    bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
-
-    legacy_bams = pd.read_csv(legacy_bams_f)
-    bams_w_ids = pd.concat([bams_w_ids, legacy_bams])
+    samples = pd.DataFrame()
 
     # start tracking issues to store in Gumbo seq table
-    bams_w_ids["issue"] = pd.Series([set()] * len(bams_w_ids))
-    bams_w_ids["blacklist"] = False
+    samples["issue"] = pd.Series([set()] * len(samples))
+    samples["blacklist"] = False
 
-    return TypedDataFrame[IdentifiedSrcBam](bams_w_ids)
+    # compare file sizes to filter out samples that are in Gumbo already
+    samples = check_already_in_gumbo(samples, seq_table, size_col_name="bam_size")
+    stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
+    report["not yet in Gumbo"] = samples.loc[~samples["already_in_gumbo"]]
+
+    if len(samples) == 0:
+        send_slack_message(
+            os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+            os.getenv("SLACK_WEBHOOK_URL_STATS"),
+            stats,
+            report,
+            config,
+        )
+        return
+
+    # join metadata to current samples
+    samples = join_metadata(samples, seq_table)
+    samples = join_short_read_metadata(samples, seq_table)
+
+    # check that BAM file sizes are above minimum threshold
+    samples, blacklisted = check_file_sizes(samples)
+    stats["n with BAM file too small"] = blacklisted.sum()
+    report["BAM file too small"] = samples.loc[blacklisted]
+
+    # assign sequencing IDs
+    samples = assign_cds_ids(samples, config)
+
+    # copy files to our own bucket
+    sample_files = copy_to_cclebams(samples, config)
+
+    # replace URLs with ones for our bucket whenever the copy operation succeeded
+    samples, blacklisted = update_sample_file_urls(samples, sample_files)
+    stats["n with failed file copies"] = blacklisted.sum()
+    report["failed copies"] = samples.loc[blacklisted]
+
+    # rename and set some columns for Gumbo
+    gumbo_samples = apply_col_map(samples.loc[~samples["already_in_gumbo"]])
+
+    # increment version numbers for samples with profile IDs already in seq table
+    gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
+
+    # upload the samples to the Gumbo sequencing table
+    gumbo_samples = upload_to_gumbo(gumbo_client, gumbo_samples, config)
+    stats["n successfully uploaded"] = len(gumbo_samples)
+    report["successfully uploaded"] = gumbo_samples
+
+    # upload the samples to Terra
+    upsert_terra_samples(terra_workspace, samples, config)
+
+    send_slack_message(
+        os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+        os.getenv("SLACK_WEBHOOK_URL_STATS"),
+        stats,
+        report,
+        config,
+    )
 
 
 def explode_and_expand_models(
@@ -162,13 +226,13 @@ def join_short_read_metadata(
 
 
 def assign_cds_ids(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata], config: DogspaConfig
+    samples: TypedDataFrame[SamplesWithShortReadMetadata], uuid_namespace: str
 ) -> TypedDataFrame[SamplesWithCDSIDs]:
     """
     Assign a "CDS-" ID to each sample by hashing relevant columns.
 
     :param samples: the data frame of samples
-    :param config: the dogspa configuration
+    :param uuid_namespace: a namespace for UUIDv3 IDs
     :return: the data frame with CDS IDs
     """
 
@@ -176,7 +240,7 @@ def assign_cds_ids(
 
     samples_w_ids = assign_hashed_uuids(
         samples,
-        uuid_namespace=config.uuid_namespace,
+        uuid_namespace=uuid_namespace,
         uuid_col_name="sequencing_id",
         subset=[
             "model_id",
@@ -195,7 +259,7 @@ def assign_cds_ids(
 
 
 def check_already_in_gumbo(
-    samples: TypedDataFrame[IdentifiedSrcBam],
+    samples: TypedDataFrame[IdentifiedSrcBams],
     seq_table: TypedDataFrame[SeqTable],
     size_col_name: str,
 ) -> TypedDataFrame[SamplesMaybeInGumbo]:
@@ -309,16 +373,14 @@ def increment_sample_versions(
 
 
 def upload_to_gumbo(
-    gumbo_client: GumboClient,
-    samples: TypedDataFrame[VersionedSamples],
-    config: DogspaConfig,
+    gumbo_client: GumboClient, samples: TypedDataFrame[VersionedSamples], dry_run: bool
 ) -> TypedDataFrame[VersionedSamples]:
     """
     Upload the samples data frame to the Gumbo sequencing table.
 
     :param gumbo_client: an instance of the Gumbo GraphQL client
     :param samples: the data frame of samples
-    :param config: the dogspa configuration
+    :param dry_run: whether to skip updates to external data stores
     :return: the samples data frame that was uploaded to Gumbo
     """
 
@@ -330,7 +392,7 @@ def upload_to_gumbo(
         ~samples["blacklist"] | samples["issue"].eq("BAM file too small")
     ]
 
-    if config.dry_run:
+    if dry_run:
         logging.info(f"(skipping) Inserting {len(samples_to_upload)} samples")
         return samples_to_upload
 
@@ -346,15 +408,14 @@ def upload_to_gumbo(
 
 
 def upsert_terra_samples(
-    tw: TerraWorkspace,
-    samples: TypedDataFrame[SamplesWithCDSIDs],
-    config: DogspaConfig,
+    tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs], dry_run: bool
 ) -> None:
     """
     Upsert sample and participant data to Terra data tables.
 
+    :param tw: a TerraWorkspace instance
     :param samples: the data frame of samples
-    :param config: the dogspa configuration
+    :param dry_run: whether to skip updates to external data stores
     """
 
     logging.info(f"Upserting data to {tw.workspace_name} data tables")
@@ -386,13 +447,13 @@ def upsert_terra_samples(
         .drop_duplicates()
     )
 
-    if config.dry_run:
+    if dry_run:
         logging.info(f"(skipping) Upserting {len(participants)} participants")
     else:
         tw.upload_entities(participants)
 
     # upsert samples
-    if config.dry_run:
+    if dry_run:
         logging.info(f"(skipping) Upserting {len(terra_samples)} samples")
     else:
         tw.upload_entities(terra_samples.drop(columns="participant_id"))
@@ -413,7 +474,7 @@ def upsert_terra_samples(
         )
     )
 
-    if config.dry_run:
+    if dry_run:
         logging.info(
             f"(skipping) Upserting {len(participant_samples)} participant-samples"
         )

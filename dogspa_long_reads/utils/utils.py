@@ -7,13 +7,11 @@ from typing import List, Optional, OrderedDict, Type
 import baseconv
 import pandas as pd
 import requests
+from nebelung.terra_workspace import TerraWorkspace
+from nebelung.types import PanderaBaseSchema
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.utils.types import (
-    DogspaConfig,
-    PanderaBaseSchema,
-    PydanticBaseModel,
-)
+from dogspa_long_reads.types import PydanticBaseModel
 
 
 def model_to_df(
@@ -67,7 +65,8 @@ def send_slack_message(
     slack_webhook_url_stats: Optional[str],
     stats: OrderedDict[str, int],
     report: OrderedDict[str, pd.DataFrame],
-    config: DogspaConfig,
+    tw: TerraWorkspace,
+    dry_run: bool,
 ) -> None:
     """
     Send a message to a Slack channel with content of `stats` and `report`.
@@ -76,10 +75,11 @@ def send_slack_message(
     :param slack_webhook_url_stats: URL for a Slack Webhook
     :param stats: ordered dictionary of metadata statistics
     :param report: ordered dictionary of relevant sample metadata
-    :param config: the dogspa configuration
+    :param tw: a TerraWorkspace instance
+    :param dry_run: whether to skip updates to external data stores
     """
 
-    if config.dry_run:
+    if dry_run:
         logging.info("(skipping) Sending summary to Slack channel...")
 
         logging.info("Stats:")
@@ -110,7 +110,7 @@ def send_slack_message(
 
     logging.info("Sending stats to Slack channel...")
 
-    terra_ws_name = "/".join([config.workspace.namespace, config.workspace.name])
+    terra_ws_name = "/".join([tw.workspace_namespace, tw.workspace_name])
 
     stats_blocks = [
         {

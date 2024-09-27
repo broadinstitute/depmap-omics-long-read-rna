@@ -6,29 +6,30 @@ from collections import OrderedDict
 from pathlib import Path
 
 import functions_framework
+import pandas as pd
 from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
+from dogspa_long_reads.types import DogspaConfig, ModelsAndChildren
+from dogspa_long_reads.utils.bams import id_bams
 from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
     copy_to_cclebams,
     list_blobs,
     update_sample_file_urls,
 )
-from dogspa_long_reads.utils.metadata import (
+from dogspa_long_reads.utils.onboarding import (
     apply_col_map,
     assign_cds_ids,
     check_already_in_gumbo,
     explode_and_expand_models,
-    id_bams,
     increment_sample_versions,
     join_metadata,
     join_short_read_metadata,
     upload_to_gumbo,
     upsert_terra_samples,
 )
-from dogspa_long_reads.utils.types import DogspaConfig, ModelsAndChildren
 from dogspa_long_reads.utils.utils import model_to_df, send_slack_message
 from gumbo_gql_client import GumboClient
 
@@ -77,6 +78,10 @@ def entrypoint(cloud_event: CloudEvent) -> None:
     # get source BAM files
     src_bams = list_blobs(config.gcs_source.bucket, glob=config.gcs_source.glob)
     samples = id_bams(src_bams, legacy_bams_csv)
+
+    # start tracking issues to store in Gumbo seq table
+    samples["issue"] = pd.Series([set()] * len(samples))
+    samples["blacklist"] = False
 
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(samples, seq_table, size_col_name="bam_size")
@@ -134,4 +139,3 @@ def entrypoint(cloud_event: CloudEvent) -> None:
         report,
         config,
     )
-    logging.info("Done.")

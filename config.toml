@@ -1,0 +1,27 @@
+title = "DOGSPA Long Read RNA"
+
+gcp_project_id = "depmap-omics"
+
+[onboarding]
+dry_run = true
+uuid_namespace = "00000000-0000-0000-0000-000000000000"
+
+[onboarding.gcs_source]
+bucket = "fc-aaf4de93-c104-45c4-a01a-a036869119c6"
+glob = "tag*/merge/*.bam"
+
+[onboarding.gcs_destination]
+bucket = "cclebams"
+prefix = "long_read_rna"
+
+[terra]
+repo_namespace = "Long_Read_Omics"
+workspace_namespace = "broad-firecloud-ccle"
+workspace_name = "Long_Read_Omics"
+
+[terra.index_bam]
+repo_method_name = "index_bam"
+method_config_name = "index_bam"
+method_synopsis = "Index a BAM file"
+workflow_wdl_path = "./workflows/index_bam/index_bam.wdl"
+method_config_json_path = "./workflows/index_bam/index_bam.json"

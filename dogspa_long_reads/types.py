@@ -1,37 +1,25 @@
-from typing import TypeVar
+from typing import Optional, TypeVar
 
+import httpx
 import pandas as pd
 import pandera as pa
-import psutil
 from nebelung.types import CoercedDataFrame
-from pandera.typing import DataFrame as PanderaDataFrame
 from pandera.typing import Series
 from pydantic import BaseModel
 
-
-class Workspace(BaseModel):
-    namespace: str
-    name: str
+from gumbo_gql_client.gumbo_client import GumboClient as AriadneGumboClient
 
 
-class GcsSource(BaseModel):
-    bucket: str
-    glob: str
-
-
-class GcsDest(BaseModel):
-    bucket: str
-    prefix: str
-
-
-class DogspaConfig(BaseModel):
-    workspace: Workspace
-    gcp_project: str
-    gcs_source: GcsSource
-    gcs_destination: GcsDest
-    uuid_namespace: str = "00000000-0000-0000-0000-000000000000"
-    ncpus: int = psutil.cpu_count()
-    dry_run: bool = True
+class GumboClient(AriadneGumboClient):
+    def __init__(
+        self,
+        url: str,
+        username: str,
+        headers: dict[str, str],
+        http_client: Optional[httpx.Client] = None,
+    ):
+        super().__init__(url=url, headers=headers, http_client=http_client)
+        self.username = username  # store username on this object for use in mutations
 
 
 class ModelsAndChildren(CoercedDataFrame):
@@ -65,17 +53,22 @@ class ObjectMetadata(CoercedDataFrame):
     gcs_obj_updated_at: Series[pd.StringDtype]
 
 
-class IdentifiedSrcBam(CoercedDataFrame):
-    bam_url: Series[pd.StringDtype] = pa.Field(unique=True)
+class TerraBams(CoercedDataFrame):
+    bam_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
     size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     gcs_obj_updated_at: Series[pd.StringDtype]
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
+
+
+class IdentifiedSrcBams(TerraBams):
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
     blacklist: Series[pd.BooleanDtype]
 
 
-class SamplesMaybeInGumbo(IdentifiedSrcBam):
+class SamplesMaybeInGumbo(IdentifiedSrcBams):
     already_in_gumbo: Series[pd.BooleanDtype]
 
 
@@ -119,5 +112,3 @@ class VersionedSamples(SamplesForGumbo):
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)
-PanderaBaseSchema = TypeVar("PanderaBaseSchema", bound=CoercedDataFrame)
-TypedDataFrame = PanderaDataFrame

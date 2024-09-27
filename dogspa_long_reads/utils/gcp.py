@@ -3,16 +3,13 @@ import pathlib
 from typing import Optional, Tuple
 from urllib.parse import urlunsplit
 
-import google.auth.transport.requests
-import google.oauth2.id_token
 import pandas as pd
 from google.cloud import storage
 from pandera.typing import DataFrame as TypedDataFrame
 from tqdm import tqdm
 
-from dogspa_long_reads.utils.types import (
+from dogspa_long_reads.types import (
     CopiedSampleFiles,
-    DogspaConfig,
     ObjectMetadata,
     SamplesWithCDSIDs,
     SamplesWithShortReadMetadata,
@@ -84,47 +81,6 @@ def list_blobs(
     return TypedDataFrame[ObjectMetadata](df)
 
 
-def get_gcp_oidc_token() -> str:
-    """
-    Get a GCP OIDC token (ID token) for current credentials.
-
-    :return: the auth/bearer token
-    """
-
-    auth_req = google.auth.transport.requests.Request()  # type: ignore
-
-    token = google.oauth2.id_token.fetch_id_token(  # type: ignore
-        auth_req, "https://cloudfunctions.googleapis.com"
-    )
-
-    if token is None:
-        raise ValueError("GCP auth token cannot be None")
-
-    return token
-
-
-def get_gcp_access_token() -> str:
-    """
-    Get a GCP access token for current credentials. (Some tools like pysam that don't go
-    through gcloud native Python APIs need this.)
-
-    :return: the auth/bearer token
-    """
-
-    auth_req = google.auth.transport.requests.Request()  # type: ignore
-
-    creds, _ = google.auth.default(
-        scopes=["https://www.googleapis.com/auth/cloud-platform"]
-    )
-    creds.refresh(auth_req)
-    token = creds.token
-
-    if token is None:
-        raise ValueError("GCP auth token cannot be None")
-
-    return token
-
-
 def check_file_sizes(
     samples: TypedDataFrame[SamplesWithShortReadMetadata],
 ) -> Tuple[TypedDataFrame[SamplesWithShortReadMetadata], pd.Series]:
@@ -149,29 +105,36 @@ def check_file_sizes(
 
 
 def copy_to_cclebams(
-    samples: TypedDataFrame[SamplesWithCDSIDs], config: DogspaConfig
+    samples: TypedDataFrame[SamplesWithCDSIDs],
+    gcp_project: str,
+    gcs_destination_bucket: str,
+    gcs_destination_prefix: str,
+    dry_run: bool,
 ) -> TypedDataFrame[CopiedSampleFiles]:
     """
     Copy all BAM files in the samples data frame to our bucket
 
     :param samples: the data frame of samples
-    :param config: the dogspa configuration
+    :param gcp_project: a GCP project ID to use for billing
+    :param gcs_destination_bucket: the name of the destination bucket
+    :param gcs_destination_prefix: an object prefix for the copied BAMs
+    :param dry_run: whether to skip updates to external data stores
     :return: a data frame of files we attempted to copy
     """
 
     logging.info("Copying files to our bucket...")
 
-    storage_client = storage.Client(project=config.gcp_project)
+    storage_client = storage.Client(project=gcp_project)
 
     # all copied files will have same destination bucket and prefix
     dest_bucket = storage_client.bucket(
-        config.gcs_destination.bucket, user_project=config.gcp_project
+        gcs_destination_bucket, user_project=gcp_project
     )
-    prefix = config.gcs_destination.prefix.strip("/")
+    prefix = gcs_destination_prefix.strip("/")
 
     # get already-copied BAMs
     existing_bams = (
-        list_blobs(config.gcs_destination.bucket, prefix=config.gcs_destination.prefix)
+        list_blobs(gcs_destination_bucket, prefix=gcs_destination_prefix)
         .rename(columns={"url": "new_url"})
         .loc[:, ["size", "new_url"]]
     )
@@ -218,7 +181,7 @@ def copy_to_cclebams(
 
             new_url = urlunsplit(("gs", dest_bucket.name, dest_obj_key, "", ""))
 
-            if config.dry_run:
+            if dry_run:
                 logging.info(
                     f"(skipping) Copying {dest_blob.name} to {dest_bucket.name}"
                 )
