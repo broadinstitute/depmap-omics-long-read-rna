@@ -65,7 +65,7 @@ def send_slack_message(
     slack_webhook_url_stats: Optional[str],
     stats: OrderedDict[str, int],
     report: OrderedDict[str, pd.DataFrame],
-    tw: TerraWorkspace,
+    terra_workspace: TerraWorkspace,
     dry_run: bool,
 ) -> None:
     """
@@ -75,7 +75,7 @@ def send_slack_message(
     :param slack_webhook_url_stats: URL for a Slack Webhook
     :param stats: ordered dictionary of metadata statistics
     :param report: ordered dictionary of relevant sample metadata
-    :param tw: a TerraWorkspace instance
+    :param terra_workspace: a TerraWorkspace instance
     :param dry_run: whether to skip updates to external data stores
     """
 
@@ -110,7 +110,9 @@ def send_slack_message(
 
     logging.info("Sending stats to Slack channel...")
 
-    terra_ws_name = "/".join([tw.workspace_namespace, tw.workspace_name])
+    terra_ws_name = "/".join(
+        [terra_workspace.workspace_namespace, terra_workspace.workspace_name]
+    )
 
     stats_blocks = [
         {

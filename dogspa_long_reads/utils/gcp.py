@@ -106,7 +106,7 @@ def check_file_sizes(
 
 def copy_to_cclebams(
     samples: TypedDataFrame[SamplesWithCDSIDs],
-    gcp_project: str,
+    gcp_project_id: str,
     gcs_destination_bucket: str,
     gcs_destination_prefix: str,
     dry_run: bool,
@@ -115,7 +115,7 @@ def copy_to_cclebams(
     Copy all BAM files in the samples data frame to our bucket
 
     :param samples: the data frame of samples
-    :param gcp_project: a GCP project ID to use for billing
+    :param gcp_project_id: a GCP project ID to use for billing
     :param gcs_destination_bucket: the name of the destination bucket
     :param gcs_destination_prefix: an object prefix for the copied BAMs
     :param dry_run: whether to skip updates to external data stores
@@ -124,11 +124,11 @@ def copy_to_cclebams(
 
     logging.info("Copying files to our bucket...")
 
-    storage_client = storage.Client(project=gcp_project)
+    storage_client = storage.Client(project=gcp_project_id)
 
     # all copied files will have same destination bucket and prefix
     dest_bucket = storage_client.bucket(
-        gcs_destination_bucket, user_project=gcp_project
+        gcs_destination_bucket, user_project=gcp_project_id
     )
     prefix = gcs_destination_prefix.strip("/")
 

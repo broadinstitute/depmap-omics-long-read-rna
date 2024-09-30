@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from collections import OrderedDict
-from pathlib import Path
 
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
@@ -20,11 +19,9 @@ from dogspa_long_reads.types import (
     SeqTable,
     VersionedSamples,
 )
-from dogspa_long_reads.utils.bams import id_bams
 from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
     copy_to_cclebams,
-    list_blobs,
     update_sample_file_urls,
 )
 from dogspa_long_reads.utils.utils import (
@@ -71,7 +68,8 @@ def do_onboard_samples(
             os.getenv("SLACK_WEBHOOK_URL_STATS"),
             stats,
             report,
-            config,
+            terra_workspace,
+            dry_run,
         )
         return
 
@@ -85,10 +83,12 @@ def do_onboard_samples(
     report["BAM file too small"] = samples.loc[blacklisted]
 
     # assign sequencing IDs
-    samples = assign_cds_ids(samples, config)
+    samples = assign_cds_ids(samples, uuid_namespace)
 
     # copy files to our own bucket
-    sample_files = copy_to_cclebams(samples, config)
+    sample_files = copy_to_cclebams(
+        samples, gcp_project_id, gcs_destination_bucket, gcs_destination_prefix, dry_run
+    )
 
     # replace URLs with ones for our bucket whenever the copy operation succeeded
     samples, blacklisted = update_sample_file_urls(samples, sample_files)
@@ -102,19 +102,20 @@ def do_onboard_samples(
     gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
 
     # upload the samples to the Gumbo sequencing table
-    gumbo_samples = upload_to_gumbo(gumbo_client, gumbo_samples, config)
+    gumbo_samples = upload_to_gumbo(gumbo_client, gumbo_samples, dry_run)
     stats["n successfully uploaded"] = len(gumbo_samples)
     report["successfully uploaded"] = gumbo_samples
 
     # upload the samples to Terra
-    upsert_terra_samples(terra_workspace, samples, config)
+    upsert_terra_samples(terra_workspace, samples, dry_run)
 
     send_slack_message(
         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
         os.getenv("SLACK_WEBHOOK_URL_STATS"),
         stats,
         report,
-        config,
+        terra_workspace,
+        dry_run,
     )
 
 
