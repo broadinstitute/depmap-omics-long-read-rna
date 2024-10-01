@@ -173,15 +173,20 @@ def copy_to_cclebams(
 
             new_url = urlunsplit(("gs", dest_bucket.name, dest_obj_key, "", ""))
 
-            if dry_run:
-                logging.info(
-                    f"(skipping) Copying {dest_blob.name} to {dest_bucket.name}"
-                )
-            else:
-                logging.info(f"Copying {dest_blob.name} to {dest_bucket.name}")
-                rewrite_blob(src_blob, dest_blob)
+            if dest_blob.exists():
+                logging.info(f"{dest_blob.name} already exists in {dest_bucket.name}")
+                copy_results.append({"url": url, "new_url": new_url, "copied": True})
 
-            copy_results.append({"url": url, "new_url": new_url, "copied": True})
+            else:
+                if dry_run:
+                    logging.info(
+                        f"(skipping) Copying {dest_blob.name} to {dest_bucket.name}"
+                    )
+                else:
+                    logging.info(f"Copying {dest_blob.name} to {dest_bucket.name}")
+                    rewrite_blob(src_blob, dest_blob)
+
+                copy_results.append({"url": url, "new_url": new_url, "copied": True})
 
         except Exception as e:
             logging.error(f"Error copying {url} to {dest_bucket}: {e}")

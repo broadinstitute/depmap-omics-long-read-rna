@@ -3,17 +3,21 @@ import os
 from pathlib import Path
 
 import pandas as pd
-from nebelung.terra_workflow import TerraWorkflow
+from firecloud import api as firecloud_api
 from nebelung.terra_workspace import TerraWorkspace
-from nebelung.utils import type_data_frame
+from nebelung.utils import call_firecloud_api, type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.types import ObjectMetadata, TerraBams
+from dogspa_long_reads.types import DeliveryBams, ObjectMetadata, SamplesWithCDSIDs
 from dogspa_long_reads.utils.gcp import list_blobs
+from dogspa_long_reads.utils.utils import assign_hashed_uuids, uuid_to_base62
 
 
 def do_upsert_delivery_bams(
-    gcs_source_bucket: str, gcs_source_glob: str, terra_workspace: TerraWorkspace
+    gcs_source_bucket: str,
+    uuid_namespace: str,
+    gcs_source_glob: str,
+    terra_workspace: TerraWorkspace,
 ) -> None:
     legacy_bams_csv = Path(
         os.path.join(
@@ -21,22 +25,45 @@ def do_upsert_delivery_bams(
         )
     ).resolve()
 
+    legacy_aligned_bams_tsv = Path(
+        os.path.join(
+            Path(os.path.dirname(__file__)).parent.parent,
+            "data",
+            "legacy_aligned_bams.tsv",
+        )
+    ).resolve()
+
     # get delivered BAM file metadata
     src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
     bams = id_bams(src_bams, legacy_bams_csv)
 
-    upsert_bams = bams.rename(columns={"bam_id": "entity:bam_id"})[
-        ["entity:bam_id", "bam", "model_id", "size", "crc32c", "gcs_obj_updated_at"]
-    ]
+    # get already-aligned BAM file metadata
+    legacy_aligned_bams = (
+        pd.read_csv(legacy_aligned_bams_tsv, sep="\t")
+        .dropna()
+        .rename(
+            columns={"minimap2_bam": "aligned_bam", "minimap2_bam_index": "aligned_bai"}
+        )
+    )
 
-    terra_workspace.upload_entities(upsert_bams)
+    # join already-aligned BAMs to delivered BAMs
+    bams = bams.merge(legacy_aligned_bams, how="left", on="model_id")
+
+    # generate sample/sequencing/CDS IDs
+    bams = assign_cds_ids(bams, uuid_namespace)
+
+    # upsert to Terra data table
+    bam_ids = bams.pop("delivery_bam_id")
+    bams.insert(0, "entity:delivery_bam_id", bam_ids)
+    terra_workspace.upload_entities(bams)
 
 
 def id_bams(
-    bams: TypedDataFrame[ObjectMetadata], legacy_bams_f: Path
-) -> TypedDataFrame[TerraBams]:
+    bams: TypedDataFrame[ObjectMetadata], legacy_bams_csv: Path
+) -> TypedDataFrame[DeliveryBams]:
     bams_w_ids = bams.copy()
 
+    # extract the Gumbo model ID from the BAM filenames
     bams_w_ids["model_id"] = (
         bams_w_ids["url"]
         .apply(lambda x: Path(x).name)
@@ -48,40 +75,85 @@ def id_bams(
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
 
-    legacy_bams = pd.read_csv(legacy_bams_f)
+    # read in "legacy" BAMs that exist in a different GCS location
+    legacy_bams = pd.read_csv(legacy_bams_csv)
     bams_w_ids = pd.concat([bams_w_ids, legacy_bams])
 
     bams_w_ids["bam_id"] = bams_w_ids["bam_url"].apply(os.path.basename)
-    assert ~bams_w_ids["bam_id"].duplicated().any()
 
-    bams_w_ids = bams_w_ids.rename(columns={"bam_url": "bam"})
+    bams_w_ids = bams_w_ids.rename(
+        columns={
+            "bam_id": "delivery_bam_id",
+            "bam_url": "delivery_bam",
+            "crc32c": "delivery_bam_crc32c",
+            "size": "delivery_bam_size",
+            "gcs_obj_updated_at": "delivery_bam_updated_at",
+        }
+    )
 
-    return type_data_frame(bams_w_ids, TerraBams)
+    return type_data_frame(bams_w_ids, DeliveryBams)
 
 
-def do_delta_index_delivery_bams(
-    terra_workspace: TerraWorkspace, terra_workflow: TerraWorkflow
-) -> None:
-    bams = terra_workspace.get_entities("bam", TerraBams)
+def assign_cds_ids(
+    samples: TypedDataFrame[DeliveryBams], uuid_namespace: str
+) -> TypedDataFrame[SamplesWithCDSIDs]:
+    """
+    Assign a "CDS-" ID to each sample by hashing relevant columns.
 
-    if "bai" not in bams.columns:
-        bams["bai"] = pd.NA
+    :param samples: the data frame of samples
+    :param uuid_namespace: a namespace for UUIDv3 IDs
+    :return: the data frame with CDS IDs
+    """
 
-    bams_to_index = bams.loc[bams["bai"].isna()]
+    logging.info("Assigning CDS IDs...")
 
-    if len(bams_to_index) == 0:
-        logging.info("No new BAMs to index")
+    samples_w_ids = assign_hashed_uuids(
+        samples,
+        uuid_namespace=uuid_namespace,
+        uuid_col_name="cds_id",
+        subset=[
+            "model_id",
+            "delivery_bam_crc32c",
+            "delivery_bam_size",
+            "delivery_bam_updated_at",
+        ],
+    )
+
+    # convert UUIDs to base62 and truncate to match existing ID format
+    samples_w_ids["cds_id"] = "CDS-" + samples_w_ids["cds_id"].apply(
+        uuid_to_base62
+    ).str.slice(-6)
+
+    return TypedDataFrame[SamplesWithCDSIDs](samples_w_ids)
+
+
+def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
+    bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
+
+    if "aligned_bam" not in bams.columns:
+        bams["aligned_bam"] = pd.NA
+
+    bams_to_align = bams.loc[bams["aligned_bam"].isna()]
+
+    if len(bams_to_align) == 0:
+        logging.info("No new BAMs to align")
         return
 
     bam_set_id = terra_workspace.create_entity_set(
-        entity_type="bam", entity_ids=bams_to_index["bam_id"], suffix="index_bam"
+        entity_type="delivery_bam",
+        entity_ids=bams_to_align["delivery_bam_id"],
+        suffix="minimap2_LR",
     )
 
-    terra_workspace.submit_workflow_run(
-        terra_workflow,
+    call_firecloud_api(
+        firecloud_api.create_submission,
+        wnamespace=terra_workspace.workspace_namespace,
+        workspace=terra_workspace.workspace_name,
+        cnamespace=terra_workspace.workspace_namespace,  # happens to be the same
+        config="Minimap2_LR",  # run from Dockstore using latest version of config
         entity=bam_set_id,
-        etype="bam_set",
-        expression="this.bams",
+        etype="delivery_bam_set",
+        expression="this.delivery_bams",
         use_callcache=True,
         use_reference_disks=False,
         memory_retry_multiplier=1.2,

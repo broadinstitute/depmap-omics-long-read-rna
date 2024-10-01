@@ -12,7 +12,7 @@ from nebelung.terra_workspace import TerraWorkspace
 
 from dogspa_long_reads.types import GumboClient
 from dogspa_long_reads.utils.bams import (
-    do_delta_index_delivery_bams,
+    do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
 from dogspa_long_reads.utils.onboarding import do_onboard_samples
@@ -100,6 +100,7 @@ def update_workflow(
 @app.command()
 def upsert_delivery_bams(ctx: typer.Context) -> None:
     do_upsert_delivery_bams(
+        uuid_namespace=config["uuid_namespace"],
         gcs_source_bucket=config["onboarding"]["gcs_source"]["bucket"],
         gcs_source_glob=config["onboarding"]["gcs_source"]["glob"],
         terra_workspace=ctx.obj["terra_workspace"],
@@ -107,15 +108,8 @@ def upsert_delivery_bams(ctx: typer.Context) -> None:
 
 
 @app.command()
-def delta_index_delivery_bams(ctx: typer.Context) -> None:
-    terra_workflow = make_workflow_from_config(
-        repo_namespace=config["terra"]["repo_namespace"],
-        workflow_config=config["terra"]["index_bam"],
-    )
-
-    do_delta_index_delivery_bams(
-        terra_workspace=ctx.obj["terra_workspace"], terra_workflow=terra_workflow
-    )
+def delta_align_delivery_bams(ctx: typer.Context) -> None:
+    do_delta_align_delivery_bams(terra_workspace=ctx.obj["terra_workspace"])
 
 
 @app.command()
@@ -124,7 +118,6 @@ def onboard_samples(ctx: typer.Context) -> None:
         gcp_project_id=config["gcp_project_id"],
         gcs_destination_bucket=config["onboarding"]["gcs_destination"]["bucket"],
         gcs_destination_prefix=config["onboarding"]["gcs_destination"]["prefix"],
-        uuid_namespace=config["onboarding"]["uuid_namespace"],
         terra_workspace=ctx.obj["terra_workspace"],
         gumbo_client=ctx.obj["gumbo_client"],
         dry_run=config["onboarding"]["dry_run"],

@@ -13,7 +13,7 @@ from nebelung.terra_workspace import TerraWorkspace
 
 from dogspa_long_reads.types import GumboClient
 from dogspa_long_reads.utils.bams import (
-    do_delta_index_delivery_bams,
+    do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
 from dogspa_long_reads.utils.onboarding import do_onboard_samples
@@ -74,9 +74,7 @@ def run(cloud_event: CloudEvent) -> None:
             ).resolve(),
         )
 
-        do_delta_index_delivery_bams(
-            terra_workspace=terra_workspace, terra_workflow=terra_workflow
-        )
+        do_delta_align_delivery_bams(terra_workspace=terra_workspace)
 
     elif config["cmd"] == "onboard-samples":
         do_onboard_samples(

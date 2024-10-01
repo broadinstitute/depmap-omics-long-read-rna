@@ -53,17 +53,29 @@ class ObjectMetadata(CoercedDataFrame):
     gcs_obj_updated_at: Series[pd.StringDtype]
 
 
-class TerraBams(CoercedDataFrame):
-    bam_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    bam: Series[pd.StringDtype] = pa.Field(unique=True)
-    bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
-    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
-    gcs_obj_updated_at: Series[pd.StringDtype]
+class DeliveryBams(CoercedDataFrame):
+    delivery_bam_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+    delivery_bam_updated_at: Series[pd.StringDtype]
+    aligned_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True, unique=True)
+    aligned_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
+    aligned_bam_crc32c: Optional[Series[pd.StringDtype]] = pa.Field(
+        nullable=True, unique=True
+    )
+    aligned_bam_size: Optional[Series[pd.Int64Dtype]] = pa.Field(
+        nullable=True, unique=True
+    )
+    aligned_bam_updated_at: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
-class IdentifiedSrcBams(TerraBams):
+class SamplesWithCDSIDs(DeliveryBams):
+    cds_id: Series[pd.StringDtype] = pa.Field(unique=True)
+
+
+class IdentifiedSrcBams(DeliveryBams):
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
     blacklist: Series[pd.BooleanDtype]
 
@@ -82,10 +94,6 @@ class SamplesWithShortReadMetadata(SamplesWithMetadata):
     sr_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
-class SamplesWithCDSIDs(SamplesWithShortReadMetadata):
-    sequencing_id: Series[pd.StringDtype]
 
 
 class CopiedSampleFiles(SamplesWithCDSIDs):
