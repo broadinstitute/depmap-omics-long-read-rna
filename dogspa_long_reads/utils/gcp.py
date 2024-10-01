@@ -126,36 +126,28 @@ def copy_to_cclebams(
 
     storage_client = storage.Client(project=gcp_project_id)
 
+    # collect all CRAM/BAM/CRAI/BAI files to copy
+    sample_files = samples.melt(
+        id_vars="sequencing_id",
+        value_vars=["bai", "bam"],
+        var_name="url_kind",
+        value_name="url",
+    )
+
     # all copied files will have same destination bucket and prefix
     dest_bucket = storage_client.bucket(
         gcs_destination_bucket, user_project=gcp_project_id
     )
     prefix = gcs_destination_prefix.strip("/")
 
-    # get already-copied BAMs
-    existing_bams = (
-        list_blobs(gcs_destination_bucket, prefix=gcs_destination_prefix)
-        .rename(columns={"url": "new_url"})
-        .loc[:, ["size", "new_url"]]
-    )
-
-    # split into copied and to-do
-    check_copied = samples.merge(existing_bams, how="left", on="size")
-    already_copied = check_copied.loc[check_copied["new_url"].notna()]
-    already_copied["copied"] = True
-    to_copy = check_copied.loc[check_copied["new_url"].isna()]
-
-    if len(to_copy) == 0:
-        return TypedDataFrame[CopiedSampleFiles](already_copied)
-
     # keep track of copy attempts
     copy_results = []
 
-    logging.info(f"Coping {len(to_copy)} BAMs...")
+    logging.info(f"Checking {len(sample_files)} files to copy...")
 
     # can't use rewrite in a batch context, so do plain iteration
-    for r in tqdm(to_copy.itertuples(index=False), total=len(to_copy)):
-        url = r[to_copy.columns.get_loc("bam_url")]
+    for r in tqdm(sample_files.itertuples(index=False), total=len(sample_files)):
+        url = r[sample_files.columns.get_loc("url")]
 
         try:
             # construct the source blob
@@ -167,7 +159,7 @@ def copy_to_cclebams(
                 "/".join(
                     [
                         prefix,
-                        str(r[to_copy.columns.get_loc("sequencing_id")]),
+                        str(r[sample_files.columns.get_loc("sequencing_id")]),
                     ]
                 )
                 + dest_file_ext
@@ -195,11 +187,9 @@ def copy_to_cclebams(
             logging.error(f"Error copying {url} to {dest_bucket}: {e}")
             copy_results.append({"url": url, "new_url": None, "copied": False})
 
-    to_copy = to_copy.merge(
-        pd.DataFrame(copy_results), how="inner", left_on="bam_url", right_on="url"
-    )
+    sample_files = sample_files.merge(pd.DataFrame(copy_results), how="inner", on="url")
 
-    return TypedDataFrame[CopiedSampleFiles](pd.concat([already_copied, to_copy]))
+    return TypedDataFrame[CopiedSampleFiles](sample_files)
 
 
 def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:

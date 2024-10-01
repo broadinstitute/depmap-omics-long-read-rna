@@ -12,7 +12,7 @@ glob = "tag*/merge/*.bam"
 
 [onboarding.gcs_destination]
 bucket = "cclebams"
-prefix = "long_read_rna"
+prefix = "long_read_rna/"
 
 [terra]
 repo_namespace = "Long_Read_Omics"

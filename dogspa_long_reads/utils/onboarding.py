@@ -50,8 +50,9 @@ def do_onboard_samples(
     # get the sequencing and profile tables from Gumbo
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
+    seq_table = seq_table.loc[seq_table["expected_type"].eq("long_read_rna")]
 
-    samples = pd.DataFrame()
+    samples = terra_workspace.get_entities("bam")
 
     # start tracking issues to store in Gumbo seq table
     samples["issue"] = pd.Series([set()] * len(samples))
