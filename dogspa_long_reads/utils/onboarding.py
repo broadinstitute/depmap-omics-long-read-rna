@@ -9,8 +9,10 @@ from nebelung.utils import expand_dict_columns
 from pandera.typing import DataFrame as TypedDataFrame
 
 from dogspa_long_reads.types import (
-    IdentifiedSrcBams,
+    DeliveryBams,
+    GumboClient,
     ModelsAndChildren,
+    OnboardingSamples,
     SamplesForGumbo,
     SamplesMaybeInGumbo,
     SamplesWithCDSIDs,
@@ -25,20 +27,17 @@ from dogspa_long_reads.utils.gcp import (
     update_sample_file_urls,
 )
 from dogspa_long_reads.utils.utils import (
-    assign_hashed_uuids,
     df_to_model,
     model_to_df,
     send_slack_message,
-    uuid_to_base62,
 )
-from gumbo_gql_client import GumboClient, omics_sequencing_insert_input
+from gumbo_gql_client import omics_sequencing_insert_input
 
 
 def do_onboard_samples(
     gcp_project_id: str,
     gcs_destination_bucket: str,
     gcs_destination_prefix: str,
-    uuid_namespace: str,
     terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
     dry_run: bool = False,
@@ -50,16 +49,36 @@ def do_onboard_samples(
     # get the sequencing and profile tables from Gumbo
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
-    seq_table = seq_table.loc[seq_table["expected_type"].eq("long_read_rna")]
+    seq_table = seq_table.loc[seq_table["datatype"].eq("long_read_rna")]
 
-    samples = terra_workspace.get_entities("bam")
+    delivery_bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
+
+    samples = (
+        delivery_bams[
+            [
+                "cds_id",
+                "model_id",
+                "aligned_bam",
+                "aligned_bai",
+                "delivery_bam",
+                "delivery_bam_size",
+                "delivery_bam_crc32c",
+                "delivery_bam_updated_at",
+            ]
+        ]
+        .dropna()  # remove samples that haven't been aligned yet
+        .rename(columns={"cds_id": "sample_id"})
+        .reset_index(drop=True)
+    )
 
     # start tracking issues to store in Gumbo seq table
     samples["issue"] = pd.Series([set()] * len(samples))
     samples["blacklist"] = False
 
     # compare file sizes to filter out samples that are in Gumbo already
-    samples = check_already_in_gumbo(samples, seq_table, size_col_name="bam_size")
+    samples = check_already_in_gumbo(
+        samples, seq_table, size_col_name="unaligned_bam_size"
+    )
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
     report["not yet in Gumbo"] = samples.loc[~samples["already_in_gumbo"]]
 
@@ -82,9 +101,6 @@ def do_onboard_samples(
     samples, blacklisted = check_file_sizes(samples)
     stats["n with BAM file too small"] = blacklisted.sum()
     report["BAM file too small"] = samples.loc[blacklisted]
-
-    # assign sequencing IDs
-    samples = assign_cds_ids(samples, uuid_namespace)
 
     # copy files to our own bucket
     sample_files = copy_to_cclebams(
@@ -227,41 +243,8 @@ def join_short_read_metadata(
     return TypedDataFrame[SamplesWithShortReadMetadata](samples_annot)
 
 
-def assign_cds_ids(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata], uuid_namespace: str
-) -> TypedDataFrame[SamplesWithCDSIDs]:
-    """
-    Assign a "CDS-" ID to each sample by hashing relevant columns.
-
-    :param samples: the data frame of samples
-    :param uuid_namespace: a namespace for UUIDv3 IDs
-    :return: the data frame with CDS IDs
-    """
-
-    logging.info("Assigning CDS IDs...")
-
-    samples_w_ids = assign_hashed_uuids(
-        samples,
-        uuid_namespace=uuid_namespace,
-        uuid_col_name="sequencing_id",
-        subset=[
-            "model_id",
-            "crc32c",
-            "size",
-            "gcs_obj_updated_at",
-        ],
-    )
-
-    # convert UUIDs to base62 and truncate to match existing ID format
-    samples_w_ids["sequencing_id"] = "CDS-" + samples_w_ids["sequencing_id"].apply(
-        uuid_to_base62
-    ).str.slice(-6)
-
-    return TypedDataFrame[SamplesWithCDSIDs](samples_w_ids)
-
-
 def check_already_in_gumbo(
-    samples: TypedDataFrame[IdentifiedSrcBams],
+    samples: TypedDataFrame[OnboardingSamples],
     seq_table: TypedDataFrame[SeqTable],
     size_col_name: str,
 ) -> TypedDataFrame[SamplesMaybeInGumbo]:
@@ -277,7 +260,7 @@ def check_already_in_gumbo(
     logging.info("Checking Gumbo for existing samples...")
 
     samples["already_in_gumbo"] = (
-        samples["size"]
+        samples["delivery_bam_size"]
         .isin(seq_table[size_col_name].dropna().astype("int64"))
         .astype("bool")
     )

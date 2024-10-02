@@ -1944,6 +1944,7 @@ class omics_sequencing_avg_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2003,6 +2004,11 @@ class omics_sequencing_bool_exp(BaseModel):
     source: Optional["String_comparison_exp"] = None
     str_profile: Optional["String_comparison_exp"] = None
     stranded: Optional["Boolean_comparison_exp"] = None
+    unaligned_bam_crc_32_c_hash: Optional["String_comparison_exp"] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional["String_comparison_exp"] = None
+    unaligned_bam_size: Optional["bigint_comparison_exp"] = None
     update_time: Optional["date_comparison_exp"] = None
     version: Optional["Int_comparison_exp"] = None
     year_sequencing_billed: Optional["Int_comparison_exp"] = None
@@ -2013,6 +2019,7 @@ class omics_sequencing_inc_input(BaseModel):
     hg_19_bam_size: Optional[int] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[int] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[int] = None
+    unaligned_bam_size: Optional[int] = None
     version: Optional[int] = None
     year_sequencing_billed: Optional[int] = None
 
@@ -2053,6 +2060,11 @@ class omics_sequencing_insert_input(BaseModel):
     source: Optional[str] = None
     str_profile: Optional[str] = None
     stranded: Optional[bool] = None
+    unaligned_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[str] = None
+    unaligned_bam_size: Optional[int] = None
     update_time: Optional[Any] = None
     version: Optional[int] = None
     year_sequencing_billed: Optional[int] = None
@@ -2096,6 +2108,11 @@ class omics_sequencing_max_order_by(BaseModel):
     sm_id: Optional[order_by] = None
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
+    unaligned_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     update_time: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
@@ -2139,6 +2156,11 @@ class omics_sequencing_min_order_by(BaseModel):
     sm_id: Optional[order_by] = None
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
+    unaligned_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     update_time: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
@@ -2199,6 +2221,11 @@ class omics_sequencing_order_by(BaseModel):
     source: Optional[order_by] = None
     str_profile: Optional[order_by] = None
     stranded: Optional[order_by] = None
+    unaligned_bam_crc_32_c_hash: Optional[order_by] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     update_time: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
@@ -2243,6 +2270,11 @@ class omics_sequencing_set_input(BaseModel):
     source: Optional[str] = None
     str_profile: Optional[str] = None
     stranded: Optional[bool] = None
+    unaligned_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[str] = None
+    unaligned_bam_size: Optional[int] = None
     update_time: Optional[Any] = None
     version: Optional[int] = None
     year_sequencing_billed: Optional[int] = None
@@ -2253,6 +2285,7 @@ class omics_sequencing_stddev_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2262,6 +2295,7 @@ class omics_sequencing_stddev_pop_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2271,6 +2305,7 @@ class omics_sequencing_stddev_samp_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2315,6 +2350,11 @@ class omics_sequencing_stream_cursor_value_input(BaseModel):
     source: Optional[str] = None
     str_profile: Optional[str] = None
     stranded: Optional[bool] = None
+    unaligned_bam_crc_32_c_hash: Optional[str] = Field(
+        alias="unaligned_bam_crc32c_hash", default=None
+    )
+    unaligned_bam_filepath: Optional[str] = None
+    unaligned_bam_size: Optional[int] = None
     update_time: Optional[Any] = None
     version: Optional[int] = None
     year_sequencing_billed: Optional[int] = None
@@ -2325,6 +2365,7 @@ class omics_sequencing_sum_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2340,6 +2381,7 @@ class omics_sequencing_var_pop_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2349,6 +2391,7 @@ class omics_sequencing_var_samp_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -2358,6 +2401,7 @@ class omics_sequencing_variance_order_by(BaseModel):
     hg_19_bam_size: Optional[order_by] = Field(alias="hg19_bam_size", default=None)
     hg_38_cram_size: Optional[order_by] = Field(alias="hg38_cram_size", default=None)
     month_sequencing_billed: Optional[order_by] = None
+    unaligned_bam_size: Optional[order_by] = None
     version: Optional[order_by] = None
     year_sequencing_billed: Optional[order_by] = None
 
@@ -3547,3 +3591,111 @@ class uuid_comparison_exp(BaseModel):
     lte: Optional[Any] = Field(alias="_lte", default=None)
     neq: Optional[Any] = Field(alias="_neq", default=None)
     nin: Optional[List[Any]] = Field(alias="_nin", default=None)
+
+
+audit_user_bool_exp.model_rebuild()
+audit_user_on_conflict.model_rebuild()
+audit_user_stream_cursor_input.model_rebuild()
+audit_user_updates.model_rebuild()
+depmap_model_type_bool_exp.model_rebuild()
+depmap_model_type_obj_rel_insert_input.model_rebuild()
+depmap_model_type_on_conflict.model_rebuild()
+depmap_model_type_stream_cursor_input.model_rebuild()
+depmap_model_type_updates.model_rebuild()
+fingerprintable_samples_bool_exp.model_rebuild()
+fingerprintable_samples_stream_cursor_input.model_rebuild()
+jsonb_cast_exp.model_rebuild()
+jsonb_comparison_exp.model_rebuild()
+media_bool_exp.model_rebuild()
+media_obj_rel_insert_input.model_rebuild()
+media_on_conflict.model_rebuild()
+media_stream_cursor_input.model_rebuild()
+media_updates.model_rebuild()
+model_bool_exp.model_rebuild()
+model_condition_aggregate_bool_exp.model_rebuild()
+model_condition_aggregate_bool_exp_bool_and.model_rebuild()
+model_condition_aggregate_bool_exp_bool_or.model_rebuild()
+model_condition_aggregate_bool_exp_count.model_rebuild()
+model_condition_aggregate_order_by.model_rebuild()
+model_condition_arr_rel_insert_input.model_rebuild()
+model_condition_bool_exp.model_rebuild()
+model_condition_insert_input.model_rebuild()
+model_condition_obj_rel_insert_input.model_rebuild()
+model_condition_on_conflict.model_rebuild()
+model_condition_order_by.model_rebuild()
+model_condition_stream_cursor_input.model_rebuild()
+model_condition_updates.model_rebuild()
+model_insert_input.model_rebuild()
+model_obj_rel_insert_input.model_rebuild()
+model_on_conflict.model_rebuild()
+model_order_by.model_rebuild()
+model_stream_cursor_input.model_rebuild()
+model_updates.model_rebuild()
+omics_profile_aggregate_bool_exp.model_rebuild()
+omics_profile_aggregate_bool_exp_bool_and.model_rebuild()
+omics_profile_aggregate_bool_exp_bool_or.model_rebuild()
+omics_profile_aggregate_bool_exp_count.model_rebuild()
+omics_profile_aggregate_order_by.model_rebuild()
+omics_profile_arr_rel_insert_input.model_rebuild()
+omics_profile_bool_exp.model_rebuild()
+omics_profile_insert_input.model_rebuild()
+omics_profile_obj_rel_insert_input.model_rebuild()
+omics_profile_on_conflict.model_rebuild()
+omics_profile_order_by.model_rebuild()
+omics_profile_stream_cursor_input.model_rebuild()
+omics_profile_updates.model_rebuild()
+omics_sequencing_aggregate_bool_exp.model_rebuild()
+omics_sequencing_aggregate_bool_exp_bool_and.model_rebuild()
+omics_sequencing_aggregate_bool_exp_bool_or.model_rebuild()
+omics_sequencing_aggregate_bool_exp_count.model_rebuild()
+omics_sequencing_aggregate_order_by.model_rebuild()
+omics_sequencing_arr_rel_insert_input.model_rebuild()
+omics_sequencing_bool_exp.model_rebuild()
+omics_sequencing_insert_input.model_rebuild()
+omics_sequencing_obj_rel_insert_input.model_rebuild()
+omics_sequencing_on_conflict.model_rebuild()
+omics_sequencing_order_by.model_rebuild()
+omics_sequencing_stream_cursor_input.model_rebuild()
+omics_sequencing_updates.model_rebuild()
+patient_bool_exp.model_rebuild()
+patient_on_conflict.model_rebuild()
+patient_stream_cursor_input.model_rebuild()
+patient_updates.model_rebuild()
+snp_fingerprint_bool_exp.model_rebuild()
+snp_fingerprint_comparison_bool_exp.model_rebuild()
+snp_fingerprint_comparison_on_conflict.model_rebuild()
+snp_fingerprint_comparison_stream_cursor_input.model_rebuild()
+snp_fingerprint_comparison_updates.model_rebuild()
+snp_fingerprint_on_conflict.model_rebuild()
+snp_fingerprint_qc_bool_exp.model_rebuild()
+snp_fingerprint_qc_stream_cursor_input.model_rebuild()
+snp_fingerprint_stream_cursor_input.model_rebuild()
+snp_fingerprint_updates.model_rebuild()
+str_profile_bool_exp.model_rebuild()
+str_profile_on_conflict.model_rebuild()
+str_profile_stream_cursor_input.model_rebuild()
+str_profile_updates.model_rebuild()
+task_entity_bool_exp.model_rebuild()
+task_entity_insert_input.model_rebuild()
+task_entity_obj_rel_insert_input.model_rebuild()
+task_entity_on_conflict.model_rebuild()
+task_entity_order_by.model_rebuild()
+task_entity_stream_cursor_input.model_rebuild()
+task_entity_updates.model_rebuild()
+task_result_aggregate_bool_exp.model_rebuild()
+task_result_aggregate_bool_exp_count.model_rebuild()
+task_result_aggregate_order_by.model_rebuild()
+task_result_arr_rel_insert_input.model_rebuild()
+task_result_bool_exp.model_rebuild()
+task_result_insert_input.model_rebuild()
+task_result_on_conflict.model_rebuild()
+task_result_order_by.model_rebuild()
+task_result_stream_cursor_input.model_rebuild()
+task_result_updates.model_rebuild()
+terra_sync_bool_exp.model_rebuild()
+terra_sync_insert_input.model_rebuild()
+terra_sync_obj_rel_insert_input.model_rebuild()
+terra_sync_on_conflict.model_rebuild()
+terra_sync_order_by.model_rebuild()
+terra_sync_stream_cursor_input.model_rebuild()
+terra_sync_updates.model_rebuild()

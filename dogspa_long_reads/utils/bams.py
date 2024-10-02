@@ -75,7 +75,7 @@ def id_bams(
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
 
-    # read in "legacy" BAMs that exist in a different GCS location
+    # read in "legacy_delivery" BAMs that exist in a different GCS location
     legacy_bams = pd.read_csv(legacy_bams_csv)
     bams_w_ids = pd.concat([bams_w_ids, legacy_bams])
 

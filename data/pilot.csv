@@ -1,0 +1,6 @@
+bam_url,crc32c,size,gcs_obj_updated_at,model_id
+gs://fc-aaf4de93-c104-45c4-a01a-a036869119c6/pilot/merge/ACH-000077.sorted.bam,DwywXg==,1466677647,2024-08-28,ACH-000077
+gs://fc-aaf4de93-c104-45c4-a01a-a036869119c6/pilot/merge/ACH-000115.sorted.bam,XzZ2mw==,1950754503,2024-08-28,ACH-000115
+gs://fc-aaf4de93-c104-45c4-a01a-a036869119c6/pilot/merge/ACH-000551.sorted.bam,0piMvQ==,2021320690,2024-08-28,ACH-000551
+gs://fc-aaf4de93-c104-45c4-a01a-a036869119c6/pilot/merge/ACH-000698.sorted.bam,E1bjUQ==,1617473842,2024-08-28,ACH-000698
+gs://fc-aaf4de93-c104-45c4-a01a-a036869119c6/pilot/merge/ACH-000773.sorted.bam,6aE8oQ==,908709561,2024-08-28,ACH-000773

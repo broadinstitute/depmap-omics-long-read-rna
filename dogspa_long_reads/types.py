@@ -36,7 +36,7 @@ class SeqTable(CoercedDataFrame):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    unaligned_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     is_main_sequencing_id: Series[pd.BooleanDtype]
     blacklist_omics: Series[pd.BooleanDtype]
@@ -61,13 +61,6 @@ class DeliveryBams(CoercedDataFrame):
     delivery_bam_updated_at: Series[pd.StringDtype]
     aligned_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True, unique=True)
     aligned_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    aligned_bam_crc32c: Optional[Series[pd.StringDtype]] = pa.Field(
-        nullable=True, unique=True
-    )
-    aligned_bam_size: Optional[Series[pd.Int64Dtype]] = pa.Field(
-        nullable=True, unique=True
-    )
-    aligned_bam_updated_at: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
@@ -75,12 +68,20 @@ class SamplesWithCDSIDs(DeliveryBams):
     cds_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
-class IdentifiedSrcBams(DeliveryBams):
+class OnboardingSamples(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+    delivery_bam_updated_at: Series[pd.StringDtype]
+    aligned_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
+    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
     blacklist: Series[pd.BooleanDtype]
 
 
-class SamplesMaybeInGumbo(IdentifiedSrcBams):
+class SamplesMaybeInGumbo(OnboardingSamples):
     already_in_gumbo: Series[pd.BooleanDtype]
 
 

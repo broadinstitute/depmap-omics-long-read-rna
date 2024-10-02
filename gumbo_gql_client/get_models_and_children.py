@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .base_model import BaseModel
 
@@ -23,7 +23,10 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
     profile_id: str
     main_sequencing_id: Optional[str]
     datatype: Optional[str]
-    blacklist_omics: bool
+    blacklist_omics: Optional[bool]
+    omics_order_date: Optional[Any]
+    smid_ordered: Optional[str]
+    smid_returned: Optional[str]
     omics_sequencings: List[
         "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings"
     ]
@@ -32,14 +35,13 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
 class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     BaseModel
 ):
-    sequencing_id: str
-    bam_size: Optional[int]
-    sequencing_id: str
-    expected_type: Optional[str]
-    bam_filepath: Optional[str]
     bai_filepath: Optional[str]
+    bam_filepath: Optional[str]
     blacklist: bool
+    expected_type: Optional[str]
+    sequencing_id: str
     source: Optional[str]
+    unaligned_bam_size: Optional[int]
 
 
 GetModelsAndChildren.model_rebuild()

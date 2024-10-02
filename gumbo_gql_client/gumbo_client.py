@@ -26,15 +26,17 @@ class GumboClient(BaseClient):
                     main_sequencing_id
                     datatype
                     blacklist_omics
+                    omics_order_date
+                    smid_ordered
+                    smid_returned
                     omics_sequencings {
-                      sequencing_id
-                      bam_size
-                      sequencing_id
-                      expected_type
-                      bam_filepath
                       bai_filepath
+                      bam_filepath
                       blacklist
+                      expected_type
+                      sequencing_id
                       source
+                      unaligned_bam_size
                     }
                   }
                 }

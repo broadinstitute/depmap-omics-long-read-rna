@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 from urllib.parse import urlunsplit
 
 import pandas as pd
@@ -14,6 +14,52 @@ from dogspa_long_reads.types import (
     SamplesWithCDSIDs,
     SamplesWithShortReadMetadata,
 )
+
+
+def get_objects_metadata(urls: Iterable[str]) -> TypedDataFrame[ObjectMetadata]:
+    """
+    Get metadata (size, CRC32 hash, and updated_at timestamp) for a list of GCS URLs.
+
+    :param urls: iterable of GCS URLs
+    :return: data frame of metadata
+    """
+
+    logging.info("Getting metadata about GCS objects...")
+
+    storage_client = storage.Client()
+
+    blobs = {}
+
+    with storage_client.batch(raise_exception=False):
+        for url in urls:
+            blob = storage.Blob.from_string(url, client=storage_client)
+            bucket = storage_client.bucket(blob.bucket.name)
+            blob = bucket.get_blob(blob.name)
+            blobs[url] = blob
+
+    metadata = [
+        {"url": k, "crc32c": v.crc32c, "size": v.size, "gcs_obj_updated_at": v.updated}
+        for k, v in blobs.items()
+    ]
+
+    df = pd.DataFrame(metadata)
+
+    # batching without raising exceptions makes all columns NA if a file was missing
+    df = df.dropna()
+
+    df = df.astype(
+        {
+            "size": "Int64",
+            "gcs_obj_updated_at": "datetime64[ns, UTC]",
+        }
+    )
+
+    # drop time component
+    df["gcs_obj_updated_at"] = (
+        df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
+    )
+
+    return TypedDataFrame[ObjectMetadata](df)
 
 
 def list_blobs(
@@ -132,7 +178,7 @@ def copy_to_cclebams(
         value_vars=["bai", "bam"],
         var_name="url_kind",
         value_name="url",
-    )
+    ).dropna()
 
     # all copied files will have same destination bucket and prefix
     dest_bucket = storage_client.bucket(
