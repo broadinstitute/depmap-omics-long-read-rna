@@ -11,7 +11,6 @@ from tqdm import tqdm
 from dogspa_long_reads.types import (
     CopiedSampleFiles,
     ObjectMetadata,
-    SamplesWithCDSIDs,
     SamplesWithShortReadMetadata,
 )
 
@@ -140,7 +139,7 @@ def check_file_sizes(
 
     logging.info("Checking BAM file sizes...")
 
-    bam_too_small = samples["size"] < 0  # TODO: use 2e9 again
+    bam_too_small = samples["size"] < 2e9
 
     samples.loc[bam_too_small, "issue"] = samples.loc[bam_too_small, "issue"].apply(
         lambda x: x.union({"BAM file too small"})
@@ -151,7 +150,8 @@ def check_file_sizes(
 
 
 def copy_to_cclebams(
-    samples: TypedDataFrame[SamplesWithCDSIDs],
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    bam_bai_colnames: list[str],
     gcp_project_id: str,
     gcs_destination_bucket: str,
     gcs_destination_prefix: str,
@@ -161,6 +161,7 @@ def copy_to_cclebams(
     Copy all BAM files in the samples data frame to our bucket
 
     :param samples: the data frame of samples
+    :param bam_bai_colnames: the names of columns containing files to copy
     :param gcp_project_id: a GCP project ID to use for billing
     :param gcs_destination_bucket: the name of the destination bucket
     :param gcs_destination_prefix: an object prefix for the copied BAMs
@@ -175,7 +176,7 @@ def copy_to_cclebams(
     # collect all CRAM/BAM/CRAI/BAI files to copy
     sample_files = samples.melt(
         id_vars="sequencing_id",
-        value_vars=["bai", "bam"],
+        value_vars=bam_bai_colnames,
         var_name="url_kind",
         value_name="url",
     ).dropna()
@@ -275,31 +276,29 @@ def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
 
 
 def update_sample_file_urls(
-    samples: TypedDataFrame[SamplesWithCDSIDs],
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
     sample_files: TypedDataFrame[CopiedSampleFiles],
-) -> Tuple[TypedDataFrame[SamplesWithCDSIDs], pd.Series]:
+    bam_bai_colnames: list[str],
+) -> TypedDataFrame[SamplesWithShortReadMetadata]:
     """
-    Replace BAM URLs with new ones used in `copy_to_depmap_omics_bucket`
+    Replace BAM URLs with new ones used in `copy_to_depmap_omics_bucket`.
 
     :param samples: the data frame of samples
     :param sample_files: a data frame of files we attempted to copy
-    :return: the samples data frame with issue and blacklist columns filled out for
-    rows with files we couldn't copy and a series indicating blacklisted rows
+    :param bam_bai_colnames: names of omics_sequencing BAM/BAI columns we're filling
+    :return: the samples data frame with updated URLs
     """
 
     logging.info("Updating GCS file URLs...")
 
     samples_updated = samples
 
-    sample_file_urls = sample_files.loc[sample_files["copied"], ["bam_url", "new_url"]]
-    samples_updated = samples_updated.merge(sample_file_urls, how="left", on="bam_url")
-    samples_updated["bam_url"] = samples_updated["new_url"]
-    samples_updated = samples_updated.drop(columns=["new_url"])
+    for c in bam_bai_colnames:
+        sample_file_urls = sample_files.loc[sample_files["copied"], ["url", "new_url"]]
+        samples_updated = samples_updated.merge(
+            sample_file_urls, how="left", left_on=c, right_on="url"
+        )
+        samples_updated[c] = samples_updated["new_url"]
+        samples_updated = samples_updated.drop(columns=["url", "new_url"])
 
-    missing_files = pd.Series(samples_updated[["bam_url"]].isna().any(axis=1))
-    samples_updated.loc[missing_files, "issue"] = samples_updated.loc[
-        missing_files, "issue"
-    ].apply(lambda x: x.union({"couldn't copy BAM"}))
-    samples_updated.loc[missing_files, "blacklist"] = True
-
-    return TypedDataFrame[SamplesWithCDSIDs](samples_updated), missing_files
+    return TypedDataFrame[SamplesWithShortReadMetadata](samples_updated)

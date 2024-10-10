@@ -2,7 +2,6 @@ import os
 
 import pandas as pd
 from dotenv import load_dotenv
-from hypothesis.extra.pandas import columns
 from nebelung.terra_workspace import TerraWorkspace
 
 from dogspa_long_reads.types import GumboClient, ModelsAndChildren

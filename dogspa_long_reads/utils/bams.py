@@ -19,35 +19,9 @@ def do_upsert_delivery_bams(
     gcs_source_glob: str,
     terra_workspace: TerraWorkspace,
 ) -> None:
-    legacy_bams_csv = Path(
-        os.path.join(
-            Path(os.path.dirname(__file__)).parent.parent, "data", "legacy_bams.csv"
-        )
-    ).resolve()
-
-    legacy_aligned_bams_tsv = Path(
-        os.path.join(
-            Path(os.path.dirname(__file__)).parent.parent,
-            "data",
-            "legacy_aligned_bams.tsv",
-        )
-    ).resolve()
-
     # get delivered BAM file metadata
     src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
-    bams = id_bams(src_bams, legacy_bams_csv)
-
-    # get already-aligned BAM file metadata
-    legacy_aligned_bams = (
-        pd.read_csv(legacy_aligned_bams_tsv, sep="\t")
-        .dropna()
-        .rename(
-            columns={"minimap2_bam": "aligned_bam", "minimap2_bam_index": "aligned_bai"}
-        )
-    )
-
-    # join already-aligned BAMs to delivered BAMs
-    bams = bams.merge(legacy_aligned_bams, how="left", on="model_id")
+    bams = id_bams(src_bams)
 
     # generate sample/sequencing/CDS IDs
     bams = assign_cds_ids(bams, uuid_namespace)
@@ -58,9 +32,7 @@ def do_upsert_delivery_bams(
     terra_workspace.upload_entities(bams)
 
 
-def id_bams(
-    bams: TypedDataFrame[ObjectMetadata], legacy_bams_csv: Path
-) -> TypedDataFrame[DeliveryBams]:
+def id_bams(bams: TypedDataFrame[ObjectMetadata]) -> TypedDataFrame[DeliveryBams]:
     bams_w_ids = bams.copy()
 
     # extract the Gumbo model ID from the BAM filenames
@@ -74,10 +46,6 @@ def id_bams(
         raise ValueError("There are BAM files not named with model IDs (ACH-*)")
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
-
-    # read in "legacy_delivery" BAMs that exist in a different GCS location
-    legacy_bams = pd.read_csv(legacy_bams_csv)
-    bams_w_ids = pd.concat([bams_w_ids, legacy_bams])
 
     bams_w_ids["bam_id"] = bams_w_ids["bam_url"].apply(os.path.basename)
 

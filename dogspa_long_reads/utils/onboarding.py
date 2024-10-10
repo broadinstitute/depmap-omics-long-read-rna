@@ -24,6 +24,7 @@ from dogspa_long_reads.types import (
 from dogspa_long_reads.utils.gcp import (
     check_file_sizes,
     copy_to_cclebams,
+    get_objects_metadata,
     update_sample_file_urls,
 )
 from dogspa_long_reads.utils.utils import (
@@ -36,8 +37,10 @@ from gumbo_gql_client import omics_sequencing_insert_input
 
 def do_onboard_samples(
     gcp_project_id: str,
-    gcs_destination_bucket: str,
-    gcs_destination_prefix: str,
+    unaligned_gcs_destination_bucket: str,
+    unaligned_gcs_destination_prefix: str,
+    aligned_gcs_destination_bucket: str,
+    aligned_gcs_destination_prefix: str,
     terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
     dry_run: bool = False,
@@ -67,7 +70,7 @@ def do_onboard_samples(
             ]
         ]
         .dropna()  # remove samples that haven't been aligned yet
-        .rename(columns={"cds_id": "sample_id"})
+        .rename(columns={"cds_id": "sequencing_id"})
         .reset_index(drop=True)
     )
 
@@ -98,22 +101,68 @@ def do_onboard_samples(
     samples = join_short_read_metadata(samples, seq_table)
 
     # check that BAM file sizes are above minimum threshold
-    samples, blacklisted = check_file_sizes(samples)
-    stats["n with BAM file too small"] = blacklisted.sum()
-    report["BAM file too small"] = samples.loc[blacklisted]
+    # samples, blacklisted = check_file_sizes(samples)
+    # stats["n with BAM file too small"] = blacklisted.sum()
+    # report["BAM file too small"] = samples.loc[blacklisted]
 
     # copy files to our own bucket
-    sample_files = copy_to_cclebams(
-        samples, gcp_project_id, gcs_destination_bucket, gcs_destination_prefix, dry_run
+    unaligned_sample_files = copy_to_cclebams(
+        samples.loc[~samples["already_in_gumbo"]],
+        bam_bai_colnames=["delivery_bam"],
+        gcp_project_id=gcp_project_id,
+        gcs_destination_bucket=unaligned_gcs_destination_bucket,
+        gcs_destination_prefix=unaligned_gcs_destination_prefix,
+        dry_run=dry_run,
+    )
+
+    aligned_sample_files = copy_to_cclebams(
+        samples.loc[~samples["already_in_gumbo"]],
+        bam_bai_colnames=["aligned_bam", "aligned_bai"],
+        gcp_project_id=gcp_project_id,
+        gcs_destination_bucket=aligned_gcs_destination_bucket,
+        gcs_destination_prefix=aligned_gcs_destination_prefix,
+        dry_run=dry_run,
     )
 
     # replace URLs with ones for our bucket whenever the copy operation succeeded
-    samples, blacklisted = update_sample_file_urls(samples, sample_files)
-    stats["n with failed file copies"] = blacklisted.sum()
-    report["failed copies"] = samples.loc[blacklisted]
+    samples = update_sample_file_urls(
+        samples, unaligned_sample_files, bam_bai_colnames=["unaligned_bam_filepath"]
+    )
+    samples = update_sample_file_urls(
+        samples, aligned_sample_files, bam_bai_colnames=["bam_filepath", "bai_filepath"]
+    )
+
+    missing_files = pd.Series(
+        samples[["unaligned_bam_filepath", "bam_filepath", "bai_filepath"]]
+        .isna()
+        .any(axis=1)
+    )
+    samples.loc[missing_files, "issue"] = samples.loc[missing_files, "issue"].apply(
+        lambda x: x.union({"couldn't copy BAM/BAI"})
+    )
+    samples.loc[missing_files, "blacklist"] = True
+
+    stats["n with failed file copies"] = missing_files.sum()
+    report["failed copies"] = samples.loc[missing_files]
+
+    # get object metadata for the aligned BAMs we just copied
+    copied_aligned_bams = get_objects_metadata(
+        samples.loc[~samples["already_in_gumbo"], "bam_filepath"]
+    ).rename(
+        columns={
+            "url": "bam_filepath",
+            "crc32c": "bam_crc32c",
+            "size": "bam_size",
+            "gcs_obj_updated_at": "bam_filepath",
+        }
+    )
+
+    samples_complete = samples.merge(copied_aligned_bams, how="left", on="bam_filepath")
 
     # rename and set some columns for Gumbo
-    gumbo_samples = apply_col_map(samples.loc[~samples["already_in_gumbo"]])
+    gumbo_samples = apply_col_map(
+        samples_complete.loc[~samples_complete["already_in_gumbo"]]
+    )
 
     # increment version numbers for samples with profile IDs already in seq table
     gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
@@ -124,7 +173,7 @@ def do_onboard_samples(
     report["successfully uploaded"] = gumbo_samples
 
     # upload the samples to Terra
-    upsert_terra_samples(terra_workspace, samples, dry_run)
+    upsert_terra_samples(terra_workspace, samples_complete, dry_run)
 
     send_slack_message(
         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
@@ -285,26 +334,24 @@ def apply_col_map(
     gumbo_samples["expected_type"] = "long_read_rna"
     gumbo_samples["sequencing_date"] = gumbo_samples["gcs_obj_updated_at"]
     gumbo_samples["stranded"] = True
+    gumbo_samples["sequencing_date"] = gumbo_samples["update_time"]
 
-    # rename columns for Gumbo
-    gumbo_samples = gumbo_samples.rename(
-        columns={
-            "bam_url": "bam_filepath",
-            "size": "bam_size",
-            "gcs_obj_updated_at": "update_time",
-            "crc32c": "bam_crc32c_hash",
-        }
-    ).loc[
+    # select columns for Gumbo
+    gumbo_samples = gumbo_samples.rename().loc[
         :,
         [
             "sequencing_id",
             "bam_filepath",
-            "profile_id",
+            "bai_filepath",
+            "bam_crc32c_hash",
             "bam_size",
+            "unaligned_bam_filepath",
+            "unaligned_bam_crc32c_hash",
+            "unaligned_bam_size",
+            "profile_id",
             "update_time",
             "sequencing_date",
             "source",
-            "bam_crc32c_hash",
             "expected_type",
             "issue",
             "blacklist",

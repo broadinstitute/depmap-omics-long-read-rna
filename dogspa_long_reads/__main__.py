@@ -116,8 +116,18 @@ def delta_align_delivery_bams(ctx: typer.Context) -> None:
 def onboard_samples(ctx: typer.Context) -> None:
     do_onboard_samples(
         gcp_project_id=config["gcp_project_id"],
-        gcs_destination_bucket=config["onboarding"]["gcs_destination"]["bucket"],
-        gcs_destination_prefix=config["onboarding"]["gcs_destination"]["prefix"],
+        unaligned_gcs_destination_bucket=config["onboarding"][
+            "unaligned_gcs_destination"
+        ]["bucket"],
+        unaligned_gcs_destination_prefix=config["onboarding"][
+            "unaligned_gcs_destination"
+        ]["prefix"],
+        aligned_gcs_destination_bucket=config["onboarding"]["aligned_gcs_destination"][
+            "bucket"
+        ],
+        aligned_gcs_destination_prefix=config["onboarding"]["aligned_gcs_destination"][
+            "prefix"
+        ],
         terra_workspace=ctx.obj["terra_workspace"],
         gumbo_client=ctx.obj["gumbo_client"],
         dry_run=config["onboarding"]["dry_run"],
