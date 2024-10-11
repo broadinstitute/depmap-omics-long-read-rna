@@ -54,7 +54,6 @@ class ObjectMetadata(CoercedDataFrame):
 
 
 class DeliveryBams(CoercedDataFrame):
-    delivery_bam_id: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)

@@ -27,7 +27,7 @@ def do_upsert_delivery_bams(
     bams = assign_cds_ids(bams, uuid_namespace)
 
     # upsert to Terra data table
-    bam_ids = bams.pop("delivery_bam_id")
+    bam_ids = bams.pop("cds_id")
     bams.insert(0, "entity:delivery_bam_id", bam_ids)
     terra_workspace.upload_entities(bams)
 
@@ -51,7 +51,6 @@ def id_bams(bams: TypedDataFrame[ObjectMetadata]) -> TypedDataFrame[DeliveryBams
 
     bams_w_ids = bams_w_ids.rename(
         columns={
-            "bam_id": "delivery_bam_id",
             "bam_url": "delivery_bam",
             "crc32c": "delivery_bam_crc32c",
             "size": "delivery_bam_size",
@@ -80,7 +79,6 @@ def assign_cds_ids(
         uuid_namespace=uuid_namespace,
         uuid_col_name="cds_id",
         subset=[
-            "model_id",
             "delivery_bam_crc32c",
             "delivery_bam_size",
             "delivery_bam_updated_at",

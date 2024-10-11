@@ -22,3 +22,10 @@ prefix = "long_read_rna_hg38/"
 repo_namespace = "Long_Read_Omics"
 workspace_namespace = "broad-firecloud-ccle"
 workspace_name = "Long_Read_Omics"
+
+[terra.align_long_reads]
+repo_method_name = "align_long_reads"
+method_config_name = "align_long_reads"
+method_synopsis = "Align long read uBAM"
+workflow_wdl_path = "./workflows/align_long_reads/align_long_reads.wdl"
+method_config_json_path = "./workflows/align_long_reads/align_long_reads.json"
