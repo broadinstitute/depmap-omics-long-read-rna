@@ -68,7 +68,7 @@ class SamplesWithCDSIDs(DeliveryBams):
 
 
 class OnboardingSamples(CoercedDataFrame):
-    sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    sequencing_id: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
@@ -90,26 +90,30 @@ class SamplesWithMetadata(SamplesMaybeInGumbo):
 
 
 class SamplesWithShortReadMetadata(SamplesWithMetadata):
-    main_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class CopiedSampleFiles(SamplesWithCDSIDs):
+class CopiedSampleFiles(CoercedDataFrame):
+    sequencing_id: Series[pd.StringDtype]
+    url_kind: Series[pd.StringDtype]
     new_url: Series[pd.StringDtype]
+    url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
 
 
 class SamplesForGumbo(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
+    unaligned_bam_filepath: Series[pd.StringDtype]
+    unaligned_bam_size: Series[pd.StringDtype]
+    unaligned_bam_crc32c_hash: Series[pd.StringDtype]
     bam_filepath: Series[pd.StringDtype]
+    bam_size: Series[pd.StringDtype]
+    bam_crc32c_hash: Series[pd.StringDtype]
+    bai_filepath: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
-    bam_size: Series[pd.Int64Dtype]
     update_time: Series[pd.StringDtype]
     sequencing_date: Series[pd.StringDtype]
     source: Series[pd.StringDtype]
-    bam_crc32c_hash: Series[pd.StringDtype]
     expected_type: Series[pd.StringDtype]
     issue: Series[pd.StringDtype] = pa.Field(nullable=True)
     blacklist: Series[pd.BooleanDtype]
