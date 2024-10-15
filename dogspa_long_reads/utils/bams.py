@@ -90,7 +90,7 @@ def assign_cds_ids(
         uuid_to_base62
     ).str.slice(-6)
 
-    return TypedDataFrame[SamplesWithCDSIDs](samples_w_ids)
+    return type_data_frame(samples_w_ids, SamplesWithCDSIDs)
 
 
 def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:

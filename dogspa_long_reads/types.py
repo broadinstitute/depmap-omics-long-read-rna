@@ -84,7 +84,7 @@ class SamplesMaybeInGumbo(OnboardingSamples):
     already_in_gumbo: Series[pd.BooleanDtype]
 
 
-class SamplesWithMetadata(SamplesMaybeInGumbo):
+class SamplesWithMetadata(OnboardingSamples):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
 

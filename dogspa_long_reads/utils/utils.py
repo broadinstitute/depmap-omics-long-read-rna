@@ -9,6 +9,7 @@ import pandas as pd
 import requests
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.types import PanderaBaseSchema
+from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from dogspa_long_reads.types import PydanticBaseModel
@@ -28,7 +29,7 @@ def model_to_df(
     """
 
     records = model.model_dump()[records_key]
-    return TypedDataFrame[pandera_schema](records)
+    return type_data_frame(records, pandera_schema)
 
 
 def df_to_model(

@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
-from nebelung.utils import expand_dict_columns
+from nebelung.utils import expand_dict_columns, type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from dogspa_long_reads.types import (
@@ -83,7 +83,7 @@ def do_onboard_samples(
     )
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
     samples = samples.loc[~samples["already_in_gumbo"]].drop(columns="already_in_gumbo")
-    report["not yet in Gumbo"] = samples.loc[~samples["already_in_gumbo"]]
+    report["not yet in Gumbo"] = samples
 
     if len(samples) == 0:
         send_slack_message(
@@ -107,7 +107,7 @@ def do_onboard_samples(
 
     # copy files to our own bucket
     unaligned_sample_files = copy_to_cclebams(
-        samples.loc[~samples["already_in_gumbo"]],
+        samples,
         bam_bai_colnames=["delivery_bam"],
         gcp_project_id=gcp_project_id,
         gcs_destination_bucket=unaligned_gcs_destination_bucket,
@@ -116,7 +116,7 @@ def do_onboard_samples(
     )
 
     aligned_sample_files = copy_to_cclebams(
-        samples.loc[~samples["already_in_gumbo"]],
+        samples,
         bam_bai_colnames=["aligned_bam", "aligned_bai"],
         gcp_project_id=gcp_project_id,
         gcs_destination_bucket=aligned_gcs_destination_bucket,
@@ -146,9 +146,7 @@ def do_onboard_samples(
     report["failed copies"] = samples.loc[missing_files]
 
     # get object metadata for the aligned BAMs we just copied
-    copied_aligned_bams = get_objects_metadata(
-        samples.loc[~samples["already_in_gumbo"], "aligned_bam"]
-    ).rename(
+    copied_aligned_bams = get_objects_metadata(samples["aligned_bam"]).rename(
         columns={
             "url": "aligned_bam",
             "crc32c": "bam_crc32c_hash",
@@ -160,9 +158,7 @@ def do_onboard_samples(
     samples_complete = samples.merge(copied_aligned_bams, how="left", on="aligned_bam")
 
     # rename and set some columns for Gumbo
-    gumbo_samples = apply_col_map(
-        samples_complete.loc[~samples_complete["already_in_gumbo"]]
-    )
+    gumbo_samples = apply_col_map(samples_complete)
 
     # increment version numbers for samples with profile IDs already in seq table
     gumbo_samples = increment_sample_versions(gumbo_samples, seq_table)
@@ -175,14 +171,14 @@ def do_onboard_samples(
     # upload the samples to Terra
     # upsert_terra_samples(terra_workspace, samples_complete, dry_run)
 
-    send_slack_message(
-        os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-        os.getenv("SLACK_WEBHOOK_URL_STATS"),
-        stats,
-        report,
-        terra_workspace,
-        dry_run,
-    )
+    # send_slack_message(
+    #     os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+    #     os.getenv("SLACK_WEBHOOK_URL_STATS"),
+    #     stats,
+    #     report,
+    #     terra_workspace,
+    #     dry_run,
+    # )
 
 
 def explode_and_expand_models(
@@ -200,11 +196,11 @@ def explode_and_expand_models(
         seq_table["sequencing_id"]
     )
 
-    seq_table[["blacklist_omics", "blacklist"]] = seq_table[
-        ["blacklist_omics", "blacklist"]
-    ].fillna(False)
+    seq_table[["blacklist_omics", "blacklist"]] = (
+        seq_table[["blacklist_omics", "blacklist"]].astype("boolean").fillna(False)
+    )
 
-    return TypedDataFrame[SeqTable](seq_table.drop(columns="main_sequencing_id"))
+    return type_data_frame(seq_table.drop(columns="main_sequencing_id"), SeqTable)
 
 
 def join_metadata(
@@ -224,9 +220,13 @@ def join_metadata(
         ],
     ]
 
+    # need to arbitrarily de-dup since there isn't a way of arbitrarily picking a
+    # profile when more than one might belong to an model condition
+    metadata = metadata.drop_duplicates(subset="model_id")
+
     samples_annot = samples.merge(metadata, how="left", on="model_id")
 
-    return TypedDataFrame[SamplesWithMetadata](samples_annot)
+    return type_data_frame(samples_annot, SamplesWithMetadata)
 
 
 def join_short_read_metadata(
@@ -272,7 +272,7 @@ def join_short_read_metadata(
 
     samples_annot = samples.merge(sr_rna, how="left", on="model_id")
 
-    return TypedDataFrame[SamplesWithShortReadMetadata](samples_annot)
+    return type_data_frame(samples_annot, SamplesWithShortReadMetadata)
 
 
 def check_already_in_gumbo(
@@ -297,11 +297,11 @@ def check_already_in_gumbo(
         .astype("bool")
     )
 
-    return TypedDataFrame[SamplesMaybeInGumbo](samples)
+    return type_data_frame(samples, SamplesMaybeInGumbo)
 
 
 def apply_col_map(
-    samples: TypedDataFrame[SamplesWithCDSIDs],
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
 ) -> TypedDataFrame[SamplesForGumbo]:
     """
     Rename the columns in the samples data frame to their corresponding names in Gumbo.
@@ -315,17 +315,20 @@ def apply_col_map(
     gumbo_samples = samples.copy()
     gumbo_samples["source"] = "DEPMAP"
     gumbo_samples["expected_type"] = "long_read_rna"
-    gumbo_samples["sequencing_date"] = gumbo_samples["update_time"]
+    gumbo_samples["sequencing_date"] = gumbo_samples["delivery_bam_updated_at"]
+    gumbo_samples["update_time"] = gumbo_samples["delivery_bam_updated_at"]
     gumbo_samples["stranded"] = True
 
     # select columns for Gumbo
     gumbo_samples = gumbo_samples.rename(
         columns={
-            "aligned_bam": "bam_filepath",
-            "aligned_bai": "bai_filepath",
             "delivery_bam": "unaligned_bam_filepath",
             "delivery_bam_size": "unaligned_bam_size",
             "delivery_bam_crc32c": "unaligned_bam_crc32c_hash",
+            "aligned_bam": "bam_filepath",
+            "aligned_bai": "bai_filepath",
+            "aligned_bam_size": "bam_size",
+            "aligned_bam_crc32c": "bam_crc32c_hash",
         }
     ).loc[
         :,
@@ -353,7 +356,7 @@ def apply_col_map(
         lambda x: "; ".join(x) if len(x) > 0 else pd.NA
     )
 
-    return TypedDataFrame[SamplesForGumbo](gumbo_samples)
+    return type_data_frame(gumbo_samples, SamplesForGumbo)
 
 
 def increment_sample_versions(
@@ -391,7 +394,7 @@ def increment_sample_versions(
     versioned_samples["version"] = 1 + versioned_samples["version_n"]
     versioned_samples = versioned_samples.drop(columns="version_n")
 
-    return TypedDataFrame[VersionedSamples](versioned_samples)
+    return type_data_frame(versioned_samples, VersionedSamples)
 
 
 def upload_to_gumbo(

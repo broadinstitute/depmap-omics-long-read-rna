@@ -5,6 +5,7 @@ from urllib.parse import urlunsplit
 
 import pandas as pd
 from google.cloud import storage
+from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 from tqdm import tqdm
 
@@ -58,7 +59,7 @@ def get_objects_metadata(urls: Iterable[str]) -> TypedDataFrame[ObjectMetadata]:
         df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
     )
 
-    return TypedDataFrame[ObjectMetadata](df)
+    return type_data_frame(df, ObjectMetadata)
 
 
 def list_blobs(
@@ -123,7 +124,7 @@ def list_blobs(
         df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
     )
 
-    return TypedDataFrame[ObjectMetadata](df)
+    return type_data_frame(df, ObjectMetadata)
 
 
 def check_file_sizes(
@@ -146,7 +147,7 @@ def check_file_sizes(
     )
     samples.loc[bam_too_small, "blacklist"] = True
 
-    return TypedDataFrame[SamplesWithShortReadMetadata](samples), bam_too_small
+    return type_data_frame(samples, SamplesWithShortReadMetadata), bam_too_small
 
 
 def copy_to_cclebams(
@@ -241,7 +242,7 @@ def copy_to_cclebams(
 
     sample_files = sample_files.merge(pd.DataFrame(copy_results), how="inner", on="url")
 
-    return TypedDataFrame[CopiedSampleFiles](sample_files)
+    return type_data_frame(sample_files, CopiedSampleFiles)
 
 
 def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
@@ -301,4 +302,4 @@ def update_sample_file_urls(
         samples_updated[c] = samples_updated["new_url"]
         samples_updated = samples_updated.drop(columns=["url", "new_url"])
 
-    return TypedDataFrame[SamplesWithShortReadMetadata](samples_updated)
+    return type_data_frame(samples_updated, SamplesWithShortReadMetadata)
