@@ -12,7 +12,7 @@ from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.types import PydanticBaseModel
+from depmap_omics_long_read_rna.types import PydanticBaseModel
 
 
 def model_to_df(

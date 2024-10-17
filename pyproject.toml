@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "dogspa-long-reads"
+name = "depmap-omics-long-read-rna"
 version = "0.1.0"
-description = "Depmap Omics Gumbo Syncing, Pre-processing, and Attestation (Long Reads)"
+description = "Depmap Omics Long Read RNA workflows and automation"
 authors = []
 readme = "README.md"
 

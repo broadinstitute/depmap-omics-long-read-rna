@@ -8,7 +8,7 @@ from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import expand_dict_columns, type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
-from dogspa_long_reads.types import (
+from depmap_omics_long_read_rna.types import (
     DeliveryBams,
     GumboClient,
     ModelsAndChildren,
@@ -21,12 +21,12 @@ from dogspa_long_reads.types import (
     SeqTable,
     VersionedSamples,
 )
-from dogspa_long_reads.utils.gcp import (
+from depmap_omics_long_read_rna.utils.gcp import (
     copy_to_cclebams,
     get_objects_metadata,
     update_sample_file_urls,
 )
-from dogspa_long_reads.utils.utils import (
+from depmap_omics_long_read_rna.utils.utils import (
     df_to_model,
     model_to_df,
     send_slack_message,
@@ -85,16 +85,16 @@ def do_onboard_samples(
     samples = samples.loc[~samples["already_in_gumbo"]].drop(columns="already_in_gumbo")
     report["not yet in Gumbo"] = samples
 
-    if len(samples) == 0:
-        send_slack_message(
-            os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-            os.getenv("SLACK_WEBHOOK_URL_STATS"),
-            stats,
-            report,
-            terra_workspace,
-            dry_run,
-        )
-        return
+    # if len(samples) == 0:
+    #     send_slack_message(
+    #         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
+    #         os.getenv("SLACK_WEBHOOK_URL_STATS"),
+    #         stats,
+    #         report,
+    #         terra_workspace,
+    #         dry_run,
+    #     )
+    #     return
 
     # join metadata to current samples
     samples = join_metadata(samples, seq_table_lr)
@@ -169,7 +169,7 @@ def do_onboard_samples(
     report["successfully uploaded"] = gumbo_samples
 
     # upload the samples to Terra
-    # upsert_terra_samples(terra_workspace, samples_complete, dry_run)
+    upsert_terra_samples(terra_workspace, samples_complete, dry_run)
 
     # send_slack_message(
     #     os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
@@ -425,7 +425,9 @@ def upload_to_gumbo(
 
     if len(samples) > 0:
         objects = df_to_model(samples_to_upload, omics_sequencing_insert_input)
-        res = gumbo_client.insert_omics_sequencings(username="dogspa", objects=objects)
+        res = gumbo_client.insert_omics_sequencings(
+            username="depmap-omics-long-read-rna", objects=objects
+        )
         affected_rows = res.insert_omics_sequencing.affected_rows  # type: ignore
         logging.info(f"Inserted {affected_rows} samples to Gumbo")
 
@@ -433,30 +435,31 @@ def upload_to_gumbo(
 
 
 def upsert_terra_samples(
-    tw: TerraWorkspace, samples: TypedDataFrame[SamplesWithCDSIDs], dry_run: bool
+    terra_workspace: TerraWorkspace,
+    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    dry_run: bool,
 ) -> None:
     """
     Upsert sample and participant data to Terra data tables.
 
-    :param tw: a TerraWorkspace instance
+    :param terra_workspace: a TerraWorkspace instance
     :param samples: the data frame of samples
     :param dry_run: whether to skip updates to external data stores
     """
 
-    logging.info(f"Upserting data to {tw.workspace_name} data tables")
+    logging.info(f"Upserting data to {terra_workspace.workspace_name} data tables")
 
     renames = {
         "sequencing_id": "entity:sample_id",
         "model_id": "participant_id",
-        "bam_url": "LR_bam_filepath",
+        "delivery_bam": "LR_bam_filepath",
+        "aligned_bam": "minimap2_bam",
+        "aligned_bai": "minimap2_bam_index",
         "cell_line_name": "CellLineName",
         "stripped_cell_line_name": "StrippedCellLineName",
         "model_condition_id": "ModelCondition",
         "profile_id": "LongReadProfileID",
         "sr_profile_id": "ShortReadProfileID",
-        "sr_bai_filepath": "SR_bai_filepath",
-        "sr_bam_filepath": "SR_bam_filepath",
-        "main_sequencing_id": "MainSequencingID",
     }
 
     terra_samples = samples.rename(columns=renames).loc[:, renames.values()]
@@ -475,13 +478,13 @@ def upsert_terra_samples(
     if dry_run:
         logging.info(f"(skipping) Upserting {len(participants)} participants")
     else:
-        tw.upload_entities(participants)
+        terra_workspace.upload_entities(participants)
 
     # upsert samples
     if dry_run:
         logging.info(f"(skipping) Upserting {len(terra_samples)} samples")
     else:
-        tw.upload_entities(terra_samples.drop(columns="participant_id"))
+        terra_workspace.upload_entities(terra_samples.drop(columns="participant_id"))
 
     # upsert the join table between participants and samples
     participant_samples = (
@@ -504,4 +507,4 @@ def upsert_terra_samples(
             f"(skipping) Upserting {len(participant_samples)} participant-samples"
         )
     else:
-        tw.upload_entities(participant_samples)
+        terra_workspace.upload_entities(participant_samples)

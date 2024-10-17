@@ -4,7 +4,7 @@ from io import StringIO
 import pandas as pd
 from google.cloud import storage
 
-from dogspa_long_reads.utils.gcp import list_blobs
+from depmap_omics_long_read_rna.utils.gcp import list_blobs
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.max_colwidth", 100)

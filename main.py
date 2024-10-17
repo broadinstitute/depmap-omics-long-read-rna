@@ -11,12 +11,12 @@ from dotenv import load_dotenv
 from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 
-from dogspa_long_reads.types import GumboClient
-from dogspa_long_reads.utils.bams import (
+from depmap_omics_long_read_rna.types import GumboClient
+from depmap_omics_long_read_rna.utils.bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
-from dogspa_long_reads.utils.onboarding import do_onboard_samples
+from depmap_omics_long_read_rna.utils.onboarding import do_onboard_samples
 
 
 @functions_framework.cloud_event

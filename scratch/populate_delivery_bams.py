@@ -4,10 +4,10 @@ import pandas as pd
 from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
-from dogspa_long_reads.types import GumboClient, ModelsAndChildren
-from dogspa_long_reads.utils.bams import assign_cds_ids
-from dogspa_long_reads.utils.onboarding import explode_and_expand_models
-from dogspa_long_reads.utils.utils import model_to_df
+from depmap_omics_long_read_rna.types import GumboClient, ModelsAndChildren
+from depmap_omics_long_read_rna.utils.bams import assign_cds_ids
+from depmap_omics_long_read_rna.utils.onboarding import explode_and_expand_models
+from depmap_omics_long_read_rna.utils.utils import model_to_df
 
 load_dotenv()
 
@@ -58,8 +58,7 @@ assert ~delivery_bams_pb_pre["model_id"].duplicated().any()
 assert len(delivery_bams_pb_pre) == len(pb_pre)
 
 # sample swap
-swapped = tag["model_id"].isin({"ACH-001508", "ACH-001625"})
-tag.loc[swapped, "model_id"] = tag.loc[swapped, "model_id"].iloc[::-1]
+# swapped = tag["model_id"].isin({"ACH-001508", "ACH-001625"})
 
 delivery_bams_tag = tag.merge(
     models.dropna(subset="smid_ordered"), how="left", on="model_id"

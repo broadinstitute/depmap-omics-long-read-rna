@@ -9,7 +9,7 @@ from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 from tqdm import tqdm
 
-from dogspa_long_reads.types import (
+from depmap_omics_long_read_rna.types import (
     CopiedSampleFiles,
     ObjectMetadata,
     SamplesWithShortReadMetadata,

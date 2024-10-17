@@ -1,4 +1,4 @@
-title = "DOGSPA Long Read RNA"
+title = "DepMap Omics Long Read RNA"
 
 gcp_project_id = "depmap-omics"
 uuid_namespace = "00000000-0000-0000-0000-000000000000"

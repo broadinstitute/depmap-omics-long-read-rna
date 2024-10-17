@@ -10,10 +10,13 @@ from google.cloud import storage
 from nebelung.terra_workspace import TerraWorkspace
 from tqdm import tqdm
 
-from dogspa_long_reads.types import GumboClient, ModelsAndChildren
-from dogspa_long_reads.utils.gcp import get_objects_metadata, rewrite_blob
-from dogspa_long_reads.utils.onboarding import explode_and_expand_models, join_metadata
-from dogspa_long_reads.utils.utils import df_to_model, model_to_df
+from depmap_omics_long_read_rna.types import GumboClient, ModelsAndChildren
+from depmap_omics_long_read_rna.utils.gcp import get_objects_metadata, rewrite_blob
+from depmap_omics_long_read_rna.utils.onboarding import (
+    explode_and_expand_models,
+    join_metadata,
+)
+from depmap_omics_long_read_rna.utils.utils import df_to_model, model_to_df
 from gumbo_gql_client import omics_sequencing_insert_input
 
 load_dotenv()
@@ -220,7 +223,9 @@ gumbo_samples = gumbo_samples.rename(
 
 objects = df_to_model(gumbo_samples, omics_sequencing_insert_input)
 objects[0].model_dump()
-res = gumbo_client.insert_omics_sequencings(username="dogspa", objects=objects)
+res = gumbo_client.insert_omics_sequencings(
+    username="depmap-omics-long-read-rna", objects=objects
+)
 
 models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
 seq_table = explode_and_expand_models(models)
