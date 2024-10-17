@@ -18,8 +18,9 @@ python-baseconv = "^1.2.2"
 google-cloud-logging = "^3.9.0"
 python-dotenv = "^1.0.1"
 ariadne-codegen = "^0.14.0"
-nebelung = "^1.1.0"
+nebelung = "^1.1.2"
 typer = "^0.12.5"
+google-cloud-secret-manager = "^2.20.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.6.8"

@@ -21,7 +21,7 @@ tag = pd.read_csv("./data/tag.csv")
 
 gumbo_client = GumboClient(
     url=os.environ["HASURA_URL"],
-    username="snp_str_qc",
+    username="depmap-omics-long-read-rna",
     headers={"X-Hasura-Admin-Secret": os.environ["HASURA_ADMIN_SECRET"]},
 )
 

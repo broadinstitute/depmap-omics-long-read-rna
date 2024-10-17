@@ -7,12 +7,45 @@ from typing import List, Optional, OrderedDict, Type
 import baseconv
 import pandas as pd
 import requests
+from google.cloud import secretmanager_v1
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from depmap_omics_long_read_rna.types import PydanticBaseModel
+
+
+def get_hasura_creds(gumbo_env: str) -> dict[str, str]:
+    """
+    Get URL and password for Hasura GraphQL API.
+
+    :param gumbo_env: the Gumbo env to get credentials for ('staging' or 'prod')
+    :return: a dictionary with the GraphQL API URL and password
+    """
+
+    return {
+        "url": get_secret_from_sm(
+            f"projects/814840278102/secrets/hasura-{gumbo_env}-api-url/versions/latest"
+        ),
+        "password": get_secret_from_sm(
+            f"projects/814840278102/secrets/hasura-admin-secret-{gumbo_env}/versions/latest"
+        ),
+    }
+
+
+def get_secret_from_sm(name: str) -> str:
+    """
+    Get the value of a secret from GCP Secret Manager.
+
+    :param name: the fully-qualified name of a secret
+    :return: the secret's decoded value
+    """
+
+    client = secretmanager_v1.SecretManagerServiceClient()
+    request = secretmanager_v1.AccessSecretVersionRequest(mapping={"name": name})
+    response = client.access_secret_version(request=request)
+    return response.payload.data.decode()
 
 
 def model_to_df(

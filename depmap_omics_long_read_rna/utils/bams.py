@@ -120,11 +120,11 @@ def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
         wnamespace=terra_workspace.workspace_namespace,
         workspace=terra_workspace.workspace_name,
         cnamespace=terra_workspace.workspace_namespace,  # happens to be the same
-        config="Minimap2_LR",  # run from Dockstore using latest version of config
+        config="align_long_reads",
         entity=bam_set_id,
         etype="delivery_bam_set",
         expression="this.delivery_bams",
         use_callcache=True,
         use_reference_disks=False,
-        memory_retry_multiplier=1.2,
+        memory_retry_multiplier=1.5,
     )

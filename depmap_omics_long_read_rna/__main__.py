@@ -16,6 +16,7 @@ from depmap_omics_long_read_rna.utils.bams import (
     do_upsert_delivery_bams,
 )
 from depmap_omics_long_read_rna.utils.onboarding import do_onboard_samples
+from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, get_secret_from_sm
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.max_colwidth", 50)
@@ -48,6 +49,11 @@ def make_workflow_from_config(
     :return: a TerraWorkflow instance
     """
 
+    # need a GitHub PAT for persisting WDL in gists
+    github_pat = get_secret_from_sm(
+        "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
+    )
+
     return TerraWorkflow(
         repo_namespace=repo_namespace,
         repo_method_name=workflow_config["repo_method_name"],
@@ -57,6 +63,7 @@ def make_workflow_from_config(
         method_config_json_path=Path(
             workflow_config["method_config_json_path"]
         ).resolve(),
+        github_pat=github_pat,
     )
 
 
@@ -72,6 +79,9 @@ def main(
     with open(config_path, "rb") as f:
         config.update(tomllib.load(f))
 
+    # get URL and password for Gumbo GraphQL API
+    hasura_creds = get_hasura_creds("prod")
+
     ctx.obj = {
         "terra_workspace": TerraWorkspace(
             workspace_namespace=config["terra"]["workspace_namespace"],
@@ -79,9 +89,9 @@ def main(
             owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         ),
         "gumbo_client": GumboClient(
-            url=os.environ["HASURA_URL"],
-            username="snp_str_qc",
-            headers={"X-Hasura-Admin-Secret": os.environ["HASURA_ADMIN_SECRET"]},
+            url=hasura_creds["url"],
+            username="depmap-omics-long-read-rna",
+            headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
         ),
     }
 
