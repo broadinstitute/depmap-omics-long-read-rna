@@ -89,10 +89,6 @@ class SamplesWithMetadata(OnboardingSamples):
     profile_id: Series[pd.StringDtype]
 
 
-class SamplesWithShortReadMetadata(SamplesWithMetadata):
-    sr_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
 class CopiedSampleFiles(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
     url_kind: Series[pd.StringDtype]
@@ -121,6 +117,12 @@ class SamplesForGumbo(CoercedDataFrame):
 
 class VersionedSamples(SamplesForGumbo):
     version: Series[int]
+
+
+class ShortReadMetadata(CoercedDataFrame):
+    short_read_sequencing_id: Series[pd.StringDtype]
+    short_read_profile_id: Series[pd.StringDtype]
+    model_id: Series[pd.StringDtype]
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)

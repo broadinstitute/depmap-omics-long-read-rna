@@ -14,7 +14,10 @@ from depmap_omics_long_read_rna.utils.bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
-from depmap_omics_long_read_rna.utils.onboarding import do_onboard_samples
+from depmap_omics_long_read_rna.utils.onboarding import (
+    do_join_short_read_data,
+    do_onboard_samples,
+)
 from depmap_omics_long_read_rna.utils.utils import get_hasura_creds
 
 
@@ -88,6 +91,17 @@ def run(cloud_event: CloudEvent) -> None:
         )
 
         do_delta_align_delivery_bams(terra_workspace=terra_workspace)
+
+        short_read_terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+            workspace_name=config["terra"]["short_read_workspace_name"],
+        )
+
+        do_join_short_read_data(
+            terra_workspace=terra_workspace,
+            short_read_terra_workspace=short_read_terra_workspace,
+            gumbo_client=gumbo_client,
+        )
 
     else:
         raise NotImplementedError(f"Invalid command: {ce_data['cmd']}")

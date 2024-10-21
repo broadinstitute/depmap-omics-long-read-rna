@@ -12,7 +12,7 @@ from tqdm import tqdm
 from depmap_omics_long_read_rna.types import (
     CopiedSampleFiles,
     ObjectMetadata,
-    SamplesWithShortReadMetadata,
+    SamplesWithMetadata,
 )
 
 
@@ -128,8 +128,8 @@ def list_blobs(
 
 
 def check_file_sizes(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
-) -> Tuple[TypedDataFrame[SamplesWithShortReadMetadata], pd.Series]:
+    samples: TypedDataFrame[SamplesWithMetadata],
+) -> Tuple[TypedDataFrame[SamplesWithMetadata], pd.Series]:
     """
     Check whether BAM file sizes are above configured minimum threshold.
 
@@ -147,11 +147,11 @@ def check_file_sizes(
     )
     samples.loc[bam_too_small, "blacklist"] = True
 
-    return type_data_frame(samples, SamplesWithShortReadMetadata), bam_too_small
+    return type_data_frame(samples, SamplesWithMetadata), bam_too_small
 
 
 def copy_to_cclebams(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    samples: TypedDataFrame[SamplesWithMetadata],
     bam_bai_colnames: list[str],
     gcp_project_id: str,
     gcs_destination_bucket: str,
@@ -277,10 +277,10 @@ def rewrite_blob(src_blob: storage.Blob, dest_blob: storage.Blob) -> None:
 
 
 def update_sample_file_urls(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    samples: TypedDataFrame[SamplesWithMetadata],
     sample_files: TypedDataFrame[CopiedSampleFiles],
     bam_bai_colnames: list[str],
-) -> TypedDataFrame[SamplesWithShortReadMetadata]:
+) -> TypedDataFrame[SamplesWithMetadata]:
     """
     Replace BAM URLs with new ones used in `copy_to_depmap_omics_bucket`.
 
@@ -302,4 +302,4 @@ def update_sample_file_urls(
         samples_updated[c] = samples_updated["new_url"]
         samples_updated = samples_updated.drop(columns=["url", "new_url"])
 
-    return type_data_frame(samples_updated, SamplesWithShortReadMetadata)
+    return type_data_frame(samples_updated, SamplesWithMetadata)

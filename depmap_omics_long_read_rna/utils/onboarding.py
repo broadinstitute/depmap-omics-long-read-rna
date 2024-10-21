@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from collections import OrderedDict
 
 import pandas as pd
@@ -15,10 +14,9 @@ from depmap_omics_long_read_rna.types import (
     OnboardingSamples,
     SamplesForGumbo,
     SamplesMaybeInGumbo,
-    SamplesWithCDSIDs,
     SamplesWithMetadata,
-    SamplesWithShortReadMetadata,
     SeqTable,
+    ShortReadMetadata,
     VersionedSamples,
 )
 from depmap_omics_long_read_rna.utils.gcp import (
@@ -29,7 +27,6 @@ from depmap_omics_long_read_rna.utils.gcp import (
 from depmap_omics_long_read_rna.utils.utils import (
     df_to_model,
     model_to_df,
-    send_slack_message,
 )
 from gumbo_gql_client import omics_sequencing_insert_input
 
@@ -98,7 +95,6 @@ def do_onboard_samples(
 
     # join metadata to current samples
     samples = join_metadata(samples, seq_table_lr)
-    samples = join_short_read_metadata(samples, seq_table)
 
     # check that BAM file sizes are above minimum threshold
     # samples, blacklisted = check_file_sizes(samples)
@@ -229,52 +225,6 @@ def join_metadata(
     return type_data_frame(samples_annot, SamplesWithMetadata)
 
 
-def join_short_read_metadata(
-    samples: TypedDataFrame[SamplesWithMetadata], seq_table: TypedDataFrame[SeqTable]
-) -> TypedDataFrame[SamplesWithShortReadMetadata]:
-    # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
-    source_priority = [
-        "BROAD",
-        "DEPMAP",
-        "IBM",
-        "CCLE2",
-        "SANGER",
-        "PRISM",
-        "CCLF",
-        "CHORDOMA",
-        "",
-    ]
-
-    sp_df = pd.DataFrame(
-        {
-            "source": source_priority,
-            "source_priority": list(range(len(source_priority))),
-        }
-    )
-
-    sr = seq_table.loc[
-        seq_table["model_id"].isin(samples["model_id"])
-        & seq_table["datatype"].eq("rna")
-        & ~seq_table["blacklist"]
-        & ~seq_table["blacklist_omics"]
-    ].copy()
-
-    sr["source"] = sr["source"].fillna("")
-    sr = sr.merge(sp_df, how="left", on="source")
-
-    assert sr["source_priority"].notna().all()
-
-    sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
-
-    sr_rna = sr_rna[["model_id", "profile_id"]].rename(
-        columns={"profile_id": "sr_profile_id"}
-    )
-
-    samples_annot = samples.merge(sr_rna, how="left", on="model_id")
-
-    return type_data_frame(samples_annot, SamplesWithShortReadMetadata)
-
-
 def check_already_in_gumbo(
     samples: TypedDataFrame[OnboardingSamples],
     seq_table: TypedDataFrame[SeqTable],
@@ -301,7 +251,7 @@ def check_already_in_gumbo(
 
 
 def apply_col_map(
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    samples: TypedDataFrame[SamplesWithMetadata],
 ) -> TypedDataFrame[SamplesForGumbo]:
     """
     Rename the columns in the samples data frame to their corresponding names in Gumbo.
@@ -436,7 +386,7 @@ def upload_to_gumbo(
 
 def upsert_terra_samples(
     terra_workspace: TerraWorkspace,
-    samples: TypedDataFrame[SamplesWithShortReadMetadata],
+    samples: TypedDataFrame[SamplesWithMetadata],
     dry_run: bool,
 ) -> None:
     """
@@ -459,7 +409,6 @@ def upsert_terra_samples(
         "stripped_cell_line_name": "cell_line_name_stripped",
         "model_condition_id": "model_condition_id",
         "profile_id": "profile_id",
-        "sr_profile_id": "short_read_profile_id",
     }
 
     terra_samples = samples.rename(columns=renames).loc[:, renames.values()]
@@ -508,3 +457,85 @@ def upsert_terra_samples(
         )
     else:
         terra_workspace.upload_entities(participant_samples)
+
+
+def do_join_short_read_data(
+    terra_workspace: TerraWorkspace,
+    short_read_terra_workspace: TerraWorkspace,
+    gumbo_client: GumboClient,
+) -> None:
+    lr_samples = terra_workspace.get_entities("sample")
+    lr_samples["model_id"] = lr_samples["participant"].apply(lambda x: x["entityName"])
+
+    sr_samples = short_read_terra_workspace.get_entities("sample")
+    sr_samples = sr_samples[["sample_id", "star_junctions"]].dropna()
+
+    models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
+    seq_table = explode_and_expand_models(models)
+    seq_table = seq_table.loc[seq_table["expected_type"].isin({"rna", "long_read_rna"})]
+
+    sr_metadata = get_short_read_metadata(lr_samples, seq_table)
+
+    sr_metadata = sr_metadata.merge(
+        sr_samples,
+        how="inner",
+        left_on="short_read_sequencing_id",
+        right_on="sample_id",
+    ).drop(columns="sample_id")
+
+    assert bool(~sr_metadata["model_id"].duplicated().any())
+
+    samples_upsert = (
+        lr_samples[["sample_id", "model_id"]]
+        .merge(sr_metadata, how="inner", on="model_id")
+        .drop(columns="model_id")
+    )
+
+    terra_workspace.upload_entities(samples_upsert)
+
+
+def get_short_read_metadata(
+    lr_samples: pd.DataFrame, seq_table: TypedDataFrame[SeqTable]
+) -> TypedDataFrame[ShortReadMetadata]:
+    # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
+    source_priority = [
+        "BROAD",
+        "DEPMAP",
+        "IBM",
+        "CCLE2",
+        "SANGER",
+        "PRISM",
+        "CCLF",
+        "CHORDOMA",
+        "",
+    ]
+
+    sp_df = pd.DataFrame(
+        {
+            "source": source_priority,
+            "source_priority": list(range(len(source_priority))),
+        }
+    )
+
+    sr = seq_table.loc[
+        seq_table["model_id"].isin(lr_samples["model_id"])
+        & seq_table["datatype"].eq("rna")
+        & ~seq_table["blacklist"]
+        & ~seq_table["blacklist_omics"]
+    ].copy()
+
+    sr["source"] = sr["source"].fillna("")
+    sr = sr.merge(sp_df, how="left", on="source")
+
+    assert sr["source_priority"].notna().all()
+
+    sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
+
+    sr_rna = sr_rna[["model_id", "profile_id", "sequencing_id"]].rename(
+        columns={
+            "profile_id": "short_read_profile_id",
+            "sequencing_id": "short_read_sequencing_id",
+        }
+    )
+
+    return sr_rna

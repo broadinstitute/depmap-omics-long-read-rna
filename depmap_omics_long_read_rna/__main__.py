@@ -15,7 +15,10 @@ from depmap_omics_long_read_rna.utils.bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
-from depmap_omics_long_read_rna.utils.onboarding import do_onboard_samples
+from depmap_omics_long_read_rna.utils.onboarding import (
+    do_join_short_read_data,
+    do_onboard_samples,
+)
 from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, get_secret_from_sm
 
 pd.set_option("display.max_columns", 30)
@@ -141,6 +144,20 @@ def onboard_samples(ctx: typer.Context) -> None:
         terra_workspace=ctx.obj["terra_workspace"],
         gumbo_client=ctx.obj["gumbo_client"],
         dry_run=config["onboarding"]["dry_run"],
+    )
+
+
+@app.command()
+def join_short_read_data(ctx: typer.Context) -> None:
+    short_read_terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+        workspace_name=config["terra"]["short_read_workspace_name"],
+    )
+
+    do_join_short_read_data(
+        terra_workspace=ctx.obj["terra_workspace"],
+        short_read_terra_workspace=short_read_terra_workspace,
+        gumbo_client=ctx.obj["gumbo_client"],
     )
 
 
