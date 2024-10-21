@@ -452,14 +452,14 @@ def upsert_terra_samples(
     renames = {
         "sequencing_id": "entity:sample_id",
         "model_id": "participant_id",
-        "delivery_bam": "LR_bam_filepath",
-        "aligned_bam": "minimap2_bam",
-        "aligned_bai": "minimap2_bam_index",
-        "cell_line_name": "CellLineName",
-        "stripped_cell_line_name": "StrippedCellLineName",
-        "model_condition_id": "ModelCondition",
-        "profile_id": "LongReadProfileID",
-        "sr_profile_id": "ShortReadProfileID",
+        "delivery_bam": "ubam",
+        "aligned_bam": "aligned_bam",
+        "aligned_bai": "aligned_bai",
+        "cell_line_name": "cell_line_name",
+        "stripped_cell_line_name": "cell_line_name_stripped",
+        "model_condition_id": "model_condition_id",
+        "profile_id": "profile_id",
+        "sr_profile_id": "short_read_profile_id",
     }
 
     terra_samples = samples.rename(columns=renames).loc[:, renames.values()]

@@ -112,7 +112,7 @@ def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
     bam_set_id = terra_workspace.create_entity_set(
         entity_type="delivery_bam",
         entity_ids=bams_to_align["delivery_bam_id"],
-        suffix="minimap2_LR",
+        suffix="align",
     )
 
     call_firecloud_api(
