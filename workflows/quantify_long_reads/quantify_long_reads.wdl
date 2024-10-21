@@ -67,6 +67,10 @@ task run_isoquant {
     )
 
     command <<<
+        set -euo pipefail
+
+        touch "~{input_bai}" # BAI must be newer than BAM to avoid warning
+
         /usr/local/bin/isoquant.py \
             --reference ~{ref_fasta} \
             --genedb ~{ref_annotation} \
@@ -134,17 +138,19 @@ task run_sqanti3 {
     )
 
     command <<<
-		zcat ~{isoquant_gtf} | awk '{ if ($7 != ".") print }' > ~{isoquant_gtf}.unzipped
-		zcat ~{star_junctions} > ~{star_junctions}.unzipped
+        set -euo pipefail
 
-		run_sqanti3.py \
-			--report skip \
-			--skipORF \
-			--coverage ~{star_junctions}.unzipped \
-			--output ~{sample_id} \
-			~{isoquant_gtf}.unzipped \
-			~{ref_annotation} \
-			~{ref_fasta}
+        zcat ~{isoquant_gtf} | awk '{ if ($7 != ".") print }' > ~{isoquant_gtf}.unzipped
+        zcat ~{star_junctions} > ~{star_junctions}.unzipped
+
+        run_sqanti3.py \
+            --report skip \
+            --skipORF \
+            --coverage ~{star_junctions}.unzipped \
+            --output ~{sample_id} \
+            ~{isoquant_gtf}.unzipped \
+            ~{ref_annotation} \
+            ~{ref_fasta}
     >>>
 
     output {
