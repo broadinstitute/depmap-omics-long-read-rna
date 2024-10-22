@@ -19,7 +19,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             input_bam = input_bam,
             input_bai = input_bai,
-            ref_annotation = ref_annotation_gtf,
+            ref_annotation = ref_annotation_db,
             ref_fasta = ref_fasta
     }
 
@@ -28,7 +28,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             isoquant_gtf = run_isoquant.extended_annotation,
             star_junctions = star_junctions,
-            ref_annotation = ref_annotation_db,
+            ref_annotation = ref_annotation_gtf,
             ref_fasta = ref_fasta
     }
 
@@ -53,8 +53,8 @@ task run_isoquant {
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 16
-        Int mem_gb = 64
+        Int cpu = 8
+        Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
@@ -64,7 +64,7 @@ task run_isoquant {
         ceil(
             size(input_bam, "GiB") + size(ref_annotation, "GiB")
             + size(ref_fasta, "GiB")
-        ) + 10 + additional_disk_gb
+        ) + 20 + additional_disk_gb
     )
 
     command <<<
@@ -124,8 +124,8 @@ task run_sqanti3 {
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 4
-        Int mem_gb = 32
+        Int cpu = 2
+        Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
@@ -135,7 +135,7 @@ task run_sqanti3 {
         ceil(
             size(isoquant_gtf, "GiB") * 3 + size(star_junctions, "GiB") * 3
             + size(ref_annotation, "GiB") + size(ref_fasta, "GiB")
-        ) + 10 + additional_disk_gb
+        ) + 20 + additional_disk_gb
     )
 
     command <<<
