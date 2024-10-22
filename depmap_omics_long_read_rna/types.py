@@ -120,8 +120,8 @@ class VersionedSamples(SamplesForGumbo):
 
 
 class ShortReadMetadata(CoercedDataFrame):
-    short_read_sequencing_id: Series[pd.StringDtype]
-    short_read_profile_id: Series[pd.StringDtype]
+    sr_sample_id: Series[pd.StringDtype]
+    sr_profile_id: Series[pd.StringDtype]
     model_id: Series[pd.StringDtype]
 
 

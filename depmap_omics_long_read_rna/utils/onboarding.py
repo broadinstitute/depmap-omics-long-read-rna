@@ -496,7 +496,7 @@ def do_join_short_read_data(
     sr_metadata = sr_metadata.merge(
         sr_samples,
         how="inner",
-        left_on="short_read_sequencing_id",
+        left_on="sr_sample_id",
         right_on="sample_id",
     ).drop(columns="sample_id")
 
@@ -550,8 +550,8 @@ def get_short_read_metadata(
 
     sr_rna = sr_rna[["model_id", "profile_id", "sequencing_id"]].rename(
         columns={
-            "profile_id": "short_read_profile_id",
-            "sequencing_id": "short_read_sequencing_id",
+            "profile_id": "sr_profile_id",
+            "sequencing_id": "sr_sample_id",
         }
     )
 
