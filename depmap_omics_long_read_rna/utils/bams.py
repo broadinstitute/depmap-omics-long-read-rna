@@ -23,9 +23,9 @@ def do_upsert_delivery_bams(
     gcs_source_glob: str,
     terra_workspace: TerraWorkspace,
 ) -> None:
-    # get delivered BAM file metadata
+    # get delivered (u)BAM file metadata
     src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
-    bams = id_bams(src_bams)
+    bams = make_delivery_bam_df(src_bams)
 
     # generate sample/sequencing/CDS IDs
     bams = assign_cds_ids(bams, uuid_namespace)
@@ -36,7 +36,17 @@ def do_upsert_delivery_bams(
     terra_workspace.upload_entities(bams)
 
 
-def id_bams(bams: TypedDataFrame[ObjectMetadata]) -> TypedDataFrame[DeliveryBams]:
+def make_delivery_bam_df(
+    bams: TypedDataFrame[ObjectMetadata],
+) -> TypedDataFrame[DeliveryBams]:
+    """
+    Prepare data frame for the Terra delivery_bam data table using inventory of GCS
+    blobs.
+
+    :param bams: a data frame of delivered uBAMs
+    :return: a data frame of delivered uBAM metadata
+    """
+
     bams_w_ids = bams.copy()
 
     # extract the Gumbo model ID from the BAM filenames
@@ -98,6 +108,12 @@ def assign_cds_ids(
 
 
 def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
+    """
+    Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.
+
+    :param terra_workspace: a TerraWorkspace instance
+    """
+
     bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
 
     if "aligned_bam" not in bams.columns:

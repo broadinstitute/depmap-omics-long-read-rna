@@ -230,96 +230,6 @@ class depmap_model_type_updates(BaseModel):
     where: "depmap_model_type_bool_exp"
 
 
-class fingerprintable_samples_bool_exp(BaseModel):
-    and_: Optional[List["fingerprintable_samples_bool_exp"]] = Field(
-        alias="_and", default=None
-    )
-    not_: Optional["fingerprintable_samples_bool_exp"] = Field(
-        alias="_not", default=None
-    )
-    or_: Optional[List["fingerprintable_samples_bool_exp"]] = Field(
-        alias="_or", default=None
-    )
-    bai_filepath: Optional["String_comparison_exp"] = None
-    bam_filepath: Optional["String_comparison_exp"] = None
-    cell_line_name: Optional["String_comparison_exp"] = None
-    expected_type: Optional["String_comparison_exp"] = None
-    hg_19_bai_filepath: Optional["String_comparison_exp"] = Field(
-        alias="hg19_bai_filepath", default=None
-    )
-    hg_19_bam_filepath: Optional["String_comparison_exp"] = Field(
-        alias="hg19_bam_filepath", default=None
-    )
-    hg_38_crai_filepath: Optional["String_comparison_exp"] = Field(
-        alias="hg38_crai_filepath", default=None
-    )
-    hg_38_cram_filepath: Optional["String_comparison_exp"] = Field(
-        alias="hg38_cram_filepath", default=None
-    )
-    id: Optional["bigint_comparison_exp"] = None
-    low_quality: Optional["Boolean_comparison_exp"] = None
-    model_condition: Optional["String_comparison_exp"] = None
-    model_id: Optional["String_comparison_exp"] = None
-    omics_sequencing_blacklist: Optional["Boolean_comparison_exp"] = None
-    patient_id: Optional["String_comparison_exp"] = None
-    profile_blacklist_omics: Optional["Boolean_comparison_exp"] = None
-    profile_id: Optional["String_comparison_exp"] = None
-    sequencing_id: Optional["String_comparison_exp"] = None
-
-
-class fingerprintable_samples_order_by(BaseModel):
-    bai_filepath: Optional[order_by] = None
-    bam_filepath: Optional[order_by] = None
-    cell_line_name: Optional[order_by] = None
-    expected_type: Optional[order_by] = None
-    hg_19_bai_filepath: Optional[order_by] = Field(
-        alias="hg19_bai_filepath", default=None
-    )
-    hg_19_bam_filepath: Optional[order_by] = Field(
-        alias="hg19_bam_filepath", default=None
-    )
-    hg_38_crai_filepath: Optional[order_by] = Field(
-        alias="hg38_crai_filepath", default=None
-    )
-    hg_38_cram_filepath: Optional[order_by] = Field(
-        alias="hg38_cram_filepath", default=None
-    )
-    id: Optional[order_by] = None
-    low_quality: Optional[order_by] = None
-    model_condition: Optional[order_by] = None
-    model_id: Optional[order_by] = None
-    omics_sequencing_blacklist: Optional[order_by] = None
-    patient_id: Optional[order_by] = None
-    profile_blacklist_omics: Optional[order_by] = None
-    profile_id: Optional[order_by] = None
-    sequencing_id: Optional[order_by] = None
-
-
-class fingerprintable_samples_stream_cursor_input(BaseModel):
-    initial_value: "fingerprintable_samples_stream_cursor_value_input"
-    ordering: Optional[cursor_ordering] = None
-
-
-class fingerprintable_samples_stream_cursor_value_input(BaseModel):
-    bai_filepath: Optional[str] = None
-    bam_filepath: Optional[str] = None
-    cell_line_name: Optional[str] = None
-    expected_type: Optional[str] = None
-    hg_19_bai_filepath: Optional[str] = Field(alias="hg19_bai_filepath", default=None)
-    hg_19_bam_filepath: Optional[str] = Field(alias="hg19_bam_filepath", default=None)
-    hg_38_crai_filepath: Optional[str] = Field(alias="hg38_crai_filepath", default=None)
-    hg_38_cram_filepath: Optional[str] = Field(alias="hg38_cram_filepath", default=None)
-    id: Optional[int] = None
-    low_quality: Optional[bool] = None
-    model_condition: Optional[str] = None
-    model_id: Optional[str] = None
-    omics_sequencing_blacklist: Optional[bool] = None
-    patient_id: Optional[str] = None
-    profile_blacklist_omics: Optional[bool] = None
-    profile_id: Optional[str] = None
-    sequencing_id: Optional[str] = None
-
-
 class float8_comparison_exp(BaseModel):
     eq: Optional[Any] = Field(alias="_eq", default=None)
     gt: Optional[Any] = Field(alias="_gt", default=None)
@@ -606,6 +516,8 @@ class model_condition_bool_exp(BaseModel):
     parent_model_condition_id: Optional["String_comparison_exp"] = None
     passage_number: Optional["String_comparison_exp"] = None
     plate_coating: Optional["String_comparison_exp"] = None
+    prescreen_treatment_days: Optional["String_comparison_exp"] = None
+    prescreen_treatment_drug: Optional["String_comparison_exp"] = None
     prism_notes: Optional["String_comparison_exp"] = None
     project: Optional["String_comparison_exp"] = None
     resistance_mechanism: Optional["String_comparison_exp"] = None
@@ -663,6 +575,8 @@ class model_condition_insert_input(BaseModel):
     parent_model_condition_id: Optional[str] = None
     passage_number: Optional[str] = None
     plate_coating: Optional[str] = None
+    prescreen_treatment_days: Optional[str] = None
+    prescreen_treatment_drug: Optional[str] = None
     prism_notes: Optional[str] = None
     project: Optional[str] = None
     resistance_mechanism: Optional[str] = None
@@ -710,6 +624,8 @@ class model_condition_max_order_by(BaseModel):
     parent_model_condition_id: Optional[order_by] = None
     passage_number: Optional[order_by] = None
     plate_coating: Optional[order_by] = None
+    prescreen_treatment_days: Optional[order_by] = None
+    prescreen_treatment_drug: Optional[order_by] = None
     prism_notes: Optional[order_by] = None
     project: Optional[order_by] = None
     resistance_mechanism: Optional[order_by] = None
@@ -756,6 +672,8 @@ class model_condition_min_order_by(BaseModel):
     parent_model_condition_id: Optional[order_by] = None
     passage_number: Optional[order_by] = None
     plate_coating: Optional[order_by] = None
+    prescreen_treatment_days: Optional[order_by] = None
+    prescreen_treatment_drug: Optional[order_by] = None
     prism_notes: Optional[order_by] = None
     project: Optional[order_by] = None
     resistance_mechanism: Optional[order_by] = None
@@ -817,6 +735,8 @@ class model_condition_order_by(BaseModel):
     parent_model_condition_id: Optional[order_by] = None
     passage_number: Optional[order_by] = None
     plate_coating: Optional[order_by] = None
+    prescreen_treatment_days: Optional[order_by] = None
+    prescreen_treatment_drug: Optional[order_by] = None
     prism_notes: Optional[order_by] = None
     project: Optional[order_by] = None
     resistance_mechanism: Optional[order_by] = None
@@ -869,6 +789,8 @@ class model_condition_set_input(BaseModel):
     parent_model_condition_id: Optional[str] = None
     passage_number: Optional[str] = None
     plate_coating: Optional[str] = None
+    prescreen_treatment_days: Optional[str] = None
+    prescreen_treatment_drug: Optional[str] = None
     prism_notes: Optional[str] = None
     project: Optional[str] = None
     resistance_mechanism: Optional[str] = None
@@ -940,6 +862,8 @@ class model_condition_stream_cursor_value_input(BaseModel):
     parent_model_condition_id: Optional[str] = None
     passage_number: Optional[str] = None
     plate_coating: Optional[str] = None
+    prescreen_treatment_days: Optional[str] = None
+    prescreen_treatment_drug: Optional[str] = None
     prism_notes: Optional[str] = None
     project: Optional[str] = None
     resistance_mechanism: Optional[str] = None
@@ -1486,6 +1410,7 @@ class omics_profile_bool_exp(BaseModel):
     sample_coverage_rounded: Optional["String_comparison_exp"] = None
     sample_is_on_risk: Optional["Boolean_comparison_exp"] = None
     sample_type: Optional["String_comparison_exp"] = None
+    shared_to_dbgap: Optional["Boolean_comparison_exp"] = None
     sm_id_matched: Optional["String_comparison_exp"] = None
     smid_ordered: Optional["String_comparison_exp"] = None
     smid_returned: Optional["String_comparison_exp"] = None
@@ -1552,6 +1477,7 @@ class omics_profile_insert_input(BaseModel):
     sample_coverage_rounded: Optional[str] = None
     sample_is_on_risk: Optional[bool] = None
     sample_type: Optional[str] = None
+    shared_to_dbgap: Optional[bool] = None
     sm_id_matched: Optional[str] = None
     smid_ordered: Optional[str] = None
     smid_returned: Optional[str] = None
@@ -1741,6 +1667,7 @@ class omics_profile_order_by(BaseModel):
     sample_coverage_rounded: Optional[order_by] = None
     sample_is_on_risk: Optional[order_by] = None
     sample_type: Optional[order_by] = None
+    shared_to_dbgap: Optional[order_by] = None
     sm_id_matched: Optional[order_by] = None
     smid_ordered: Optional[order_by] = None
     smid_returned: Optional[order_by] = None
@@ -1810,6 +1737,7 @@ class omics_profile_set_input(BaseModel):
     sample_coverage_rounded: Optional[str] = None
     sample_is_on_risk: Optional[bool] = None
     sample_type: Optional[str] = None
+    shared_to_dbgap: Optional[bool] = None
     sm_id_matched: Optional[str] = None
     smid_ordered: Optional[str] = None
     smid_returned: Optional[str] = None
@@ -1879,6 +1807,7 @@ class omics_profile_stream_cursor_value_input(BaseModel):
     sample_coverage_rounded: Optional[str] = None
     sample_is_on_risk: Optional[bool] = None
     sample_type: Optional[str] = None
+    shared_to_dbgap: Optional[bool] = None
     sm_id_matched: Optional[str] = None
     smid_ordered: Optional[str] = None
     smid_returned: Optional[str] = None
@@ -3602,8 +3531,6 @@ depmap_model_type_obj_rel_insert_input.model_rebuild()
 depmap_model_type_on_conflict.model_rebuild()
 depmap_model_type_stream_cursor_input.model_rebuild()
 depmap_model_type_updates.model_rebuild()
-fingerprintable_samples_bool_exp.model_rebuild()
-fingerprintable_samples_stream_cursor_input.model_rebuild()
 jsonb_cast_exp.model_rebuild()
 jsonb_comparison_exp.model_rebuild()
 media_bool_exp.model_rebuild()

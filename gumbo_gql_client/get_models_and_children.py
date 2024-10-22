@@ -21,7 +21,6 @@ class GetModelsAndChildrenRecordsModelConditions(BaseModel):
 
 class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
     profile_id: str
-    main_sequencing_id: Optional[str]
     datatype: Optional[str]
     blacklist_omics: Optional[bool]
     omics_order_date: Optional[Any]

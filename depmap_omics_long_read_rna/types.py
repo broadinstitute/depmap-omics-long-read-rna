@@ -38,7 +38,6 @@ class SeqTable(CoercedDataFrame):
     datatype: Series[pd.StringDtype]
     unaligned_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    is_main_sequencing_id: Series[pd.BooleanDtype]
     blacklist_omics: Series[pd.BooleanDtype]
     blacklist: Series[pd.BooleanDtype]
     expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)

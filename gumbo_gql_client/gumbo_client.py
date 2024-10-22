@@ -23,7 +23,6 @@ class GumboClient(BaseClient):
                   model_condition_id
                   omics_profiles {
                     profile_id
-                    main_sequencing_id
                     datatype
                     blacklist_omics
                     omics_order_date

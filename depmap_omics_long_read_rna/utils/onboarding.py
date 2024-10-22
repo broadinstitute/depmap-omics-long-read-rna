@@ -41,6 +41,19 @@ def do_onboard_samples(
     gumbo_client: GumboClient,
     dry_run: bool = False,
 ) -> None:
+    """
+    Onboard the latest uBAMs and aligned BAMs to Gumbo and Terra.
+
+    :param gcp_project_id: a GCP project ID to use for billing
+    :param unaligned_gcs_destination_bucket: the GCS bucket name for uBAMs
+    :param unaligned_gcs_destination_prefix: the GCS bucket prefix for uBAMs
+    :param aligned_gcs_destination_bucket: the GCS bucket name for aligned BAMs
+    :param aligned_gcs_destination_prefix: the GCS bucket prefix for aligned BAMs
+    :param terra_workspace: a TerraWorkspace instance
+    :param gumbo_client: an instance of the Gumbo GraphQL client
+    :param dry_run: whether to skip updates to external data stores
+    """
+
     # keep track of filtering and quality control checks performed
     stats = OrderedDict()
     report = OrderedDict()
@@ -82,16 +95,9 @@ def do_onboard_samples(
     samples = samples.loc[~samples["already_in_gumbo"]].drop(columns="already_in_gumbo")
     report["not yet in Gumbo"] = samples
 
-    # if len(samples) == 0:
-    #     send_slack_message(
-    #         os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-    #         os.getenv("SLACK_WEBHOOK_URL_STATS"),
-    #         stats,
-    #         report,
-    #         terra_workspace,
-    #         dry_run,
-    #     )
-    #     return
+    if len(samples) == 0:
+        logging.info("No new samples")
+        return
 
     # join metadata to current samples
     samples = join_metadata(samples, seq_table_lr)
@@ -167,19 +173,17 @@ def do_onboard_samples(
     # upload the samples to Terra
     upsert_terra_samples(terra_workspace, samples_complete, dry_run)
 
-    # send_slack_message(
-    #     os.getenv("SLACK_WEBHOOK_URL_ERRORS"),
-    #     os.getenv("SLACK_WEBHOOK_URL_STATS"),
-    #     stats,
-    #     report,
-    #     terra_workspace,
-    #     dry_run,
-    # )
-
 
 def explode_and_expand_models(
     models: TypedDataFrame[ModelsAndChildren],
 ) -> TypedDataFrame[SeqTable]:
+    """
+    Unnest columns from the GraphQL call for Gumbo models and their childen.
+
+    :param models: a data frame of models with nested profile/sequencing/etc. data
+    :return: a wide version of the data frame without nesting
+    """
+
     seq_table = models.copy()
 
     for c in ["model_conditions", "omics_profiles", "omics_sequencings"]:
@@ -188,21 +192,25 @@ def explode_and_expand_models(
 
     seq_table = seq_table.dropna(subset=["model_condition_id", "profile_id"])
 
-    seq_table["is_main_sequencing_id"] = seq_table["main_sequencing_id"].eq(
-        seq_table["sequencing_id"]
-    )
-
     seq_table[["blacklist_omics", "blacklist"]] = (
         seq_table[["blacklist_omics", "blacklist"]].astype("boolean").fillna(False)
     )
 
-    return type_data_frame(seq_table.drop(columns="main_sequencing_id"), SeqTable)
+    return type_data_frame(seq_table, SeqTable)
 
 
 def join_metadata(
     samples: TypedDataFrame[SamplesMaybeInGumbo],
     seq_table: TypedDataFrame[SeqTable],
 ) -> TypedDataFrame[SamplesWithMetadata]:
+    """
+    Join metadata for long read samples from Gumbo.
+
+    :param samples: the data frame of samples
+    :param seq_table: the data frame of Gumbo Omics sequencing data
+    :return: the samples with additional metadata from Gumbo
+    """
+
     metadata = seq_table.loc[
         seq_table["datatype"].eq("long_read_rna")
         & ~seq_table["blacklist"]
@@ -232,10 +240,11 @@ def check_already_in_gumbo(
 ) -> TypedDataFrame[SamplesMaybeInGumbo]:
     """
     Mark samples that are already in Gumbo by comparing stored file sizes.
+    Get non-blacklisted short read RNA samples to map to long read ones.
 
     :param samples: the data frame of samples
     :param seq_table: the data frame of Gumbo Omics sequencing data
-    :param size_col_name: the Gumbo column containing file sizes
+    :param size_col_name: the Gumbo column containing file sizesa data frame mapping model IDs to short read profile and sequencing IDs
     :return: the samples data frame with `already_in_gumbo` column
     """
 
@@ -317,7 +326,7 @@ def increment_sample_versions(
     the version numbers beyond the default value of 1.
 
     :param samples: the data frame of samples
-    :param seq_table: the data frame of Gumbo sequence data
+    :param seq_table: the data frame of Gumbo Omics sequencing data
     :return: the samples data frame with optionally incremented version numbers
     """
 
@@ -464,6 +473,15 @@ def do_join_short_read_data(
     short_read_terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
 ) -> None:
+    """
+    Join columns from the short read RNA workspace to the long read one by mapping on
+    model IDs.
+
+    :param terra_workspace: the long read TerraWorkspace instance
+    :param short_read_terra_workspace: the short read TerraWorkspace instance
+    :param gumbo_client: an instance of the Gumbo GraphQL client
+    """
+
     lr_samples = terra_workspace.get_entities("sample")
     lr_samples["model_id"] = lr_samples["participant"].apply(lambda x: x["entityName"])
 
@@ -514,6 +532,14 @@ def do_join_short_read_data(
 def get_short_read_metadata(
     lr_samples: pd.DataFrame, seq_table: TypedDataFrame[SeqTable]
 ) -> TypedDataFrame[ShortReadMetadata]:
+    """
+    Get non-blacklisted short read RNA samples to map to long read ones.
+
+    :param lr_samples: the long read workspace sample data table
+    :param seq_table: the data frame of Gumbo Omics sequencing data
+    :return: a data frame mapping model IDs to short read profile and sequencing IDs
+    """
+
     # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
     source_priority = [
         "BROAD",

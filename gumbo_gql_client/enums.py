@@ -38,26 +38,6 @@ class depmap_model_type_update_column(str, Enum):
     subtype = "subtype"
 
 
-class fingerprintable_samples_select_column(str, Enum):
-    bai_filepath = "bai_filepath"
-    bam_filepath = "bam_filepath"
-    cell_line_name = "cell_line_name"
-    expected_type = "expected_type"
-    hg19_bai_filepath = "hg19_bai_filepath"
-    hg19_bam_filepath = "hg19_bam_filepath"
-    hg38_crai_filepath = "hg38_crai_filepath"
-    hg38_cram_filepath = "hg38_cram_filepath"
-    id = "id"
-    low_quality = "low_quality"
-    model_condition = "model_condition"
-    model_id = "model_id"
-    omics_sequencing_blacklist = "omics_sequencing_blacklist"
-    patient_id = "patient_id"
-    profile_blacklist_omics = "profile_blacklist_omics"
-    profile_id = "profile_id"
-    sequencing_id = "sequencing_id"
-
-
 class media_constraint(str, Enum):
     media_pkey = "media_pkey"
 
@@ -116,6 +96,8 @@ class model_condition_select_column(str, Enum):
     parent_model_condition_id = "parent_model_condition_id"
     passage_number = "passage_number"
     plate_coating = "plate_coating"
+    prescreen_treatment_days = "prescreen_treatment_days"
+    prescreen_treatment_drug = "prescreen_treatment_drug"
     prism_notes = "prism_notes"
     project = "project"
     resistance_mechanism = "resistance_mechanism"
@@ -178,6 +160,8 @@ class model_condition_update_column(str, Enum):
     parent_model_condition_id = "parent_model_condition_id"
     passage_number = "passage_number"
     plate_coating = "plate_coating"
+    prescreen_treatment_days = "prescreen_treatment_days"
+    prescreen_treatment_drug = "prescreen_treatment_drug"
     prism_notes = "prism_notes"
     project = "project"
     resistance_mechanism = "resistance_mechanism"
@@ -437,6 +421,7 @@ class omics_profile_select_column(str, Enum):
     sample_coverage_rounded = "sample_coverage_rounded"
     sample_is_on_risk = "sample_is_on_risk"
     sample_type = "sample_type"
+    shared_to_dbgap = "shared_to_dbgap"
     sm_id_matched = "sm_id_matched"
     smid_ordered = "smid_ordered"
     smid_returned = "smid_returned"
@@ -457,6 +442,7 @@ class omics_profile_select_column_omics_profile_aggregate_bool_exp_bool_and_argu
     registered = "registered"
     resubmit_for_extraction = "resubmit_for_extraction"
     sample_is_on_risk = "sample_is_on_risk"
+    shared_to_dbgap = "shared_to_dbgap"
 
 
 class omics_profile_select_column_omics_profile_aggregate_bool_exp_bool_or_arguments_columns(
@@ -470,6 +456,7 @@ class omics_profile_select_column_omics_profile_aggregate_bool_exp_bool_or_argum
     registered = "registered"
     resubmit_for_extraction = "resubmit_for_extraction"
     sample_is_on_risk = "sample_is_on_risk"
+    shared_to_dbgap = "shared_to_dbgap"
 
 
 class omics_profile_update_column(str, Enum):
@@ -527,6 +514,7 @@ class omics_profile_update_column(str, Enum):
     sample_coverage_rounded = "sample_coverage_rounded"
     sample_is_on_risk = "sample_is_on_risk"
     sample_type = "sample_type"
+    shared_to_dbgap = "shared_to_dbgap"
     sm_id_matched = "sm_id_matched"
     smid_ordered = "smid_ordered"
     smid_returned = "smid_returned"
