@@ -84,13 +84,17 @@ def run(cloud_event: CloudEvent) -> None:
         )
 
         do_upsert_delivery_bams(
-            uuid_namespace=config["uuid_namespace"],
             gcs_source_bucket=config["onboarding"]["gcs_source"]["bucket"],
             gcs_source_glob=config["onboarding"]["gcs_source"]["glob"],
+            uuid_namespace=config["uuid_namespace"],
             terra_workspace=config["terra_workspace"],
+            dry_run=config["onboarding"]["dry_run"],
         )
 
-        do_delta_align_delivery_bams(terra_workspace=terra_workspace)
+        do_delta_align_delivery_bams(
+            terra_workspace=terra_workspace,
+            dry_run=config["onboarding"]["dry_run"],
+        )
 
         short_read_terra_workspace = TerraWorkspace(
             workspace_namespace=config["terra"]["short_read_workspace_namespace"],
@@ -101,6 +105,7 @@ def run(cloud_event: CloudEvent) -> None:
             terra_workspace=terra_workspace,
             short_read_terra_workspace=short_read_terra_workspace,
             gumbo_client=gumbo_client,
+            dry_run=config["onboarding"]["dry_run"],
         )
 
     else:

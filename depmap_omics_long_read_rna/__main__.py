@@ -41,35 +41,6 @@ def done(*args, **kwargs):
     logging.info("Done.")
 
 
-def make_workflow_from_config(
-    repo_namespace: str, workflow_config: dict
-) -> TerraWorkflow:
-    """
-    Make a TerraWorkflow object from a config entry.
-
-    :param repo_namespace: the method repo namespace to store methods
-    :param workflow_config: a dictionary with workflow/method config values
-    :return: a TerraWorkflow instance
-    """
-
-    # need a GitHub PAT for persisting WDL in gists
-    github_pat = get_secret_from_sm(
-        "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
-    )
-
-    return TerraWorkflow(
-        repo_namespace=repo_namespace,
-        repo_method_name=workflow_config["repo_method_name"],
-        method_config_name=workflow_config["method_config_name"],
-        method_synopsis=workflow_config["method_synopsis"],
-        workflow_wdl_path=Path(workflow_config["workflow_wdl_path"]).resolve(),
-        method_config_json_path=Path(
-            workflow_config["method_config_json_path"]
-        ).resolve(),
-        github_pat=github_pat,
-    )
-
-
 @app.callback(result_callback=done)
 def main(
     ctx: typer.Context,
@@ -103,26 +74,45 @@ def main(
 def update_workflow(
     ctx: typer.Context, workflow_name: Annotated[str, typer.Option()]
 ) -> None:
-    terra_workflow = make_workflow_from_config(
-        repo_namespace=config["terra"]["repo_namespace"],
-        workflow_config=config["terra"][workflow_name],
+    # need a GitHub PAT for persisting WDL in gists
+    github_pat = get_secret_from_sm(
+        "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
     )
+
+    terra_workflow = TerraWorkflow(
+        repo_namespace=config["terra"]["repo_namespace"],
+        repo_method_name=config["terra"][workflow_name]["repo_method_name"],
+        method_config_name=config["terra"][workflow_name]["method_config_name"],
+        method_synopsis=config["terra"][workflow_name]["method_synopsis"],
+        workflow_wdl_path=Path(
+            config["terra"][workflow_name]["workflow_wdl_path"]
+        ).resolve(),
+        method_config_json_path=Path(
+            config["terra"][workflow_name]["method_config_json_path"]
+        ).resolve(),
+        github_pat=github_pat,
+    )
+
     ctx.obj["terra_workspace"].update_workflow(terra_workflow=terra_workflow)
 
 
 @app.command()
 def upsert_delivery_bams(ctx: typer.Context) -> None:
     do_upsert_delivery_bams(
-        uuid_namespace=config["uuid_namespace"],
         gcs_source_bucket=config["onboarding"]["gcs_source"]["bucket"],
         gcs_source_glob=config["onboarding"]["gcs_source"]["glob"],
+        uuid_namespace=config["uuid_namespace"],
         terra_workspace=ctx.obj["terra_workspace"],
+        dry_run=config["onboarding"]["dry_run"],
     )
 
 
 @app.command()
 def delta_align_delivery_bams(ctx: typer.Context) -> None:
-    do_delta_align_delivery_bams(terra_workspace=ctx.obj["terra_workspace"])
+    do_delta_align_delivery_bams(
+        terra_workspace=ctx.obj["terra_workspace"],
+        dry_run=config["onboarding"]["dry_run"],
+    )
 
 
 @app.command()
@@ -158,6 +148,7 @@ def join_short_read_data(ctx: typer.Context) -> None:
         terra_workspace=ctx.obj["terra_workspace"],
         short_read_terra_workspace=short_read_terra_workspace,
         gumbo_client=ctx.obj["gumbo_client"],
+        dry_run=config["onboarding"]["dry_run"],
     )
 
 

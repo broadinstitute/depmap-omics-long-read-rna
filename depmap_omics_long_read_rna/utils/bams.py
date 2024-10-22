@@ -19,10 +19,22 @@ from depmap_omics_long_read_rna.utils.utils import assign_hashed_uuids, uuid_to_
 
 def do_upsert_delivery_bams(
     gcs_source_bucket: str,
-    uuid_namespace: str,
     gcs_source_glob: str,
+    uuid_namespace: str,
     terra_workspace: TerraWorkspace,
+    dry_run: bool,
 ) -> None:
+    """
+    Search for uBAMs delivered to a GCS bucket by GP and populate a `delivery_bam` data
+    table on Terra.
+
+    :param gcs_source_bucket: the GCS bucket where GP delivers uBAMs
+    :param gcs_source_glob: a glob expression to search for uBAMs in the bucket
+    :param uuid_namespace: a namespace for generated UUIDv3s
+    :param terra_workspace: a TerraWorkspace instance
+    :param dry_run: whether to skip updates to external data stores
+    """
+
     # get delivered (u)BAM file metadata
     src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
     bams = make_delivery_bam_df(src_bams)
@@ -33,6 +45,11 @@ def do_upsert_delivery_bams(
     # upsert to Terra data table
     bam_ids = bams.pop("cds_id")
     bams.insert(0, "entity:delivery_bam_id", bam_ids)
+
+    if dry_run:
+        logging.info(f"(skipping) Upserting {len(bams)} delivery_bams")
+        return
+
     terra_workspace.upload_entities(bams)
 
 
@@ -82,7 +99,7 @@ def assign_cds_ids(
     Assign a "CDS-" ID to each sample by hashing relevant columns.
 
     :param samples: the data frame of samples
-    :param uuid_namespace: a namespace for UUIDv3 IDs
+    :param uuid_namespace: a namespace for generated UUIDv3s
     :return: the data frame with CDS IDs
     """
 
@@ -107,11 +124,15 @@ def assign_cds_ids(
     return type_data_frame(samples_w_ids, SamplesWithCDSIDs)
 
 
-def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
+def do_delta_align_delivery_bams(
+    terra_workspace: TerraWorkspace,
+    dry_run: bool,
+) -> None:
     """
     Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.
 
     :param terra_workspace: a TerraWorkspace instance
+    :param dry_run: whether to skip updates to external data stores
     """
 
     bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
@@ -123,6 +144,10 @@ def do_delta_align_delivery_bams(terra_workspace: TerraWorkspace) -> None:
 
     if len(bams_to_align) == 0:
         logging.info("No new BAMs to align")
+        return
+
+    if dry_run:
+        logging.info("(skipping) Submitting align_long_reads job")
         return
 
     bam_set_id = terra_workspace.create_entity_set(

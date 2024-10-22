@@ -66,7 +66,8 @@ def do_onboard_samples(
     delivery_bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
 
     samples = (
-        delivery_bams[
+        delivery_bams.loc[
+            :,
             [
                 "delivery_bam_id",
                 "model_id",
@@ -76,7 +77,7 @@ def do_onboard_samples(
                 "delivery_bam_size",
                 "delivery_bam_crc32c",
                 "delivery_bam_updated_at",
-            ]
+            ],
         ]
         .dropna()  # remove samples that haven't been aligned yet
         .rename(columns={"delivery_bam_id": "sequencing_id"})
@@ -157,7 +158,10 @@ def do_onboard_samples(
         }
     )
 
-    samples_complete = samples.merge(copied_aligned_bams, how="left", on="aligned_bam")
+    samples_complete = type_data_frame(
+        samples.merge(copied_aligned_bams, how="left", on="aligned_bam"),
+        SamplesWithMetadata,
+    )
 
     # rename and set some columns for Gumbo
     gumbo_samples = apply_col_map(samples_complete)
@@ -472,6 +476,7 @@ def do_join_short_read_data(
     terra_workspace: TerraWorkspace,
     short_read_terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
+    dry_run: bool,
 ) -> None:
     """
     Join columns from the short read RNA workspace to the long read one by mapping on
@@ -480,6 +485,7 @@ def do_join_short_read_data(
     :param terra_workspace: the long read TerraWorkspace instance
     :param short_read_terra_workspace: the short read TerraWorkspace instance
     :param gumbo_client: an instance of the Gumbo GraphQL client
+    :param dry_run: whether to skip updates to external data stores
     """
 
     lr_samples = terra_workspace.get_entities("sample")
@@ -487,13 +493,14 @@ def do_join_short_read_data(
 
     sr_samples = short_read_terra_workspace.get_entities("sample")
     sr_samples = (
-        sr_samples[
+        sr_samples.loc[
+            :,
             [
                 "sample_id",
                 "star_junctions",
                 "fusion_predictions",
                 "fusion_predictions_abridged",
-            ]
+            ],
         ]
         .dropna()
         .rename(
@@ -507,7 +514,7 @@ def do_join_short_read_data(
 
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
-    seq_table = seq_table.loc[seq_table["expected_type"].isin({"rna", "long_read_rna"})]
+    seq_table = seq_table.loc[seq_table["expected_type"].isin(["rna", "long_read_rna"])]
 
     sr_metadata = get_short_read_metadata(lr_samples, seq_table)
 
@@ -526,7 +533,10 @@ def do_join_short_read_data(
         .drop(columns="model_id")
     )
 
-    terra_workspace.upload_entities(samples_upsert)
+    if dry_run:
+        logging.info(f"(skipping) Upserting {len(samples_upsert)} samples")
+    else:
+        terra_workspace.upload_entities(samples_upsert)
 
 
 def get_short_read_metadata(

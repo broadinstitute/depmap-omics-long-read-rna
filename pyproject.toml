@@ -45,5 +45,5 @@ exclude = ["gumbo_gql_client"]
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
-exclude  = ["gumbo_gql_client"]
+include = ["depmap_omics_long_read_rna", "main.py"]
 reportInvalidTypeVarUse = "none"
