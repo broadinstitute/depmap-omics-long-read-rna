@@ -468,7 +468,24 @@ def do_join_short_read_data(
     lr_samples["model_id"] = lr_samples["participant"].apply(lambda x: x["entityName"])
 
     sr_samples = short_read_terra_workspace.get_entities("sample")
-    sr_samples = sr_samples[["sample_id", "star_junctions"]].dropna()
+    sr_samples = (
+        sr_samples[
+            [
+                "sample_id",
+                "star_junctions",
+                "fusion_predictions",
+                "fusion_predictions_abridged",
+            ]
+        ]
+        .dropna()
+        .rename(
+            columns={
+                "star_junctions": "sr_star_junctions",
+                "fusion_predictions": "sr_fusion_predictions",
+                "fusion_predictions_abridged": "sr_fusion_predictions_abridged",
+            }
+        )
+    )
 
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)

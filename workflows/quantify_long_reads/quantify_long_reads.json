@@ -11,7 +11,7 @@
     "quantify_long_reads.ref_annotation_db": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
     "quantify_long_reads.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "quantify_long_reads.sample_id": "this.sample_id",
-    "quantify_long_reads.star_junctions": "this.star_junctions"
+    "quantify_long_reads.star_junctions": "this.sr_star_junctions"
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
