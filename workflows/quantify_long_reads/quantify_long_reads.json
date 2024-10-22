@@ -7,7 +7,8 @@
     "quantify_long_reads.run_isoquant.docker_image_hash_or_tag": "\":3.6.1--hdfd78af_0\"",
     "quantify_long_reads.run_sqanti3.docker_image": "\"us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus\"",
     "quantify_long_reads.run_sqanti3.docker_image_hash_or_tag": "\":latest\"",
-    "quantify_long_reads.ref_annotation": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
+    "quantify_long_reads.ref_annotation_gtf": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf\"",
+    "quantify_long_reads.ref_annotation_db": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
     "quantify_long_reads.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "quantify_long_reads.sample_id": "this.sample_id",
     "quantify_long_reads.star_junctions": "this.star_junctions"

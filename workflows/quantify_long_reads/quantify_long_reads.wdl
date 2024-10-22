@@ -9,7 +9,8 @@ workflow quantify_long_reads {
         File input_bam
         File input_bai
         File ref_fasta
-        File ref_annotation
+        File ref_annotation_gtf
+        File ref_annotation_db
         File star_junctions
     }
 
@@ -18,7 +19,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             input_bam = input_bam,
             input_bai = input_bai,
-            ref_annotation = ref_annotation,
+            ref_annotation = ref_annotation_gtf,
             ref_fasta = ref_fasta
     }
 
@@ -27,7 +28,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             isoquant_gtf = run_isoquant.extended_annotation,
             star_junctions = star_junctions,
-            ref_annotation = ref_annotation,
+            ref_annotation = ref_annotation_db,
             ref_fasta = ref_fasta
     }
 
@@ -143,7 +144,7 @@ task run_sqanti3 {
         zcat ~{isoquant_gtf} | awk '{ if ($7 != ".") print }' > ~{isoquant_gtf}.unzipped
         zcat ~{star_junctions} > ~{star_junctions}.unzipped
 
-        run_sqanti3.py \
+        python /usr/local/src/SQANTI3-5.1.2/sqanti3_qc.py \
             --report skip \
             --skipORF \
             --coverage ~{star_junctions}.unzipped \
