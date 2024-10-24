@@ -1,12 +1,14 @@
 import base64
 import json
 import logging
+from pathlib import Path
 
 import functions_framework
 import google.cloud.logging
 import tomllib
 from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
+from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
@@ -91,8 +93,27 @@ def run(cloud_event: CloudEvent) -> None:
             dry_run=config["onboarding"]["dry_run"],
         )
 
+        terra_workflow = TerraWorkflow(
+            method_namespace=config["terra"]["align_long_reads"]["method_namespace"],
+            method_name=config["terra"]["align_long_reads"]["method_name"],
+            method_config_namespace=config["terra"]["align_long_reads"][
+                "method_config_namespace"
+            ],
+            method_config_name=config["terra"]["align_long_reads"][
+                "method_config_name"
+            ],
+            method_synopsis=config["terra"]["align_long_reads"]["method_synopsis"],
+            workflow_wdl_path=Path(
+                config["terra"]["align_long_reads"]["workflow_wdl_path"]
+            ).resolve(),
+            method_config_json_path=Path(
+                config["terra"]["align_long_reads"]["method_config_json_path"]
+            ).resolve(),
+        )
+
         do_delta_align_delivery_bams(
             terra_workspace=terra_workspace,
+            terra_workflow=terra_workflow,
             dry_run=config["onboarding"]["dry_run"],
         )
 

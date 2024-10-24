@@ -134,6 +134,7 @@ def do_delta_align_delivery_bams(
     Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.
 
     :param terra_workspace: a TerraWorkspace instance
+    :param terra_workflow: a TerraWorkflow instance for the alignment method
     :param dry_run: whether to skip updates to external data stores
     """
 
