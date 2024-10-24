@@ -26,14 +26,18 @@ short_read_workspace_namespace = "broad-firecloud-ccle"
 short_read_workspace_name = "DepMap_hg38_RNAseq"
 
 [terra.align_long_reads]
-repo_method_name = "align_long_reads"
+method_namespace = "Long_Read_Omics"
+method_name = "align_long_reads"
+method_config_namespace = "Long_Read_Omics"
 method_config_name = "align_long_reads"
 method_synopsis = "Align long read uBAM"
 workflow_wdl_path = "./workflows/align_long_reads/align_long_reads.wdl"
 method_config_json_path = "./workflows/align_long_reads/align_long_reads.json"
 
 [terra.quantify_long_reads]
-repo_method_name = "quantify_long_reads"
+method_namespace = "Long_Read_Omics"
+method_name = "quantify_long_reads"
+method_config_namespace = "Long_Read_Omics"
 method_config_name = "quantify_long_reads"
 method_synopsis = "Quantify long reads"
 workflow_wdl_path = "./workflows/quantify_long_reads/quantify_long_reads.wdl"

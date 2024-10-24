@@ -80,8 +80,11 @@ def update_workflow(
     )
 
     terra_workflow = TerraWorkflow(
-        repo_namespace=config["terra"]["repo_namespace"],
-        repo_method_name=config["terra"][workflow_name]["repo_method_name"],
+        method_namespace=config["terra"][workflow_name]["method_namespace"],
+        method_name=config["terra"][workflow_name]["method_name"],
+        method_config_namespace=config["terra"][workflow_name][
+            "method_config_namespace"
+        ],
         method_config_name=config["terra"][workflow_name]["method_config_name"],
         method_synopsis=config["terra"][workflow_name]["method_synopsis"],
         workflow_wdl_path=Path(
@@ -109,8 +112,25 @@ def upsert_delivery_bams(ctx: typer.Context) -> None:
 
 @app.command()
 def delta_align_delivery_bams(ctx: typer.Context) -> None:
+    terra_workflow = TerraWorkflow(
+        method_namespace=config["terra"]["method_namespace"],
+        method_name=config["terra"]["align_long_reads"]["method_name"],
+        method_config_namespace=config["terra"]["align_long_reads"][
+            "method_config_namespace"
+        ],
+        method_config_name=config["terra"]["align_long_reads"]["method_config_name"],
+        method_synopsis=config["terra"]["align_long_reads"]["method_synopsis"],
+        workflow_wdl_path=Path(
+            config["terra"]["align_long_reads"]["workflow_wdl_path"]
+        ).resolve(),
+        method_config_json_path=Path(
+            config["terra"]["align_long_reads"]["method_config_json_path"]
+        ).resolve(),
+    )
+
     do_delta_align_delivery_bams(
         terra_workspace=ctx.obj["terra_workspace"],
+        terra_workflow=terra_workflow,
         dry_run=config["onboarding"]["dry_run"],
     )
 

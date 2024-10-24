@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 from firecloud import api as firecloud_api
+from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import call_firecloud_api, type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
@@ -126,6 +127,7 @@ def assign_cds_ids(
 
 def do_delta_align_delivery_bams(
     terra_workspace: TerraWorkspace,
+    terra_workflow: TerraWorkflow,
     dry_run: bool,
 ) -> None:
     """
@@ -160,8 +162,8 @@ def do_delta_align_delivery_bams(
         firecloud_api.create_submission,
         wnamespace=terra_workspace.workspace_namespace,
         workspace=terra_workspace.workspace_name,
-        cnamespace=terra_workspace.workspace_namespace,  # happens to be the same
-        config="align_long_reads",
+        cnamespace=terra_workflow.method_config_namespace,
+        config=terra_workflow.method_config_name,
         entity=bam_set_id,
         etype="delivery_bam_set",
         expression="this.delivery_bams",

@@ -1241,13 +1241,13 @@ files = [
 
 [[package]]
 name = "nebelung"
-version = "1.1.3"
+version = "1.2.0"
 description = "Firecloud API Wrapper"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "nebelung-1.1.3-py3-none-any.whl", hash = "sha256:bbb6805072804ce18947a8ade335e6f645596a04b9cf699f42c52c57a505f51b"},
-    {file = "nebelung-1.1.3.tar.gz", hash = "sha256:958dff723a41c2812db656d45e868108340af6968b871df2e0cce9bc276c0c46"},
+    {file = "nebelung-1.2.0-py3-none-any.whl", hash = "sha256:06a1a09621840e07f178e8e70e65567f50018b3a5be13cd355ebf7f2869c0641"},
+    {file = "nebelung-1.2.0.tar.gz", hash = "sha256:98225e417bf00718646e0bd42c9b3db6d11c59a62067c8d4e670dff5713f41dd"},
 ]
 
 [package.dependencies]
@@ -2362,4 +2362,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "9922c2dc8820dbfafe507556edbb2655a1e08fc2bb8d151e4f67c91a77543948"
+content-hash = "d15d40a1bc9a3db39258d16ad86062dea52ba0fa3cb86f71e3c889accd401cc3"
