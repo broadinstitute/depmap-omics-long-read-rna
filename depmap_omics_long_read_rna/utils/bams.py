@@ -1,12 +1,12 @@
+import datetime
 import logging
 import os
 from pathlib import Path
 
 import pandas as pd
-from firecloud import api as firecloud_api
 from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
-from nebelung.utils import call_firecloud_api, type_data_frame
+from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from depmap_omics_long_read_rna.types import (
@@ -149,6 +149,28 @@ def do_delta_align_delivery_bams(
         logging.info("No new BAMs to align")
         return
 
+    # get statuses of submitted entity workflow statuses
+    submittable_entities = terra_workspace.check_submittable_entities(
+        entity_type="delivery_bam",
+        entity_ids=bams_to_align["delivery_bam_id"],
+        terra_workflow=terra_workflow,
+        resubmit_n_times=1,
+        force_retry=False,
+    )
+
+    logging.info(f"Submittable entities: {submittable_entities}")
+
+    if len(submittable_entities["failed"]) > 0:
+        raise RuntimeError("Some entities have failed too many times")
+
+    # don't submit jobs for entities that are currently running, completed, or failed
+    # too many times
+    bams_to_align = bams_to_align.loc[
+        bams_to_align["delivery_bam_id"].isin(
+            submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
+        )
+    ]
+
     if dry_run:
         logging.info("(skipping) Submitting align_long_reads job")
         return
@@ -159,12 +181,8 @@ def do_delta_align_delivery_bams(
         suffix="align",
     )
 
-    call_firecloud_api(
-        firecloud_api.create_submission,
-        wnamespace=terra_workspace.workspace_namespace,
-        workspace=terra_workspace.workspace_name,
-        cnamespace=terra_workflow.method_config_namespace,
-        config=terra_workflow.method_config_name,
+    terra_workspace.submit_workflow_run(
+        terra_workflow=terra_workflow,
         entity=bam_set_id,
         etype="delivery_bam_set",
         expression="this.delivery_bams",
