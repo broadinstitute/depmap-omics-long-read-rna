@@ -37,7 +37,9 @@ workflow quantify_long_reads {
         File model_counts = run_isoquant.model_counts
         File transcript_tpm = run_isoquant.transcript_tpm
         File transcript_model_tpm = run_isoquant.transcript_model_tpm
+        File gene_tpm = run_isoquant.gene_tpm
         File extended_annotation = run_isoquant.extended_annotation
+        File gene_counts = run_isoquant.gene_counts
         File sq_junctions = run_sqanti3.sq_junctions
         File sq_class = run_sqanti3.sq_class
     }
@@ -97,6 +99,8 @@ task run_isoquant {
         File model_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_counts.tsv.gz"
         File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
         File transcript_model_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_tpm.tsv.gz"
+        File gene_tpm = "isoquant_output/~{sample_id}/~{sample_id}.gene_tpm.tsv.gz"
+        File gene_counts = "isoquant_output/~{sample_id}/~{sample_id}.gene_counts.tsv.gz"
         File extended_annotation = "isoquant_output/~{sample_id}/~{sample_id}.extended_annotation.gtf.gz"
     }
 

@@ -26,6 +26,8 @@
     "quantify_long_reads.model_counts": "this.model_counts",
     "quantify_long_reads.transcript_tpm": "this.transcript_tpm",
     "quantify_long_reads.transcript_model_tpm": "this.transcript_model_tpm",
+    "quantify_long_reads.gene_tpm": "this.gene_tpm",
+    "quantify_long_reads.gene_counts": "this.gene_counts",
     "quantify_long_reads.extended_annotation": "this.extended_annotation",
     "quantify_long_reads.sq_junctions": "this.sq_junctions",
     "quantify_long_reads.sq_class": "this.sq_class"
