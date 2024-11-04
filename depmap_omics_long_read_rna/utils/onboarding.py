@@ -500,16 +500,24 @@ def do_join_short_read_data(
                 "star_junctions",
                 "fusion_predictions",
                 "fusion_predictions_abridged",
+                "rsem_genes",
+                "rsem_genes_stranded",
+                "rsem_isoforms",
+                "rsem_isoforms_stranded",
             ],
         ]
-        .dropna()
         .rename(
             columns={
                 "star_junctions": "sr_star_junctions",
                 "fusion_predictions": "sr_fusion_predictions",
                 "fusion_predictions_abridged": "sr_fusion_predictions_abridged",
+                "rsem_genes": "sr_rsem_genes",
+                "rsem_genes_stranded": "sr_rsem_genes_stranded",
+                "rsem_isoforms": "sr_rsem_isoforms",
+                "rsem_isoforms_stranded": "sr_rsem_isoforms_stranded",
             }
         )
+        .astype("string")
     )
 
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
