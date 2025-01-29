@@ -848,66 +848,6 @@ class sequencing_alignment_update_column(str, Enum):
     url = "url"
 
 
-class snp_fingerprint_comparison_constraint(str, Enum):
-    snp_fingerprint_comparison_pkey = "snp_fingerprint_comparison_pkey"
-
-
-class snp_fingerprint_comparison_select_column(str, Enum):
-    acknowledged = "acknowledged"
-    comments = "comments"
-    created_at = "created_at"
-    id = "id"
-    issue = "issue"
-    n_common_snps = "n_common_snps"
-    n_matching_genotypes = "n_matching_genotypes"
-    patient_id1 = "patient_id1"
-    patient_id2 = "patient_id2"
-    score = "score"
-    snp_fingerprint_id1 = "snp_fingerprint_id1"
-    snp_fingerprint_id2 = "snp_fingerprint_id2"
-    updated_at = "updated_at"
-
-
-class snp_fingerprint_comparison_update_column(str, Enum):
-    acknowledged = "acknowledged"
-    comments = "comments"
-    created_at = "created_at"
-    id = "id"
-    issue = "issue"
-    n_common_snps = "n_common_snps"
-    n_matching_genotypes = "n_matching_genotypes"
-    patient_id1 = "patient_id1"
-    patient_id2 = "patient_id2"
-    score = "score"
-    snp_fingerprint_id1 = "snp_fingerprint_id1"
-    snp_fingerprint_id2 = "snp_fingerprint_id2"
-    updated_at = "updated_at"
-
-
-class snp_fingerprint_constraint(str, Enum):
-    snp_fingerprint_pkey = "snp_fingerprint_pkey"
-
-
-class snp_fingerprint_select_column(str, Enum):
-    comments = "comments"
-    created_at = "created_at"
-    genotypes = "genotypes"
-    id = "id"
-    omics_sequencing_id = "omics_sequencing_id"
-    updated_at = "updated_at"
-    vcf_uri = "vcf_uri"
-
-
-class snp_fingerprint_update_column(str, Enum):
-    comments = "comments"
-    created_at = "created_at"
-    genotypes = "genotypes"
-    id = "id"
-    omics_sequencing_id = "omics_sequencing_id"
-    updated_at = "updated_at"
-    vcf_uri = "vcf_uri"
-
-
 class str_profile_constraint(str, Enum):
     single_reference_per_patient = "single_reference_per_patient"
     str_profile_pkey = "str_profile_pkey"

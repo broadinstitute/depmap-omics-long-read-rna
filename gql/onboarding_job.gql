@@ -1,0 +1,11 @@
+mutation InsertOnboardingJob(
+  $_username: String!
+  $object: onboarding_job_insert_input!
+) {
+  set_username(args: { _username: $_username }) {
+    username
+  }
+  insert_onboarding_job_one(object: $object) {
+    id
+  }
+}

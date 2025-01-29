@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional
 from urllib.parse import urlunsplit
 
 import pandas as pd
@@ -125,29 +125,6 @@ def list_blobs(
     )
 
     return type_data_frame(df, ObjectMetadata)
-
-
-def check_file_sizes(
-    samples: TypedDataFrame[SamplesWithMetadata],
-) -> Tuple[TypedDataFrame[SamplesWithMetadata], pd.Series]:
-    """
-    Check whether BAM file sizes are above configured minimum threshold.
-
-    :param samples: the data frame of samples
-    :return: the samples data frame with issue and blacklist columns filled out for
-    too-small BAM files and a series indicating blacklisted rows
-    """
-
-    logging.info("Checking BAM file sizes...")
-
-    bam_too_small = samples["size"] < 2e9
-
-    samples.loc[bam_too_small, "issue"] = samples.loc[bam_too_small, "issue"].apply(
-        lambda x: x.union({"BAM file too small"})
-    )
-    samples.loc[bam_too_small, "blacklist"] = True
-
-    return type_data_frame(samples, SamplesWithMetadata), bam_too_small
 
 
 def copy_to_cclebams(

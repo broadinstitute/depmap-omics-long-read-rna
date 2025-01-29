@@ -1,10 +1,11 @@
 title = "DepMap Omics Long Read RNA"
 
 gcp_project_id = "depmap-omics"
+gumbo_env = "dev"
 uuid_namespace = "00000000-0000-0000-0000-000000000000"
 
 [onboarding]
-dry_run = false
+dry_run = true
 
 [onboarding.gcs_source]
 bucket = "fc-aaf4de93-c104-45c4-a01a-a036869119c6"

@@ -47,7 +47,7 @@ class SeqTable(CoercedDataFrame):
     sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
     crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
-    crai_bai_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    cram_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
 
 
 class ObjectMetadata(CoercedDataFrame):
@@ -81,7 +81,6 @@ class OnboardingSamples(CoercedDataFrame):
     aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
-    blacklist: Series[pd.BooleanDtype]
 
 
 class SamplesMaybeInGumbo(OnboardingSamples):
@@ -103,13 +102,13 @@ class CopiedSampleFiles(CoercedDataFrame):
 
 class SamplesForGumbo(CoercedDataFrame):
     sequencing_id: Series[pd.StringDtype]
-    unaligned_bam_filepath: Series[pd.StringDtype]
-    unaligned_bam_size: Series[pd.StringDtype]
+    unaligned_bam_url: Series[pd.StringDtype]
     unaligned_bam_crc32c_hash: Series[pd.StringDtype]
-    bam_filepath: Series[pd.StringDtype]
-    bam_size: Series[pd.StringDtype]
+    unaligned_bam_size: Series[pd.StringDtype]
+    bam_url: Series[pd.StringDtype]
     bam_crc32c_hash: Series[pd.StringDtype]
-    bai_filepath: Series[pd.StringDtype]
+    bam_size: Series[pd.StringDtype]
+    bai_url: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
     update_time: Series[pd.StringDtype]
     sequencing_date: Series[pd.StringDtype]

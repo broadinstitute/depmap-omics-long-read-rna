@@ -53,8 +53,22 @@ def main(
     with open(config_path, "rb") as f:
         config.update(tomllib.load(f))
 
-    # get URL and password for Gumbo GraphQL API
-    hasura_creds = get_hasura_creds("prod")
+    if config["gumbo_env"] == "dev":
+        gumbo_client = GumboClient(
+            url="http://localhost:8080/v1/graphql",
+            username="dogspa",
+            headers={"X-Hasura-Admin-Secret": "secret"},
+        )
+
+    else:
+        # get URL and password for Gumbo GraphQL API from secrets manager
+        hasura_creds = get_hasura_creds(gumbo_env=config["gumbo_env"])
+
+        gumbo_client = GumboClient(
+            url=hasura_creds["url"],
+            username="dogspa",
+            headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
+        )
 
     ctx.obj = {
         "terra_workspace": TerraWorkspace(
@@ -62,11 +76,7 @@ def main(
             workspace_name=config["terra"]["workspace_name"],
             owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         ),
-        "gumbo_client": GumboClient(
-            url=hasura_creds["url"],
-            username="depmap-omics-long-read-rna",
-            headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
-        ),
+        "gumbo_client": gumbo_client,
     }
 
 
