@@ -1223,17 +1223,6 @@ files = [
 ]
 
 [[package]]
-name = "multimethod"
-version = "1.10"
-description = "Multiple argument dispatching."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "multimethod-1.10-py3-none-any.whl", hash = "sha256:afd84da9c3d0445c84f827e4d63ad42d17c6d29b122427c6dee9032ac2d2a0d4"},
-    {file = "multimethod-1.10.tar.gz", hash = "sha256:daa45af3fe257f73abb69673fd54ddeaf31df0eb7363ad6e1251b7c9b192d8c5"},
-]
-
-[[package]]
 name = "mypy-extensions"
 version = "1.0.0"
 description = "Type system extensions for programs checked with the mypy type checker."
@@ -1459,25 +1448,23 @@ xml = ["lxml (>=4.9.2)"]
 
 [[package]]
 name = "pandera"
-version = "0.20.4"
+version = "0.22.1"
 description = "A light-weight and flexible data validation and testing tool for statistical data objects."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pandera-0.20.4-py3-none-any.whl", hash = "sha256:40368d9162938f304ce4ce6ad41ce4b57991b88f7de1bb4574aeb5a1ecf2dc8c"},
-    {file = "pandera-0.20.4.tar.gz", hash = "sha256:ccf6178293ef9d4393dc4776e47477e3d2dd51c800ecdfedec67fff50f4ad3c2"},
+    {file = "pandera-0.22.1-py3-none-any.whl", hash = "sha256:2a35531b4b533ac83e606a6dcc3cd41561774ff3d872117228e931f22e72f330"},
+    {file = "pandera-0.22.1.tar.gz", hash = "sha256:091ebc353383ba642e5a20ee0df763ed2059ab99cb4b2ac3e83f482de8493645"},
 ]
 
 [package.dependencies]
 hypothesis = {version = ">=6.92.7", optional = true, markers = "extra == \"strategies\""}
-multimethod = "<=1.10.0"
 numpy = ">=1.19.0"
 packaging = ">=20.0"
 pandas = ">=1.2.0"
 pydantic = "*"
 typeguard = "*"
-typing-inspect = ">=0.6.0"
-wrapt = "*"
+typing_inspect = ">=0.6.0"
 
 [package.extras]
 all = ["black", "dask[dataframe]", "fastapi", "frictionless (<=4.40.8)", "geopandas", "hypothesis (>=6.92.7)", "modin", "pandas-stubs", "polars (>=0.20.0)", "pyspark[connect] (>=3.2.0)", "pyyaml (>=5.1)", "ray", "scipy", "shapely"]
@@ -2149,13 +2136,13 @@ test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
 name = "typer"
-version = "0.12.5"
+version = "0.15.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typer-0.12.5-py3-none-any.whl", hash = "sha256:62fe4e471711b147e3365034133904df3e235698399bc4de2b36c8579298d52b"},
-    {file = "typer-0.12.5.tar.gz", hash = "sha256:f592f089bedcc8ec1b974125d64851029c3b1af145f04aca64d69410f0c9b722"},
+    {file = "typer-0.15.1-py3-none-any.whl", hash = "sha256:7994fb7b8155b64d3402518560648446072864beefd44aa2dc36972a5972e847"},
+    {file = "typer-0.15.1.tar.gz", hash = "sha256:a0588c0a7fa68a1978a069818657778f86abe6ff5ea6abf472f940a08bfe4f0a"},
 ]
 
 [package.dependencies]
@@ -2387,4 +2374,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "213bd75410773ab2535f5f4643b3b79e51344c8bc9abbef17eb9d565c13a2a19"
+content-hash = "dcca8173ee158ab395dd8613a45e2a46f446c88bdf1d6e3d6d503fcbde819da2"
