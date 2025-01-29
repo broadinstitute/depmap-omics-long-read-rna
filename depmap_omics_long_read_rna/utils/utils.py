@@ -10,6 +10,7 @@ from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from depmap_omics_long_read_rna.types import PydanticBaseModel
+from gumbo_gql_client import BaseModel
 
 
 def get_hasura_creds(gumbo_env: str) -> dict[str, str]:
@@ -45,7 +46,7 @@ def get_secret_from_sm(name: str) -> str:
 
 
 def model_to_df(
-    model: PydanticBaseModel,
+    model: BaseModel,
     pandera_schema: Type[PanderaBaseSchema],
     records_key: str = "records",
 ) -> TypedDataFrame[PanderaBaseSchema]:
