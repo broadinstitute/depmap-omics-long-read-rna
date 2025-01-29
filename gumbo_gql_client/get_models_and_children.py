@@ -38,6 +38,7 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     expected_type: Optional[str]
     sequencing_id: str
     source: Optional[str]
+    version: Optional[int]
     sequencing_alignments: List[
         "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments"
     ]

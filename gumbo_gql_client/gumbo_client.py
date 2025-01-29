@@ -33,6 +33,7 @@ class GumboClient(BaseClient):
                       expected_type
                       sequencing_id
                       source
+                      version
                       sequencing_alignments {
                         id
                         url

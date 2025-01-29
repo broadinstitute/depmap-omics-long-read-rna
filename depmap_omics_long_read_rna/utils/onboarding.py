@@ -496,7 +496,7 @@ def do_join_short_read_data(
 ) -> None:
     """
     Join columns from the short read RNA workspace to the long read one by mapping on
-    model IDs.
+    common model condition IDs.
 
     :param terra_workspace: the long read TerraWorkspace instance
     :param short_read_terra_workspace: the short read TerraWorkspace instance
@@ -504,9 +504,11 @@ def do_join_short_read_data(
     :param dry_run: whether to skip updates to external data stores
     """
 
+    # get the current long read sample data from Terra
     lr_samples = terra_workspace.get_entities("sample")
     lr_samples["model_id"] = lr_samples["participant"].apply(lambda x: x["entityName"])
 
+    # get the current short read sample data from Terra
     sr_samples = short_read_terra_workspace.get_entities("sample")
     sr_samples = (
         sr_samples.loc[
@@ -536,13 +538,27 @@ def do_join_short_read_data(
         .astype("string")
     )
 
+    # get the short read sequencing records from Gumbo
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
-    seq_table = explode_and_expand_models(models)
-    seq_table = seq_table.loc[
-        seq_table["expected_type"].isin(["rna", "long_read_rna"])
+    sr_sequencings = explode_and_expand_models(models)
+    sr_sequencings = sr_sequencings.loc[
+        sr_sequencings["expected_type"].eq("rna"),
+        [
+            "model_condition_id",
+            "profile_id",
+            "sequencing_id",
+            "datatype",
+            "blacklist",
+            "blacklist_omics",
+            "source",
+            "version",
+        ],
     ].drop_duplicates(subset="sequencing_id")
 
-    sr_metadata = get_short_read_metadata(lr_samples, seq_table)
+    # match a short read sample to each long read sample
+    sr_metadata = choose_matched_short_read_sample(
+        sr_samples, lr_samples, sr_sequencings
+    )
 
     sr_metadata = sr_metadata.merge(
         sr_samples,
@@ -551,12 +567,14 @@ def do_join_short_read_data(
         right_on="sample_id",
     ).drop(columns="sample_id")
 
-    assert bool(~sr_metadata["model_id"].duplicated().any())
+    assert bool(~sr_metadata["model_condition_id"].duplicated().any())
 
+    # update long read sample data table in Terra with short read metadata and workflow
+    # outputs
     samples_upsert = (
-        lr_samples[["sample_id", "model_id"]]
-        .merge(sr_metadata, how="inner", on="model_id")
-        .drop(columns="model_id")
+        lr_samples[["sample_id", "model_condition_id"]]
+        .merge(sr_metadata, how="inner", on="model_condition_id")
+        .drop(columns="model_condition_id")
     )
 
     if dry_run:
@@ -565,20 +583,23 @@ def do_join_short_read_data(
         terra_workspace.upload_entities(samples_upsert)
 
 
-def get_short_read_metadata(
-    lr_samples: pd.DataFrame, seq_table: TypedDataFrame[SeqTable]
+def choose_matched_short_read_sample(
+    sr_samples: pd.DataFrame,
+    lr_samples: pd.DataFrame,
+    sr_sequencings: TypedDataFrame[SeqTable],
 ) -> TypedDataFrame[ShortReadMetadata]:
     """
-    Get non-blacklisted short read RNA samples to map to long read ones.
+    Choose short read RNA samples to map to long read ones.
 
+    :param sr_samples: the short read workspace sample data table
     :param lr_samples: the long read workspace sample data table
-    :param seq_table: the data frame of Gumbo Omics sequencing data
-    :return: a data frame mapping model IDs to short read profile and sequencing IDs
+    :param sr_sequencings: the data frame of Gumbo Omics sequencing data
+    :return: a data frame mapping common model condition IDs to short read profile and
+    sequencing IDs
     """
 
-    # reproduce logic of `makeDefaultModelTable` in depmap_omics_upload
+    # prioritize certain sample source
     source_priority = [
-        "BROAD",
         "DEPMAP",
         "IBM",
         "CCLE2",
@@ -596,22 +617,33 @@ def get_short_read_metadata(
         }
     )
 
-    sr = seq_table.loc[
-        seq_table["model_id"].isin(lr_samples["model_id"])
-        & seq_table["datatype"].eq("rna")
-        & ~seq_table["blacklist"]
-        & ~seq_table["blacklist_omics"]
+    # collect all valid short read samples in Gumbo that are present in both short and
+    # long read workspaces
+    sr = sr_sequencings.loc[
+        sr_sequencings["sequencing_id"].isin(sr_samples["sample_id"])
+        & sr_sequencings["model_condition_id"].isin(lr_samples["model_condition_id"])
+        & ~sr_sequencings["blacklist"]
+        & ~sr_sequencings["blacklist_omics"]
     ].copy()
 
+    # populate the `source_priority` column
     sr["source"] = sr["source"].fillna("")
     sr = sr.merge(sp_df, how="left", on="source")
-
     assert sr["source_priority"].notna().all()
 
-    sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
-
-    sr_rna = sr_rna[["model_id", "profile_id", "sequencing_id"]].rename(
-        columns={"profile_id": "sr_profile_id", "sequencing_id": "sr_sample_id"}
+    # pick a short read sample for each model condition, using the more recent `version`
+    # to break ties
+    sr_choices = (
+        sr.sort_values(
+            ["model_condition_id", "source_priority", "version"],
+            ascending=[True, True, False],
+        )
+        .groupby("model_condition_id")
+        .nth(0)
     )
 
-    return sr_rna
+    sr_choices = sr_choices[
+        ["model_condition_id", "profile_id", "sequencing_id"]
+    ].rename(columns={"profile_id": "sr_profile_id", "sequencing_id": "sr_sample_id"})
+
+    return type_data_frame(sr_choices, ShortReadMetadata)

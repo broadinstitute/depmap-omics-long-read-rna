@@ -41,6 +41,7 @@ class SeqTable(CoercedDataFrame):
     blacklist: Series[pd.BooleanDtype]
     source: Series[pd.StringDtype] = pa.Field(nullable=True)
     expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)
+    version: Series[pd.Int64Dtype]
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
     sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
     sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
@@ -125,7 +126,7 @@ class VersionedSamples(SamplesForGumbo):
 class ShortReadMetadata(CoercedDataFrame):
     sr_sample_id: Series[pd.StringDtype]
     sr_profile_id: Series[pd.StringDtype]
-    model_id: Series[pd.StringDtype]
+    model_condition_id: Series[pd.StringDtype]
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)

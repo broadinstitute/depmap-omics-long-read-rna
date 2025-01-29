@@ -17,6 +17,7 @@ query GetModelsAndChildren {
           expected_type
           sequencing_id
           source
+          version
           sequencing_alignments {
             id
             url
