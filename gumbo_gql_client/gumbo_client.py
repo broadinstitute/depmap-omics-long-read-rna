@@ -29,13 +29,18 @@ class GumboClient(BaseClient):
                     smid_ordered
                     smid_returned
                     omics_sequencings {
-                      bai_filepath
-                      bam_filepath
                       blacklist
                       expected_type
                       sequencing_id
                       source
-                      unaligned_bam_size
+                      sequencing_alignments {
+                        id
+                        url
+                        index_url
+                        size
+                        reference_genome
+                        sequencing_alignment_source
+                      }
                     }
                   }
                 }

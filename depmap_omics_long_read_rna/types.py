@@ -36,13 +36,17 @@ class SeqTable(CoercedDataFrame):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    unaligned_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     blacklist_omics: Series[pd.BooleanDtype]
     blacklist: Series[pd.BooleanDtype]
+    source: Series[pd.StringDtype] = pa.Field(nullable=True)
     expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)
-    bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
-    bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
+    reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    crai_bai_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
 
 
 class ObjectMetadata(CoercedDataFrame):

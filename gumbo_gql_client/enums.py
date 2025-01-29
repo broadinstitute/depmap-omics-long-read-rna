@@ -38,6 +38,99 @@ class depmap_model_type_update_column(str, Enum):
     subtype = "subtype"
 
 
+class genomic_fingerprint_comparison_constraint(str, Enum):
+    genomic_fingerprint_comparison_pkey = "genomic_fingerprint_comparison_pkey"
+
+
+class genomic_fingerprint_comparison_select_column(str, Enum):
+    created_at = "created_at"
+    genomic_fingerprint_id1 = "genomic_fingerprint_id1"
+    genomic_fingerprint_id2 = "genomic_fingerprint_id2"
+    id = "id"
+    n_common_snps = "n_common_snps"
+    n_matching_genotypes = "n_matching_genotypes"
+    patient_id1 = "patient_id1"
+    patient_id2 = "patient_id2"
+    score = "score"
+
+
+class genomic_fingerprint_comparison_update_column(str, Enum):
+    created_at = "created_at"
+    genomic_fingerprint_id1 = "genomic_fingerprint_id1"
+    genomic_fingerprint_id2 = "genomic_fingerprint_id2"
+    id = "id"
+    n_common_snps = "n_common_snps"
+    n_matching_genotypes = "n_matching_genotypes"
+    patient_id1 = "patient_id1"
+    patient_id2 = "patient_id2"
+    score = "score"
+
+
+class genomic_fingerprint_constraint(str, Enum):
+    genomic_fingerprint_pkey = "genomic_fingerprint_pkey"
+
+
+class genomic_fingerprint_failure_constraint(str, Enum):
+    genomic_fingerprint_failure_pkey = "genomic_fingerprint_failure_pkey"
+
+
+class genomic_fingerprint_failure_genomic_fingerprint_comparison_constraint(str, Enum):
+    genomic_fingerprint_fail_genomicfingerprintfailur_151d88a5_uniq = (
+        "genomic_fingerprint_fail_genomicfingerprintfailur_151d88a5_uniq"
+    )
+    genomic_fingerprint_failure_genomic_fingerprint_comparison_pkey = (
+        "genomic_fingerprint_failure_genomic_fingerprint_comparison_pkey"
+    )
+
+
+class genomic_fingerprint_failure_genomic_fingerprint_comparison_select_column(
+    str, Enum
+):
+    genomicfingerprintcomparison_id = "genomicfingerprintcomparison_id"
+    genomicfingerprintfailure_id = "genomicfingerprintfailure_id"
+    id = "id"
+
+
+class genomic_fingerprint_failure_genomic_fingerprint_comparison_update_column(
+    str, Enum
+):
+    genomicfingerprintcomparison_id = "genomicfingerprintcomparison_id"
+    genomicfingerprintfailure_id = "genomicfingerprintfailure_id"
+    id = "id"
+
+
+class genomic_fingerprint_failure_select_column(str, Enum):
+    acknowledged = "acknowledged"
+    comments = "comments"
+    created_at = "created_at"
+    id = "id"
+    updated_at = "updated_at"
+
+
+class genomic_fingerprint_failure_update_column(str, Enum):
+    acknowledged = "acknowledged"
+    comments = "comments"
+    created_at = "created_at"
+    id = "id"
+    updated_at = "updated_at"
+
+
+class genomic_fingerprint_select_column(str, Enum):
+    created_at = "created_at"
+    genotypes = "genotypes"
+    id = "id"
+    sequencing_alignment_id = "sequencing_alignment_id"
+    vcf_url = "vcf_url"
+
+
+class genomic_fingerprint_update_column(str, Enum):
+    created_at = "created_at"
+    genotypes = "genotypes"
+    id = "id"
+    sequencing_alignment_id = "sequencing_alignment_id"
+    vcf_url = "vcf_url"
+
+
 class media_constraint(str, Enum):
     media_pkey = "media_pkey"
 
@@ -529,22 +622,10 @@ class omics_sequencing_constraint(str, Enum):
 
 
 class omics_sequencing_select_column(str, Enum):
-    bai_filepath = "bai_filepath"
-    bam_crc32c_hash = "bam_crc32c_hash"
-    bam_filepath = "bam_filepath"
     bam_qc = "bam_qc"
-    bam_size = "bam_size"
     blacklist = "blacklist"
     expected_type = "expected_type"
     gp_alignment = "gp_alignment"
-    hg19_bai_filepath = "hg19_bai_filepath"
-    hg19_bam_crc32c_hash = "hg19_bam_crc32c_hash"
-    hg19_bam_filepath = "hg19_bam_filepath"
-    hg19_bam_size = "hg19_bam_size"
-    hg38_crai_filepath = "hg38_crai_filepath"
-    hg38_cram_crc32c_hash = "hg38_cram_crc32c_hash"
-    hg38_cram_filepath = "hg38_cram_filepath"
-    hg38_cram_size = "hg38_cram_size"
     issue = "issue"
     low_quality = "low_quality"
     month_sequencing_billed = "month_sequencing_billed"
@@ -559,9 +640,6 @@ class omics_sequencing_select_column(str, Enum):
     source = "source"
     str_profile = "str_profile"
     stranded = "stranded"
-    unaligned_bam_crc32c_hash = "unaligned_bam_crc32c_hash"
-    unaligned_bam_filepath = "unaligned_bam_filepath"
-    unaligned_bam_size = "unaligned_bam_size"
     update_time = "update_time"
     version = "version"
     year_sequencing_billed = "year_sequencing_billed"
@@ -588,22 +666,10 @@ class omics_sequencing_select_column_omics_sequencing_aggregate_bool_exp_bool_or
 
 
 class omics_sequencing_update_column(str, Enum):
-    bai_filepath = "bai_filepath"
-    bam_crc32c_hash = "bam_crc32c_hash"
-    bam_filepath = "bam_filepath"
     bam_qc = "bam_qc"
-    bam_size = "bam_size"
     blacklist = "blacklist"
     expected_type = "expected_type"
     gp_alignment = "gp_alignment"
-    hg19_bai_filepath = "hg19_bai_filepath"
-    hg19_bam_crc32c_hash = "hg19_bam_crc32c_hash"
-    hg19_bam_filepath = "hg19_bam_filepath"
-    hg19_bam_size = "hg19_bam_size"
-    hg38_crai_filepath = "hg38_crai_filepath"
-    hg38_cram_crc32c_hash = "hg38_cram_crc32c_hash"
-    hg38_cram_filepath = "hg38_cram_filepath"
-    hg38_cram_size = "hg38_cram_size"
     issue = "issue"
     low_quality = "low_quality"
     month_sequencing_billed = "month_sequencing_billed"
@@ -618,12 +684,115 @@ class omics_sequencing_update_column(str, Enum):
     source = "source"
     str_profile = "str_profile"
     stranded = "stranded"
-    unaligned_bam_crc32c_hash = "unaligned_bam_crc32c_hash"
-    unaligned_bam_filepath = "unaligned_bam_filepath"
-    unaligned_bam_size = "unaligned_bam_size"
     update_time = "update_time"
     version = "version"
     year_sequencing_billed = "year_sequencing_billed"
+
+
+class onboarding_job_constraint(str, Enum):
+    onboarding_job_pkey = "onboarding_job_pkey"
+
+
+class onboarding_job_select_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    n_samples = "n_samples"
+    n_samples_excluded = "n_samples_excluded"
+    n_samples_failed = "n_samples_failed"
+    n_samples_new = "n_samples_new"
+    n_samples_succeeded = "n_samples_succeeded"
+    onboarding_workspace_id = "onboarding_workspace_id"
+    succeeded = "succeeded"
+
+
+class onboarding_job_select_column_onboarding_job_aggregate_bool_exp_bool_and_arguments_columns(
+    str, Enum
+):
+    succeeded = "succeeded"
+
+
+class onboarding_job_select_column_onboarding_job_aggregate_bool_exp_bool_or_arguments_columns(
+    str, Enum
+):
+    succeeded = "succeeded"
+
+
+class onboarding_job_update_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    n_samples = "n_samples"
+    n_samples_excluded = "n_samples_excluded"
+    n_samples_failed = "n_samples_failed"
+    n_samples_new = "n_samples_new"
+    n_samples_succeeded = "n_samples_succeeded"
+    onboarding_workspace_id = "onboarding_workspace_id"
+    succeeded = "succeeded"
+
+
+class onboarding_sample_constraint(str, Enum):
+    onboarding_sample_pkey = "onboarding_sample_pkey"
+
+
+class onboarding_sample_select_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    issue = "issue"
+    omics_profile_id = "omics_profile_id"
+    onboarding_job_id = "onboarding_job_id"
+    sequencing_alignment_id = "sequencing_alignment_id"
+    sm_id = "sm_id"
+    terra_sample_id = "terra_sample_id"
+
+
+class onboarding_sample_update_column(str, Enum):
+    created_at = "created_at"
+    id = "id"
+    issue = "issue"
+    omics_profile_id = "omics_profile_id"
+    onboarding_job_id = "onboarding_job_id"
+    sequencing_alignment_id = "sequencing_alignment_id"
+    sm_id = "sm_id"
+    terra_sample_id = "terra_sample_id"
+
+
+class onboarding_workspace_constraint(str, Enum):
+    onboarding_workspace_pkey = "onboarding_workspace_pkey"
+
+
+class onboarding_workspace_select_column(str, Enum):
+    active = "active"
+    created_at = "created_at"
+    custom_values = "custom_values"
+    excluded_terra_sample_ids = "excluded_terra_sample_ids"
+    expected_type = "expected_type"
+    gcs_destination_bucket = "gcs_destination_bucket"
+    gcs_destination_prefix = "gcs_destination_prefix"
+    id = "id"
+    min_file_size = "min_file_size"
+    reference_genome = "reference_genome"
+    source = "source"
+    terra_col_names = "terra_col_names"
+    updated_at = "updated_at"
+    workspace_name = "workspace_name"
+    workspace_namespace = "workspace_namespace"
+
+
+class onboarding_workspace_update_column(str, Enum):
+    active = "active"
+    created_at = "created_at"
+    custom_values = "custom_values"
+    excluded_terra_sample_ids = "excluded_terra_sample_ids"
+    expected_type = "expected_type"
+    gcs_destination_bucket = "gcs_destination_bucket"
+    gcs_destination_prefix = "gcs_destination_prefix"
+    id = "id"
+    min_file_size = "min_file_size"
+    reference_genome = "reference_genome"
+    source = "source"
+    terra_col_names = "terra_col_names"
+    updated_at = "updated_at"
+    workspace_name = "workspace_name"
+    workspace_namespace = "workspace_namespace"
 
 
 class order_by(str, Enum):
@@ -645,6 +814,38 @@ class patient_select_column(str, Enum):
 
 class patient_update_column(str, Enum):
     patient_id = "patient_id"
+
+
+class sequencing_alignment_constraint(str, Enum):
+    sequencing_alignment_pkey = "sequencing_alignment_pkey"
+
+
+class sequencing_alignment_select_column(str, Enum):
+    crc32c_hash = "crc32c_hash"
+    created_at = "created_at"
+    id = "id"
+    index_url = "index_url"
+    omics_sequencing_id = "omics_sequencing_id"
+    reference_genome = "reference_genome"
+    sequencing_alignment_source = "sequencing_alignment_source"
+    size = "size"
+    str_profile_id = "str_profile_id"
+    updated_at = "updated_at"
+    url = "url"
+
+
+class sequencing_alignment_update_column(str, Enum):
+    crc32c_hash = "crc32c_hash"
+    created_at = "created_at"
+    id = "id"
+    index_url = "index_url"
+    omics_sequencing_id = "omics_sequencing_id"
+    reference_genome = "reference_genome"
+    sequencing_alignment_source = "sequencing_alignment_source"
+    size = "size"
+    str_profile_id = "str_profile_id"
+    updated_at = "updated_at"
+    url = "url"
 
 
 class snp_fingerprint_comparison_constraint(str, Enum):
@@ -685,38 +886,6 @@ class snp_fingerprint_comparison_update_column(str, Enum):
 
 class snp_fingerprint_constraint(str, Enum):
     snp_fingerprint_pkey = "snp_fingerprint_pkey"
-
-
-class snp_fingerprint_qc_select_column(str, Enum):
-    acknowledged = "acknowledged"
-    cell_line_name1 = "cell_line_name1"
-    cell_line_name2 = "cell_line_name2"
-    comments = "comments"
-    compared_patient_id1 = "compared_patient_id1"
-    compared_patient_id2 = "compared_patient_id2"
-    created_at = "created_at"
-    expected_type1 = "expected_type1"
-    expected_type2 = "expected_type2"
-    id = "id"
-    issue = "issue"
-    linked_patient_id1 = "linked_patient_id1"
-    linked_patient_id2 = "linked_patient_id2"
-    low_quality1 = "low_quality1"
-    low_quality2 = "low_quality2"
-    model_condition1 = "model_condition1"
-    model_condition2 = "model_condition2"
-    model_id1 = "model_id1"
-    model_id2 = "model_id2"
-    omics_sequencing_blacklist1 = "omics_sequencing_blacklist1"
-    omics_sequencing_blacklist2 = "omics_sequencing_blacklist2"
-    profile_blacklist_omics1 = "profile_blacklist_omics1"
-    profile_blacklist_omics2 = "profile_blacklist_omics2"
-    profile_id1 = "profile_id1"
-    profile_id2 = "profile_id2"
-    score = "score"
-    sequencing_id1 = "sequencing_id1"
-    sequencing_id2 = "sequencing_id2"
-    snp_fingerprint_comparison_id = "snp_fingerprint_comparison_id"
 
 
 class snp_fingerprint_select_column(str, Enum):

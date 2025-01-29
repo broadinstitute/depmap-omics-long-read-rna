@@ -109,11 +109,7 @@ def assign_cds_ids(
         samples,
         uuid_namespace=uuid_namespace,
         uuid_col_name="cds_id",
-        subset=[
-            "delivery_bam_crc32c",
-            "delivery_bam_size",
-            "delivery_bam_updated_at",
-        ],
+        subset=["delivery_bam_crc32c", "delivery_bam_size", "delivery_bam_updated_at"],
     )
 
     # convert UUIDs to base62 and truncate to match existing ID format
@@ -125,9 +121,7 @@ def assign_cds_ids(
 
 
 def do_delta_align_delivery_bams(
-    terra_workspace: TerraWorkspace,
-    terra_workflow: TerraWorkflow,
-    dry_run: bool,
+    terra_workspace: TerraWorkspace, terra_workflow: TerraWorkflow, dry_run: bool
 ) -> None:
     """
     Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.

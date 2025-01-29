@@ -34,16 +34,28 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
 class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     BaseModel
 ):
-    bai_filepath: Optional[str]
-    bam_filepath: Optional[str]
     blacklist: bool
     expected_type: Optional[str]
     sequencing_id: str
     source: Optional[str]
-    unaligned_bam_size: Optional[int]
+    sequencing_alignments: List[
+        "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments"
+    ]
+
+
+class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments(
+    BaseModel
+):
+    id: int
+    url: str
+    index_url: Optional[str]
+    size: int
+    reference_genome: Optional[str]
+    sequencing_alignment_source: str
 
 
 GetModelsAndChildren.model_rebuild()
 GetModelsAndChildrenRecords.model_rebuild()
 GetModelsAndChildrenRecordsModelConditions.model_rebuild()
 GetModelsAndChildrenRecordsModelConditionsOmicsProfiles.model_rebuild()
+GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings.model_rebuild()

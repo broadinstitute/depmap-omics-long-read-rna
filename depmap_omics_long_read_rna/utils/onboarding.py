@@ -90,7 +90,7 @@ def do_onboard_samples(
 
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(
-        samples, seq_table_lr, size_col_name="unaligned_bam_size"
+        samples, seq_table_lr, size_col_name="crai_bai_size"
     )
     stats["n not yet in Gumbo"] = (~samples["already_in_gumbo"]).sum()
     samples = samples.loc[~samples["already_in_gumbo"]].drop(columns="already_in_gumbo")
@@ -190,17 +190,30 @@ def explode_and_expand_models(
 
     seq_table = models.copy()
 
-    for c in ["model_conditions", "omics_profiles", "omics_sequencings"]:
+    for c in [
+        "model_conditions",
+        "omics_profiles",
+        "omics_sequencings",
+        "sequencing_alignments",
+    ]:
         seq_table = seq_table.explode(c).reset_index(drop=True)
+        seq_table.dropna(subset=[c], inplace=True)
         seq_table = expand_dict_columns(seq_table, name_columns_with_parent=False)
-
-    seq_table = seq_table.dropna(subset=["model_condition_id", "profile_id"])
 
     seq_table[["blacklist_omics", "blacklist"]] = (
         seq_table[["blacklist_omics", "blacklist"]].astype("boolean").fillna(False)
     )
 
-    return type_data_frame(seq_table, SeqTable)
+    seq_table = seq_table.rename(
+        columns={
+            "id": "sequencing_alignment_id",
+            "url": "cram_bam_url",
+            "index_url": "crai_bai_url",
+            "size": "crai_bai_size",
+        }
+    )
+
+    return type_data_frame(seq_table, SeqTable, remove_unknown_cols=True)
 
 
 def join_metadata(
@@ -254,9 +267,11 @@ def check_already_in_gumbo(
 
     logging.info("Checking Gumbo for existing samples...")
 
+    seq_table_ubam = seq_table.loc[seq_table["reference_genome"].isna()]
+
     samples["already_in_gumbo"] = (
         samples["delivery_bam_size"]
-        .isin(seq_table[size_col_name].dropna().astype("int64"))
+        .isin(seq_table_ubam[size_col_name].dropna().astype("int64"))
         .astype("bool")
     )
 
@@ -339,7 +354,8 @@ def increment_sample_versions(
     # count distinct profile IDs in existing seq table from among those observed in the
     # current batch of samples
     existing_profile_id_counts = (
-        seq_table.loc[
+        seq_table.drop_duplicates(subset="sequencing_id")
+        .loc[
             seq_table["expected_type"].eq("long_read_rna")
             & seq_table["profile_id"].isin(samples["profile_id"]),
             "profile_id",
@@ -522,7 +538,9 @@ def do_join_short_read_data(
 
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
-    seq_table = seq_table.loc[seq_table["expected_type"].isin(["rna", "long_read_rna"])]
+    seq_table = seq_table.loc[
+        seq_table["expected_type"].isin(["rna", "long_read_rna"])
+    ].drop_duplicates(subset="sequencing_id")
 
     sr_metadata = get_short_read_metadata(lr_samples, seq_table)
 
@@ -593,10 +611,7 @@ def get_short_read_metadata(
     sr_rna = sr.sort_values("source_priority").groupby("model_id").nth(0)
 
     sr_rna = sr_rna[["model_id", "profile_id", "sequencing_id"]].rename(
-        columns={
-            "profile_id": "sr_profile_id",
-            "sequencing_id": "sr_sample_id",
-        }
+        columns={"profile_id": "sr_profile_id", "sequencing_id": "sr_sample_id"}
     )
 
     return sr_rna
