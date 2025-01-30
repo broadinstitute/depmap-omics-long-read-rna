@@ -25,11 +25,7 @@ from depmap_omics_long_read_rna.utils.gcp import (
     get_objects_metadata,
     update_sample_file_urls,
 )
-from depmap_omics_long_read_rna.utils.utils import (
-    df_to_model,
-    get_secret_from_sm,
-    model_to_df,
-)
+from depmap_omics_long_read_rna.utils.utils import get_secret_from_sm, model_to_df
 from gumbo_gql_client import (
     omics_sequencing_insert_input,
     omics_sequencing_obj_rel_insert_input,
@@ -93,7 +89,7 @@ def do_onboard_samples(
             dry_run,
         )
         onboarding_job.succeeded = True
-    except Exception as e:
+    except BrokenPipeError as e:
         logging.error(e)
     finally:
         onboarding_job = persist_onboarding_job(gumbo_client, onboarding_job, dry_run)
@@ -135,7 +131,7 @@ def prep_onboarding_job(
     onboarding_job.n_samples_failed = 0
 
     # check if any Terra sample IDs are in the exclusion list and drop them now
-    is_excluded = samples["sample_id"].isin(excluded_terra_sample_ids)
+    is_excluded = samples["sequencing_id"].isin(excluded_terra_sample_ids)
     onboarding_job.n_samples_excluded = is_excluded.sum()
     samples = samples.loc[~is_excluded]
 
@@ -152,7 +148,7 @@ def prep_onboarding_job(
 
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(
-        samples, seq_table_lr, size_col_name="crai_bai_size"
+        samples, seq_table_lr, size_col_name="cram_bam_size"
     )
     onboarding_job.n_samples_new = (~samples["already_in_gumbo"]).sum()
 
@@ -289,8 +285,12 @@ def explode_and_expand_models(
         "omics_sequencings",
         "sequencing_alignments",
     ]:
+        print(c)
         seq_table = seq_table.explode(c).reset_index(drop=True)
-        seq_table.dropna(subset=[c], inplace=True)
+
+        if c != "sequencing_alignments":
+            seq_table.dropna(subset=[c], inplace=True)
+
         seq_table = expand_dict_columns(seq_table, name_columns_with_parent=False)
 
     seq_table[["blacklist_omics", "blacklist"]] = (
@@ -358,7 +358,7 @@ def check_file_sizes(
 
     logging.info("Checking BAM file sizes...")
 
-    bam_too_small = samples["size"] < min_file_size
+    bam_too_small = samples["delivery_bam_size"] < min_file_size
     samples.loc[bam_too_small, "issue"] = samples.loc[bam_too_small, "issue"].apply(
         lambda x: x.union({"BAM/CRAM file too small"})
     )
@@ -441,7 +441,6 @@ def apply_col_map(
             "source",
             "expected_type",
             "issue",
-            "blacklist",
         ],
     ]
 
@@ -490,43 +489,6 @@ def increment_sample_versions(
     versioned_samples = versioned_samples.drop(columns="version_n")
 
     return type_data_frame(versioned_samples, VersionedSamples)
-
-
-def upload_to_gumbo(
-    gumbo_client: GumboClient, samples: TypedDataFrame[VersionedSamples], dry_run: bool
-) -> TypedDataFrame[VersionedSamples]:
-    """
-    Upload the samples data frame to the Gumbo sequencing table.
-
-    :param gumbo_client: an instance of the Gumbo GraphQL client
-    :param samples: the data frame of samples
-    :param dry_run: whether to skip updates to external data stores
-    :return: the samples data frame that was uploaded to Gumbo
-    """
-
-    # match historical behavior to exclude bad records except for too-small
-    # BAM files (so that other types of bad records like missing GCS
-    # objects that might get resolved later still get processed the next time
-    # this automation is run)
-    samples_to_upload = samples.loc[
-        ~samples["blacklist"] | samples["issue"].eq("BAM file too small")
-    ]
-
-    if dry_run:
-        logging.info(f"(skipping) Inserting {len(samples_to_upload)} samples")
-        return samples_to_upload
-
-    logging.info(f"Inserting {len(samples_to_upload)} samples to omics_sequencing")
-
-    if len(samples) > 0:
-        objects = df_to_model(samples_to_upload, omics_sequencing_insert_input)
-        res = gumbo_client.insert_omics_sequencings(
-            username="depmap-omics-long-read-rna", objects=objects
-        )
-        affected_rows = res.insert_omics_sequencing.affected_rows  # type: ignore
-        logging.info(f"Inserted {affected_rows} samples to Gumbo")
-
-    return samples_to_upload
 
 
 def upsert_terra_samples(

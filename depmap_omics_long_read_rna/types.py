@@ -115,7 +115,6 @@ class SamplesForGumbo(CoercedDataFrame):
     source: Series[pd.StringDtype]
     expected_type: Series[pd.StringDtype]
     issue: Series[pd.StringDtype] = pa.Field(nullable=True)
-    blacklist: Series[pd.BooleanDtype]
 
 
 class VersionedSamples(SamplesForGumbo):
