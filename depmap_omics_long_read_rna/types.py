@@ -41,10 +41,10 @@ class SeqTable(CoercedDataFrame):
     blacklist: Series[pd.BooleanDtype]
     source: Series[pd.StringDtype] = pa.Field(nullable=True)
     expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)
-    version: Series[pd.Int64Dtype]
+    version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
     sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
     crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
     cram_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)

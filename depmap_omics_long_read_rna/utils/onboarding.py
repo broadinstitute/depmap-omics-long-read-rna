@@ -94,7 +94,7 @@ def do_onboard_samples(
         logging.error(e)
     finally:
         onboarding_job = persist_onboarding_job(gumbo_client, onboarding_job, dry_run)
-        send_slack_message(onboarding_job, dry_run)
+        send_slack_message(onboarding_job, dry_run=True)
 
 
 def prep_onboarding_job(
@@ -139,13 +139,7 @@ def prep_onboarding_job(
     # get the sequencing and profile tables from Gumbo
     models = model_to_df(gumbo_client.get_models_and_children(), ModelsAndChildren)
     seq_table = explode_and_expand_models(models)
-
-    # filter so that sequencing alignment-related columns are just the ones for the
-    # GP-delivered uBAM
-    seq_table_lr = seq_table.loc[
-        seq_table["datatype"].eq("long_read_rna")
-        & seq_table["sequencing_alignment_source"].eq("GP")
-    ]
+    seq_table_lr = seq_table.loc[seq_table["datatype"].eq("long_read_rna")]
 
     # compare file sizes to filter out samples that are in Gumbo already
     samples = check_already_in_gumbo(
@@ -282,6 +276,23 @@ def explode_and_expand_models(
 
     seq_table[["blacklist_omics", "blacklist"]] = (
         seq_table[["blacklist_omics", "blacklist"]].astype("boolean").fillna(False)
+    )
+
+    # columns for `omics_sequencing` and `sequencing_alignment` might be null, since
+    # we haven't onboarded those samples yet, but parent values (`omics_profile`, etc.)
+    # should be present
+    seq_table = seq_table.dropna(
+        subset=[
+            "model_id",
+            "cell_line_name",
+            "stripped_cell_line_name",
+            "model_condition_id",
+            "profile_id",
+            "datatype",
+            "blacklist_omics",
+            "blacklist",
+            "version",
+        ]
     )
 
     seq_table = seq_table.rename(
@@ -727,14 +738,62 @@ def prep_onboarding_samples(
     :return: the updated onboarding job
     """
 
+    unaligned_samples = (
+        samples.loc[
+            :,
+            [
+                "sequencing_id",
+                "profile_id",
+                "issue",
+                "unaligned_bam_url",
+                "unaligned_bam_crc32c_hash",
+                "unaligned_bam_size",
+            ],
+        ]
+        .rename(
+            columns={
+                "sequencing_id": "terra_sample_id",
+                "unaligned_bam_url": "url",
+                "unaligned_bam_crc32c_hash": "crc32c_hash",
+                "unaligned_bam_size": "size",
+            }
+        )
+        .assign(sequencing_alignment_source="GP", reference_genome=None)
+    )
+
+    aligned_samples = (
+        samples.loc[
+            :,
+            [
+                "sequencing_id",
+                "profile_id",
+                "issue",
+                "bam_url",
+                "bam_crc32c_hash",
+                "bam_size",
+            ],
+        ]
+        .rename(
+            columns={
+                "sequencing_id": "terra_sample_id",
+                "bam_url": "url",
+                "bam_crc32c_hash": "crc32c_hash",
+                "bam_size": "size",
+            }
+        )
+        .assign(sequencing_alignment_source="CDS", reference_genome="hg38")
+    )
+
+    samples_long = pd.concat([unaligned_samples, aligned_samples])
+
     onboarding_samples = []
 
-    for x in samples.to_dict(orient="records"):
+    for x in samples_long.to_dict(orient="records"):
         # make the onboarding_sample record (whether we're creating an omics_sequencing
         # record or not)
         onboarding_sample = onboarding_sample_insert_input.model_validate(
             {
-                "terra_sample_id": x["sequencing_id"],
+                "terra_sample_id": x["terra_sample_id"],
                 "omics_profile_id": x["profile_id"],
                 "issue": x["issue"],
             }
@@ -755,9 +814,12 @@ def prep_onboarding_samples(
                 )
             )
 
-            onboarding_job.n_samples_succeeded += 1  # pyright: ignore
+            if x["reference_genome"] is None:
+                # don't double count because we're technically onboarding both the
+                # unaligned, GP-delivered file and the aligned CDS one
+                onboarding_job.n_samples_succeeded += 1  # pyright: ignore
 
-        else:
+        elif x["reference_genome"] is None:
             onboarding_job.n_samples_failed += 1  # pyright: ignore
 
         onboarding_samples.append(onboarding_sample)

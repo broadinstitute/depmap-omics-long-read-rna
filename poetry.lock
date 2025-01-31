@@ -1495,13 +1495,13 @@ files = [
 
 [[package]]
 name = "pd-flatten"
-version = "0.1.0"
+version = "0.1.1"
 description = "Recursively flatten dictionaries in a Pandas data frame"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pd_flatten-0.1.0-py3-none-any.whl", hash = "sha256:281736d37096070d2cfae64097be523f0fd1368bcd423aa8ee6540f154dde366"},
-    {file = "pd_flatten-0.1.0.tar.gz", hash = "sha256:576b10a10837e84645d7b67717e6a4f78423b66a80fed38699150b1d6fc0c7a3"},
+    {file = "pd_flatten-0.1.1-py3-none-any.whl", hash = "sha256:8b0903dd03f06eca915c576fd2099e88f9c06f6e21b1d9c26105c9b6827196f2"},
+    {file = "pd_flatten-0.1.1.tar.gz", hash = "sha256:be05bef70aae0ce8736c2935d2609b1bc2206fce45f707e428b759ee35c58841"},
 ]
 
 [package.dependencies]
