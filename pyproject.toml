@@ -17,10 +17,11 @@ pandera = {extras = ["strategies"], version = "^0.22.1"}
 python-baseconv = "^1.2.2"
 google-cloud-logging = "^3.11.4"
 python-dotenv = "^1.0.1"
-nebelung = "^1.4.0"
+nebelung = "^2.0.0"
 typer = "^0.15.1"
 google-cloud-secret-manager = "^2.22.1"
 ariadne-codegen = "^0.14.0"
+pd-flatten = "^0.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.6.8"

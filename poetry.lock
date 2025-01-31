@@ -170,13 +170,13 @@ files = [
 
 [[package]]
 name = "certifi"
-version = "2024.12.14"
+version = "2025.1.31"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.12.14-py3-none-any.whl", hash = "sha256:1275f7a45be9464efc1173084eaa30f866fe2e47d389406136d332ed4967ec56"},
-    {file = "certifi-2024.12.14.tar.gz", hash = "sha256:b650d30f370c2b724812bee08008be0c4163b163ddaec3f2546c1caf65f191db"},
+    {file = "certifi-2025.1.31-py3-none-any.whl", hash = "sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe"},
+    {file = "certifi-2025.1.31.tar.gz", hash = "sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651"},
 ]
 
 [[package]]
@@ -1235,19 +1235,20 @@ files = [
 
 [[package]]
 name = "nebelung"
-version = "1.4.0"
+version = "2.0.0"
 description = "Firecloud API Wrapper"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "nebelung-1.4.0-py3-none-any.whl", hash = "sha256:15bc7f2d14722a5814db9b17dbafc2219e36b47072e472aeebee91be78314261"},
-    {file = "nebelung-1.4.0.tar.gz", hash = "sha256:df5aed6ac80fb359b198bdaf709f70a7172c11d4713eeb3b3ca0ae7faca045e6"},
+    {file = "nebelung-2.0.0-py3-none-any.whl", hash = "sha256:7dc4b982ffa6db9ecf1dfa47309cab668270e59e7e0923e046966d61c7dbb4ba"},
+    {file = "nebelung-2.0.0.tar.gz", hash = "sha256:c14a9fa79fadf8536a0734a514c26093a9743fbc338b4e767a09d01e70e245de"},
 ]
 
 [package.dependencies]
 firecloud = ">=0.16"
 pandas = ">=1.5"
 pandera = {version = ">=0.20", extras = ["strategies"]}
+pd-flatten = ">=0.1"
 pydantic = ">=2.8"
 pygithub = ">=2.3"
 
@@ -1491,6 +1492,20 @@ files = [
     {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
     {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
+
+[[package]]
+name = "pd-flatten"
+version = "0.1.0"
+description = "Recursively flatten dictionaries in a Pandas data frame"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pd_flatten-0.1.0-py3-none-any.whl", hash = "sha256:281736d37096070d2cfae64097be523f0fd1368bcd423aa8ee6540f154dde366"},
+    {file = "pd_flatten-0.1.0.tar.gz", hash = "sha256:576b10a10837e84645d7b67717e6a4f78423b66a80fed38699150b1d6fc0c7a3"},
+]
+
+[package.dependencies]
+pandas = ">=2.2,<3.0"
 
 [[package]]
 name = "platformdirs"
@@ -1920,13 +1935,13 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "pytz"
-version = "2024.2"
+version = "2025.1"
 description = "World timezone definitions, modern and historical"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytz-2024.2-py2.py3-none-any.whl", hash = "sha256:31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725"},
-    {file = "pytz-2024.2.tar.gz", hash = "sha256:2aa355083c50a0f93fa581709deac0c9ad65cca8a9e9beac660adcbd493c798a"},
+    {file = "pytz-2025.1-py2.py3-none-any.whl", hash = "sha256:89dd22dca55b46eac6eda23b2d72721bf1bdfef212645d81513ef5d03038de57"},
+    {file = "pytz-2025.1.tar.gz", hash = "sha256:c2db42be2a2518b28e65f9207c4d05e6ff547d1efa4086469ef855e4ab70178e"},
 ]
 
 [[package]]
@@ -2374,4 +2389,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "dcca8173ee158ab395dd8613a45e2a46f446c88bdf1d6e3d6d503fcbde819da2"
+content-hash = "233282ca5e0fd107ec3809c47c259c8759cf8f0665953f4483da07d34d98b5c8"

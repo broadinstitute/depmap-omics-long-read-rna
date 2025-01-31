@@ -5,8 +5,9 @@ from urllib.parse import quote_plus
 import pandas as pd
 import requests
 from nebelung.terra_workspace import TerraWorkspace
-from nebelung.utils import expand_dict_columns, type_data_frame
+from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
+from pd_flatten import pd_flatten
 
 from depmap_omics_long_read_rna.types import (
     DeliveryBams,
@@ -277,21 +278,7 @@ def explode_and_expand_models(
     :return: a wide version of the data frame without nesting
     """
 
-    seq_table = models.copy()
-
-    for c in [
-        "model_conditions",
-        "omics_profiles",
-        "omics_sequencings",
-        "sequencing_alignments",
-    ]:
-        print(c)
-        seq_table = seq_table.explode(c).reset_index(drop=True)
-
-        if c != "sequencing_alignments":
-            seq_table.dropna(subset=[c], inplace=True)
-
-        seq_table = expand_dict_columns(seq_table, name_columns_with_parent=False)
+    seq_table = pd_flatten(models, name_columns_with_parent=False)
 
     seq_table[["blacklist_omics", "blacklist"]] = (
         seq_table[["blacklist_omics", "blacklist"]].astype("boolean").fillna(False)
