@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient, ModelsAndChildren
-from depmap_omics_long_read_rna.utils.bams import assign_cds_ids
+from depmap_omics_long_read_rna.utils.delivery_bams import assign_cds_ids
 from depmap_omics_long_read_rna.utils.onboarding import explode_and_expand_models
 from depmap_omics_long_read_rna.utils.utils import model_to_df
 

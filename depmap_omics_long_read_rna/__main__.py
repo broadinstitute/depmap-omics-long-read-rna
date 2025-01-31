@@ -11,7 +11,7 @@ from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.bams import (
+from depmap_omics_long_read_rna.utils.delivery_bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )

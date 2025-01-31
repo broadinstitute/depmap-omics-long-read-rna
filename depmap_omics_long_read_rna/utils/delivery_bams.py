@@ -25,8 +25,8 @@ def do_upsert_delivery_bams(
     dry_run: bool,
 ) -> None:
     """
-    Search for uBAMs delivered to a GCS bucket by GP and populate a `delivery_bam` data
-    table on Terra.
+    Search for uBAMs delivered to a GCS bucket by GP and populate a `sample` data table
+    on Terra.
 
     :param gcs_source_bucket: the GCS bucket where GP delivers uBAMs
     :param gcs_source_glob: a glob expression to search for uBAMs in the bucket
@@ -44,7 +44,7 @@ def do_upsert_delivery_bams(
 
     # upsert to Terra data table
     bam_ids = bams.pop("cds_id")
-    bams.insert(0, "entity:delivery_bam_id", bam_ids)
+    bams.insert(0, "entity:sample_id", bam_ids)
 
     if dry_run:
         logging.info(f"(skipping) Upserting {len(bams)} delivery_bams")
@@ -131,7 +131,7 @@ def do_delta_align_delivery_bams(
     :param dry_run: whether to skip updates to external data stores
     """
 
-    bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
+    bams = terra_workspace.get_entities("sample", DeliveryBams)
 
     if "aligned_bam" not in bams.columns:
         bams["aligned_bam"] = pd.NA
@@ -144,8 +144,8 @@ def do_delta_align_delivery_bams(
 
     # get statuses of submitted entity workflow statuses
     submittable_entities = terra_workspace.check_submittable_entities(
-        entity_type="delivery_bam",
-        entity_ids=bams_to_align["delivery_bam_id"],
+        entity_type="sample",
+        entity_ids=bams_to_align["sample_id"],
         terra_workflow=terra_workflow,
         resubmit_n_times=1,
         force_retry=False,
@@ -159,7 +159,7 @@ def do_delta_align_delivery_bams(
     # don't submit jobs for entities that are currently running, completed, or failed
     # too many times
     bams_to_align = bams_to_align.loc[
-        bams_to_align["delivery_bam_id"].isin(
+        bams_to_align["sample_id"].isin(
             submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
         )
     ]
@@ -169,16 +169,16 @@ def do_delta_align_delivery_bams(
         return
 
     bam_set_id = terra_workspace.create_entity_set(
-        entity_type="delivery_bam",
-        entity_ids=bams_to_align["delivery_bam_id"],
+        entity_type="sample",
+        entity_ids=bams_to_align["sample_id"],
         suffix="align",
     )
 
     terra_workspace.submit_workflow_run(
         terra_workflow=terra_workflow,
         entity=bam_set_id,
-        etype="delivery_bam_set",
-        expression="this.delivery_bams",
+        etype="sample_set",
+        expression="this.samples",
         use_callcache=True,
         use_reference_disks=False,
         memory_retry_multiplier=1.5,
