@@ -1,7 +1,0 @@
-query GetOnboardingWorkspace {
-  records: onboarding_workspace(where: { expected_type: { _eq: "long_read_rna" } }) {
-    id
-    excluded_terra_sample_ids
-    min_file_size
-  }
-}

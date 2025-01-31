@@ -87,10 +87,6 @@ from .get_models_and_children import (
     GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings,
     GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments,
 )
-from .get_onboarding_workspace import (
-    GetOnboardingWorkspace,
-    GetOnboardingWorkspaceRecords,
-)
 from .gumbo_client import GumboClient
 from .input_types import (
     Boolean_comparison_exp,
@@ -436,17 +432,6 @@ from .input_types import (
     timestamptz_comparison_exp,
     uuid_comparison_exp,
 )
-from .insert_omics_sequencings import (
-    InsertOmicsSequencings,
-    InsertOmicsSequencingsInsertOmicsSequencing,
-    InsertOmicsSequencingsSetUsername,
-)
-from .insert_onboarding_job import (
-    InsertOnboardingJob,
-    InsertOnboardingJobInsertOnboardingJobOne,
-    InsertOnboardingJobSetUsername,
-)
-from .set_status import SetStatus, SetStatusSetUsername, SetStatusUpdateOmicsProfileMany
 
 __all__ = [
     "BaseClient",
@@ -458,24 +443,13 @@ __all__ = [
     "GetModelsAndChildrenRecordsModelConditionsOmicsProfiles",
     "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings",
     "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments",
-    "GetOnboardingWorkspace",
-    "GetOnboardingWorkspaceRecords",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
     "GumboClient",
-    "InsertOmicsSequencings",
-    "InsertOmicsSequencingsInsertOmicsSequencing",
-    "InsertOmicsSequencingsSetUsername",
-    "InsertOnboardingJob",
-    "InsertOnboardingJobInsertOnboardingJobOne",
-    "InsertOnboardingJobSetUsername",
     "Int_comparison_exp",
-    "SetStatus",
-    "SetStatusSetUsername",
-    "SetStatusUpdateOmicsProfileMany",
     "String_array_comparison_exp",
     "String_comparison_exp",
     "Upload",

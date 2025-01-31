@@ -15,10 +15,7 @@ from depmap_omics_long_read_rna.utils.delivery_bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
-from depmap_omics_long_read_rna.utils.onboarding import (
-    do_join_short_read_data,
-    do_onboard_samples,
-)
+from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
 from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, get_secret_from_sm
 
 pd.set_option("display.max_columns", 30)
@@ -70,14 +67,7 @@ def main(
             headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
         )
 
-    ctx.obj = {
-        "terra_workspace": TerraWorkspace(
-            workspace_namespace=config["terra"]["workspace_namespace"],
-            workspace_name=config["terra"]["workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
-        ),
-        "gumbo_client": gumbo_client,
-    }
+    ctx.obj = {"gumbo_client": gumbo_client}
 
 
 @app.command()
@@ -112,11 +102,15 @@ def update_workflow(
 @app.command()
 def upsert_delivery_bams(ctx: typer.Context) -> None:
     do_upsert_delivery_bams(
-        gcs_source_bucket=config["onboarding"]["gcs_source"]["bucket"],
-        gcs_source_glob=config["onboarding"]["gcs_source"]["glob"],
+        gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
+        gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
         uuid_namespace=config["uuid_namespace"],
-        terra_workspace=ctx.obj["terra_workspace"],
-        dry_run=config["onboarding"]["dry_run"],
+        terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+        ),
+        dry_run=config["dry_run"],
     )
 
 
@@ -139,47 +133,35 @@ def delta_align_delivery_bams(ctx: typer.Context) -> None:
     )
 
     do_delta_align_delivery_bams(
-        terra_workspace=ctx.obj["terra_workspace"],
+        terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+        ),
         terra_workflow=terra_workflow,
-        dry_run=config["onboarding"]["dry_run"],
+        dry_run=config["dry_run"],
     )
 
 
 @app.command()
-def onboard_samples(ctx: typer.Context) -> None:
-    do_onboard_samples(
-        gcp_project_id=config["gcp_project_id"],
-        unaligned_gcs_destination_bucket=config["onboarding"][
-            "unaligned_gcs_destination"
-        ]["bucket"],
-        unaligned_gcs_destination_prefix=config["onboarding"][
-            "unaligned_gcs_destination"
-        ]["prefix"],
-        aligned_gcs_destination_bucket=config["onboarding"]["aligned_gcs_destination"][
-            "bucket"
-        ],
-        aligned_gcs_destination_prefix=config["onboarding"]["aligned_gcs_destination"][
-            "prefix"
-        ],
-        terra_workspace=ctx.obj["terra_workspace"],
-        gumbo_client=ctx.obj["gumbo_client"],
-        dry_run=config["onboarding"]["dry_run"],
+def refresh_terra_samples(ctx: typer.Context) -> None:
+    terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["workspace_namespace"],
+        workspace_name=config["terra"]["workspace_name"],
     )
 
-
-@app.command()
-def join_short_read_data(ctx: typer.Context) -> None:
     short_read_terra_workspace = TerraWorkspace(
         workspace_namespace=config["terra"]["short_read_workspace_namespace"],
         workspace_name=config["terra"]["short_read_workspace_name"],
     )
 
-    do_join_short_read_data(
-        terra_workspace=ctx.obj["terra_workspace"],
+    samples = do_refresh_terra_samples(
+        terra_workspace=terra_workspace,
         short_read_terra_workspace=short_read_terra_workspace,
         gumbo_client=ctx.obj["gumbo_client"],
-        dry_run=config["onboarding"]["dry_run"],
     )
+
+    ctx.obj["terra_workspace"].upload_entities(df=samples)
 
 
 if __name__ == "__main__":

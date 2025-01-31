@@ -29,25 +29,21 @@ class ModelsAndChildren(CoercedDataFrame):
     model_conditions: Series
 
 
-class SeqTable(CoercedDataFrame):
+class SampleMetadata(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
     cell_line_name: Series[pd.StringDtype]
     stripped_cell_line_name: Series[pd.StringDtype]
     model_condition_id: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype]
+    omics_profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    blacklist_omics: Series[pd.BooleanDtype]
-    blacklist: Series[pd.BooleanDtype]
+    omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     source: Series[pd.StringDtype] = pa.Field(nullable=True)
-    expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)
     version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
     sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
-    cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
-    crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
-    cram_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
 
 
 class ObjectMetadata(CoercedDataFrame):
@@ -122,8 +118,8 @@ class VersionedSamples(SamplesForGumbo):
 
 
 class ShortReadMetadata(CoercedDataFrame):
-    sr_sample_id: Series[pd.StringDtype]
-    sr_profile_id: Series[pd.StringDtype]
+    sr_omics_sequencing_id: Series[pd.StringDtype]
+    sr_omics_profile_id: Series[pd.StringDtype]
     model_condition_id: Series[pd.StringDtype]
 
 

@@ -1,0 +1,220 @@
+import pandas as pd
+from nebelung.terra_workspace import TerraWorkspace
+from nebelung.utils import type_data_frame
+from pandera.typing import DataFrame as TypedDataFrame
+from pd_flatten import pd_flatten
+
+from depmap_omics_long_read_rna.types import (
+    GumboClient,
+    ModelsAndChildren,
+    SampleMetadata,
+    ShortReadMetadata,
+)
+from depmap_omics_long_read_rna.utils.utils import model_to_df
+
+
+def do_refresh_terra_samples(
+    terra_workspace: TerraWorkspace,
+    short_read_terra_workspace: TerraWorkspace,
+    gumbo_client: GumboClient,
+) -> pd.DataFrame:
+    models = model_to_df(
+        gumbo_client.get_models_and_children(timeout=30.0), ModelsAndChildren
+    )
+
+    alignments = explode_and_expand_models(models)
+
+    lr_alignments = alignments.loc[alignments["datatype"].eq("long_read_rna")]
+    lr_alignments_gp = lr_alignments.loc[
+        lr_alignments["sequencing_alignment_source"].eq("GP")
+    ]
+    lr_alignments_cds = lr_alignments.loc[
+        lr_alignments["sequencing_alignment_source"].eq("CDS")
+    ]
+
+    samples = (
+        lr_alignments_gp[
+            [
+                "omics_sequencing_id",
+                "omics_profile_id",
+                "model_condition_id",
+                "model_id",
+                "cell_line_name",
+                "stripped_cell_line_name",
+                "sequencing_alignment_id",
+                "cram_bam_url",
+            ]
+        ]
+        .rename(
+            columns={
+                "omics_sequencing_id": "sample_id",
+                "sequencing_alignment_id": "delivery_sequencing_alignment_id",
+                "cram_bam_url": "delivery_cram_bam",
+            }
+        )
+        .merge(
+            lr_alignments_cds[
+                [
+                    "omics_sequencing_id",
+                    "sequencing_alignment_id",
+                    "cram_bam_url",
+                    "reference_genome",
+                ]
+            ].rename(
+                columns={
+                    "omics_sequencing_id": "sample_id",
+                    "sequencing_alignment_id": "aligned_sequencing_alignment_id",
+                    "cram_bam_url": "aligned_cram_bam",
+                    "crai_bai_url": "aligned_crai_bai",
+                }
+            ),
+            how="left",
+            on="sample_id",
+        )
+    )
+
+    # get the current short read sample data from Terra
+    sr_terra_samples = short_read_terra_workspace.get_entities("sample")
+    sr_terra_samples = (
+        sr_terra_samples.loc[
+            :,
+            [
+                "sample_id",
+                "star_junctions",
+                "fusion_predictions",
+                "fusion_predictions_abridged",
+                "rsem_genes",
+                "rsem_genes_stranded",
+                "rsem_isoforms",
+                "rsem_isoforms_stranded",
+            ],
+        ]
+        .rename(
+            columns={
+                "star_junctions": "sr_star_junctions",
+                "fusion_predictions": "sr_fusion_predictions",
+                "fusion_predictions_abridged": "sr_fusion_predictions_abridged",
+                "rsem_genes": "sr_rsem_genes",
+                "rsem_genes_stranded": "sr_rsem_genes_stranded",
+                "rsem_isoforms": "sr_rsem_isoforms",
+                "rsem_isoforms_stranded": "sr_rsem_isoforms_stranded",
+            }
+        )
+        .astype("string")
+    )
+
+    sr_sequencings = alignments.loc[
+        alignments["datatype"].eq("rna"),
+        [
+            "model_condition_id",
+            "omics_profile_id",
+            "omics_sequencing_id",
+            "source",
+            "version",
+        ],
+    ].drop_duplicates(subset="omics_sequencing_id")
+
+    # start here
+    # match a short read sample to each long read sample
+    sr_metadata = choose_matched_short_read_sample(samples, sr_sequencings)
+
+    sr_metadata = sr_metadata.merge(
+        sr_terra_samples,
+        how="inner",
+        left_on="sr_sample_id",
+        right_on="sample_id",
+    ).drop(columns="sample_id")
+
+    assert bool(~sr_metadata["model_condition_id"].duplicated().any())
+
+    return alignments
+
+
+def explode_and_expand_models(
+    models: TypedDataFrame[ModelsAndChildren],
+) -> TypedDataFrame[SampleMetadata]:
+    """
+    Unnest columns from the GraphQL call for Gumbo models and their childen.
+
+    :param models: a data frame of models with nested profile/sequencing/etc. data
+    :return: a wide version of the data frame without nesting
+    """
+
+    alignments = pd_flatten(models, name_columns_with_parent=False)
+
+    alignments = alignments.dropna(
+        subset=[
+            "model_id",
+            "model_condition_id",
+            "omics_profile_id",
+            "omics_sequencing_id",
+            "sequencing_alignment_id",
+        ]
+    )
+
+    return type_data_frame(alignments, SampleMetadata, remove_unknown_cols=True)
+
+
+def choose_matched_short_read_sample(
+    samples: pd.DataFrame, sr_sequencings: pd.DataFrame
+) -> TypedDataFrame[ShortReadMetadata]:
+    """
+    Choose short read RNA samples to map to long read ones.
+
+    :param samples: a data frame for the the long read samples
+    :param sr_sequencings: the short read workspace sample data table
+    :return: a data frame mapping common model condition IDs to short read profile and
+    sequencing IDs
+    """
+
+    # prioritize certain sample source
+    source_priority = [
+        "DEPMAP",
+        "IBM",
+        "CCLE2",
+        "SANGER",
+        "PRISM",
+        "CCLF",
+        "CHORDOMA",
+        "",
+    ]
+
+    sp_df = pd.DataFrame(
+        {
+            "source": source_priority,
+            "source_priority": list(range(len(source_priority))),
+        }
+    )
+
+    # collect all valid short read samples in Gumbo that are present in both short and
+    # long read workspaces
+    sr = sr_sequencings.loc[
+        sr_sequencings["model_condition_id"].isin(samples["model_condition_id"])
+    ].copy()
+
+    # populate the `source_priority` column
+    sr["source"] = sr["source"].fillna("")
+    sr = sr.merge(sp_df, how="left", on="source")
+    assert sr["source_priority"].notna().all()
+
+    # pick a short read sample for each model condition, using the more recent `version`
+    # to break ties
+    sr_choices = (
+        sr.sort_values(
+            ["model_condition_id", "source_priority", "version"],
+            ascending=[True, True, False],
+        )
+        .groupby("model_condition_id")
+        .nth(0)
+    )
+
+    sr_choices = sr_choices[
+        ["model_condition_id", "omics_profile_id", "omics_sequencing_id"]
+    ].rename(
+        columns={
+            "omics_profile_id": "sr_omics_profile_id",
+            "omics_sequencing_id": "sr_omics_sequencing_id",
+        }
+    )
+
+    return type_data_frame(sr_choices, ShortReadMetadata)

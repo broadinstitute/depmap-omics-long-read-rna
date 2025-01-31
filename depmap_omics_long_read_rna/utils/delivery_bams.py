@@ -66,7 +66,7 @@ def make_delivery_bam_df(
 
     bams_w_ids = bams.copy()
 
-    # extract the Gumbo model ID from the BAM filenames
+    # extract the model ID from the BAM filenames
     bams_w_ids["model_id"] = (
         bams_w_ids["url"]
         .apply(lambda x: Path(x).name)
