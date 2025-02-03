@@ -1,7 +1,7 @@
 title = "DepMap Omics Long Read RNA"
 
 gcp_project_id = "depmap-omics"
-gumbo_env = "dev"
+gumbo_env = "prod"
 uuid_namespace = "00000000-0000-0000-0000-000000000000"
 dry_run = true
 

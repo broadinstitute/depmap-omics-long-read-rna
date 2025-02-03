@@ -100,7 +100,7 @@ def update_workflow(
 
 
 @app.command()
-def upsert_delivery_bams(ctx: typer.Context) -> None:
+def upsert_delivery_bams() -> None:
     do_upsert_delivery_bams(
         gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
         gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
@@ -115,7 +115,7 @@ def upsert_delivery_bams(ctx: typer.Context) -> None:
 
 
 @app.command()
-def delta_align_delivery_bams(ctx: typer.Context) -> None:
+def delta_align_delivery_bams() -> None:
     terra_workflow = TerraWorkflow(
         method_namespace=config["terra"]["align_long_reads"]["method_namespace"],
         method_name=config["terra"]["align_long_reads"]["method_name"],
