@@ -16,10 +16,6 @@ from depmap_omics_long_read_rna.utils.delivery_bams import (
     do_delta_align_delivery_bams,
     do_upsert_delivery_bams,
 )
-from depmap_omics_long_read_rna.utils.onboarding import (
-    do_join_short_read_data,
-    do_onboard_samples,
-)
 from depmap_omics_long_read_rna.utils.utils import get_hasura_creds
 
 

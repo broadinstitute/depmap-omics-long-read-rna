@@ -21,14 +21,26 @@ def do_refresh_terra_samples(
     short_read_terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
 ) -> None:
+    """
+    Upsert the sample data table in Terra with the latest long read sample metadata from
+    Gumbo and the short read Terra workspace.
+
+    :param terra_workspace: the Terra workspace for long read RNA samples
+    :param short_read_terra_workspace: the Terra workspace for short read RNA samples
+    :param gumbo_client: an instance of the Gumbo GraphQL client
+    """
+
     models = model_to_df(
         gumbo_client.get_models_and_children(timeout=30.0), ModelsAndChildren
     )
 
+    # make wide data frame of Gumbo sequencing_alignment and related records
     alignments = explode_and_expand_models(models)
 
+    # start constructing a sample data frame
     samples = collect_lr_alignments(alignments)
 
+    # join short read data
     samples = join_sr_metadata(samples, alignments, short_read_terra_workspace)
 
     terra_workspace.upload_entities(df=samples)
@@ -60,6 +72,15 @@ def explode_and_expand_models(
 
 
 def collect_lr_alignments(alignments: TypedDataFrame[AlignmentMetadataLong]):
+    """
+    Construct a wide data frame of long read RNA sample metadata using data from Gumbo.
+
+    :param alignments: a data frame of sequencing_alignment metadata from Gumbo
+    :return: a data frame of long read samples
+    """
+
+    # collect sequencing_alignment records for GP-delivered uBAMs and our analysis-ready
+    # hg38-aligned BAMs
     lr_alignments = alignments.loc[alignments["datatype"].eq("long_read_rna")]
     lr_alignments_gp = lr_alignments.loc[
         lr_alignments["sequencing_alignment_source"].eq("GP")
@@ -118,9 +139,20 @@ def join_sr_metadata(
     alignments: TypedDataFrame[AlignmentMetadataLong],
     short_read_terra_workspace: TerraWorkspace,
 ) -> TypedDataFrame[LongReadTerraSamples]:
+    """
+    Collect metadata from Gumbo and workflow outputs from Terra relating to short read
+    RNA samples and join them to the long read samples.
+
+    :param samples: a data frame of long read samples
+    :param alignments: a data frame of sequencing_alignment metadata from Gumbo
+    :param short_read_terra_workspace: the Terra workspace for short read RNA samples
+    :return: the long read samples with short read sample metaadata joined to it
+    """
+
     # get the current short read sample data from Terra
     sr_terra_samples = get_sr_terra_samples(short_read_terra_workspace)
 
+    # collect short read metadata from Gumbo
     sr_sequencings = alignments.loc[
         alignments["datatype"].eq("rna"),
         [
@@ -150,6 +182,13 @@ def join_sr_metadata(
 def get_sr_terra_samples(
     short_read_terra_workspace: TerraWorkspace,
 ) -> TypedDataFrame[ShortReadTerraSamples]:
+    """
+    Get a subset of short read RNA sample workflow output URLs from Terra.
+
+    :param short_read_terra_workspace: the Terra workspace for short read RNA samples
+    :return: a data frame of shot read output file URLs
+    """
+
     sr_terra_samples = short_read_terra_workspace.get_entities("sample")
 
     sr_terra_samples = (
@@ -188,7 +227,7 @@ def choose_matched_short_read_sample(
     """
     Choose short read RNA samples to map to long read ones.
 
-    :param samples: a data frame for the the long read samples
+    :param samples: a data frame of long read samples
     :param sr_sequencings: the short read workspace sample data table
     :return: a data frame mapping common model condition IDs to short read profile and
     sequencing IDs

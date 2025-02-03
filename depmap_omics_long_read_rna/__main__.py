@@ -72,10 +72,16 @@ def main(
 
 @app.command()
 def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
-    terra_workspace = TerraWorkspace(
-        workspace_namespace=config["terra"]["workspace_namespace"],
-        workspace_name=config["terra"]["workspace_name"],
-    )
+    if workflow_name == "align_long_reads":
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+        )
+    else:
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
+        )
 
     # need a GitHub PAT for persisting WDL in gists
     github_pat = get_secret_from_sm(

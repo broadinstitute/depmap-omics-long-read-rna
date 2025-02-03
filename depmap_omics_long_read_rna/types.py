@@ -135,10 +135,6 @@ class OnboardingSamples(CoercedDataFrame):
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
 
 
-class SamplesMaybeInGumbo(OnboardingSamples):
-    already_in_gumbo: Series[pd.BooleanDtype]
-
-
 class SamplesWithMetadata(OnboardingSamples):
     model_condition_id: Series[pd.StringDtype]
     profile_id: Series[pd.StringDtype]
@@ -150,27 +146,6 @@ class CopiedSampleFiles(CoercedDataFrame):
     new_url: Series[pd.StringDtype]
     url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
-
-
-class SamplesForGumbo(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype]
-    unaligned_bam_url: Series[pd.StringDtype]
-    unaligned_bam_crc32c_hash: Series[pd.StringDtype]
-    unaligned_bam_size: Series[pd.StringDtype]
-    bam_url: Series[pd.StringDtype]
-    bam_crc32c_hash: Series[pd.StringDtype]
-    bam_size: Series[pd.StringDtype]
-    bai_url: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype]
-    update_time: Series[pd.StringDtype]
-    sequencing_date: Series[pd.StringDtype]
-    source: Series[pd.StringDtype]
-    expected_type: Series[pd.StringDtype]
-    issue: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
-class VersionedSamples(SamplesForGumbo):
-    version: Series[int]
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)
