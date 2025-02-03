@@ -155,13 +155,11 @@ def refresh_terra_samples(ctx: typer.Context) -> None:
         workspace_name=config["terra"]["short_read_workspace_name"],
     )
 
-    samples = do_refresh_terra_samples(
+    do_refresh_terra_samples(
         terra_workspace=terra_workspace,
         short_read_terra_workspace=short_read_terra_workspace,
         gumbo_client=ctx.obj["gumbo_client"],
     )
-
-    ctx.obj["terra_workspace"].upload_entities(df=samples)
 
 
 if __name__ == "__main__":

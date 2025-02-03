@@ -5,10 +5,13 @@ from pandera.typing import DataFrame as TypedDataFrame
 from pd_flatten import pd_flatten
 
 from depmap_omics_long_read_rna.types import (
+    AlignmentMetadataLong,
     GumboClient,
+    LongReadAlignmentMetadata,
+    LongReadTerraSamples,
     ModelsAndChildren,
-    SampleMetadata,
     ShortReadMetadata,
+    ShortReadTerraSamples,
 )
 from depmap_omics_long_read_rna.utils.utils import model_to_df
 
@@ -17,13 +20,46 @@ def do_refresh_terra_samples(
     terra_workspace: TerraWorkspace,
     short_read_terra_workspace: TerraWorkspace,
     gumbo_client: GumboClient,
-) -> pd.DataFrame:
+) -> None:
     models = model_to_df(
         gumbo_client.get_models_and_children(timeout=30.0), ModelsAndChildren
     )
 
     alignments = explode_and_expand_models(models)
 
+    samples = collect_lr_alignments(alignments)
+
+    samples = join_sr_metadata(samples, alignments, short_read_terra_workspace)
+
+    terra_workspace.upload_entities(df=samples)
+
+
+def explode_and_expand_models(
+    models: TypedDataFrame[ModelsAndChildren],
+) -> TypedDataFrame[AlignmentMetadataLong]:
+    """
+    Unnest columns from the GraphQL call for Gumbo models and their childen.
+
+    :param models: a data frame of models with nested profile/sequencing/etc. data
+    :return: a wide version of the data frame without nesting
+    """
+
+    alignments = pd_flatten(models, name_columns_with_parent=False)
+
+    alignments = alignments.dropna(
+        subset=[
+            "model_id",
+            "model_condition_id",
+            "omics_profile_id",
+            "omics_sequencing_id",
+            "sequencing_alignment_id",
+        ]
+    )
+
+    return type_data_frame(alignments, AlignmentMetadataLong, remove_unknown_cols=True)
+
+
+def collect_lr_alignments(alignments: TypedDataFrame[AlignmentMetadataLong]):
     lr_alignments = alignments.loc[alignments["datatype"].eq("long_read_rna")]
     lr_alignments_gp = lr_alignments.loc[
         lr_alignments["sequencing_alignment_source"].eq("GP")
@@ -58,6 +94,7 @@ def do_refresh_terra_samples(
                     "omics_sequencing_id",
                     "sequencing_alignment_id",
                     "cram_bam_url",
+                    "crai_bai_url",
                     "reference_genome",
                 ]
             ].rename(
@@ -73,11 +110,50 @@ def do_refresh_terra_samples(
         )
     )
 
+    return type_data_frame(samples, LongReadAlignmentMetadata)
+
+
+def join_sr_metadata(
+    samples: TypedDataFrame[LongReadAlignmentMetadata],
+    alignments: TypedDataFrame[AlignmentMetadataLong],
+    short_read_terra_workspace: TerraWorkspace,
+) -> TypedDataFrame[LongReadTerraSamples]:
     # get the current short read sample data from Terra
+    sr_terra_samples = get_sr_terra_samples(short_read_terra_workspace)
+
+    sr_sequencings = alignments.loc[
+        alignments["datatype"].eq("rna"),
+        [
+            "model_condition_id",
+            "omics_profile_id",
+            "omics_sequencing_id",
+            "source",
+            "version",
+        ],
+    ].drop_duplicates(subset="omics_sequencing_id")
+
+    # match a short read sample to each long read sample
+    sr_metadata = choose_matched_short_read_sample(samples, sr_sequencings)
+
+    sr_metadata = sr_terra_samples.merge(
+        sr_metadata,
+        how="inner",
+        left_on="sample_id",
+        right_on="sr_omics_sequencing_id",
+    ).drop(columns="sample_id")
+
+    samples = samples.merge(sr_metadata, how="left", on="model_condition_id")
+
+    return type_data_frame(samples, LongReadTerraSamples)
+
+
+def get_sr_terra_samples(
+    short_read_terra_workspace: TerraWorkspace,
+) -> TypedDataFrame[ShortReadTerraSamples]:
     sr_terra_samples = short_read_terra_workspace.get_entities("sample")
+
     sr_terra_samples = (
-        sr_terra_samples.loc[
-            :,
+        sr_terra_samples[
             [
                 "sample_id",
                 "star_junctions",
@@ -87,7 +163,7 @@ def do_refresh_terra_samples(
                 "rsem_genes_stranded",
                 "rsem_isoforms",
                 "rsem_isoforms_stranded",
-            ],
+            ]
         ]
         .rename(
             columns={
@@ -103,56 +179,7 @@ def do_refresh_terra_samples(
         .astype("string")
     )
 
-    sr_sequencings = alignments.loc[
-        alignments["datatype"].eq("rna"),
-        [
-            "model_condition_id",
-            "omics_profile_id",
-            "omics_sequencing_id",
-            "source",
-            "version",
-        ],
-    ].drop_duplicates(subset="omics_sequencing_id")
-
-    # start here
-    # match a short read sample to each long read sample
-    sr_metadata = choose_matched_short_read_sample(samples, sr_sequencings)
-
-    sr_metadata = sr_metadata.merge(
-        sr_terra_samples,
-        how="inner",
-        left_on="sr_sample_id",
-        right_on="sample_id",
-    ).drop(columns="sample_id")
-
-    assert bool(~sr_metadata["model_condition_id"].duplicated().any())
-
-    return alignments
-
-
-def explode_and_expand_models(
-    models: TypedDataFrame[ModelsAndChildren],
-) -> TypedDataFrame[SampleMetadata]:
-    """
-    Unnest columns from the GraphQL call for Gumbo models and their childen.
-
-    :param models: a data frame of models with nested profile/sequencing/etc. data
-    :return: a wide version of the data frame without nesting
-    """
-
-    alignments = pd_flatten(models, name_columns_with_parent=False)
-
-    alignments = alignments.dropna(
-        subset=[
-            "model_id",
-            "model_condition_id",
-            "omics_profile_id",
-            "omics_sequencing_id",
-            "sequencing_alignment_id",
-        ]
-    )
-
-    return type_data_frame(alignments, SampleMetadata, remove_unknown_cols=True)
+    return type_data_frame(sr_terra_samples, ShortReadTerraSamples)
 
 
 def choose_matched_short_read_sample(
