@@ -71,9 +71,12 @@ def main(
 
 
 @app.command()
-def update_workflow(
-    ctx: typer.Context, workflow_name: Annotated[str, typer.Option()]
-) -> None:
+def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
+    terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["workspace_namespace"],
+        workspace_name=config["terra"]["workspace_name"],
+    )
+
     # need a GitHub PAT for persisting WDL in gists
     github_pat = get_secret_from_sm(
         "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
@@ -96,7 +99,7 @@ def update_workflow(
         github_pat=github_pat,
     )
 
-    ctx.obj["terra_workspace"].update_workflow(terra_workflow=terra_workflow)
+    terra_workspace.update_workflow(terra_workflow=terra_workflow)
 
 
 @app.command()
