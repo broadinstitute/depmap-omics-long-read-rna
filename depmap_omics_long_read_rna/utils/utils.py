@@ -151,7 +151,7 @@ def submit_delta_job(
     if check_col not in entities.columns:
         entities[check_col] = pd.NA
 
-    entities_todo = entities  # .loc[entities[check_col].isna()]
+    entities_todo = entities.loc[entities[check_col].isna()]
 
     if len(entities_todo) == 0:
         logging.info(f"No {entity_type}s to run {terra_workflow.method_name} for")
@@ -205,7 +205,7 @@ def submit_delta_job(
 
 
 def make_workflow_from_config(
-    config: dict[str, Any], workflow_name: str
+    config: dict[str, Any], workflow_name: str, **kwargs: Any
 ) -> TerraWorkflow:
     """
     Make a TerraWorkflow object from a config entry.
@@ -229,4 +229,5 @@ def make_workflow_from_config(
         method_config_json_path=Path(
             config["terra"][workflow_name]["method_config_json_path"]
         ).resolve(),
+        **kwargs,
     )

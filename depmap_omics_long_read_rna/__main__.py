@@ -90,24 +90,11 @@ def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
         "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
     )
 
-    terra_workflow = TerraWorkflow(
-        method_namespace=config["terra"][workflow_name]["method_namespace"],
-        method_name=config["terra"][workflow_name]["method_name"],
-        method_config_namespace=config["terra"][workflow_name][
-            "method_config_namespace"
-        ],
-        method_config_name=config["terra"][workflow_name]["method_config_name"],
-        method_synopsis=config["terra"][workflow_name]["method_synopsis"],
-        workflow_wdl_path=Path(
-            config["terra"][workflow_name]["workflow_wdl_path"]
-        ).resolve(),
-        method_config_json_path=Path(
-            config["terra"][workflow_name]["method_config_json_path"]
-        ).resolve(),
-        github_pat=github_pat,
+    terra_workspace.update_workflow(
+        terra_workflow=make_workflow_from_config(
+            config, workflow_name, github_pat=github_pat
+        )
     )
-
-    terra_workspace.update_workflow(terra_workflow=terra_workflow)
 
 
 @app.command()
