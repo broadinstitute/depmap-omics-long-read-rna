@@ -127,10 +127,21 @@ def submit_delta_job(
     dry_run: bool = True,
 ):
     """
-    TODO
+    Identify entities in a Terra data table that need to have a workflow run on them by:
+
+        1. checking for the presence of a workflow output in a data table column
+        2. confirming the entity is eligible to be submitted in a job by checking for
+           previous submissions of that same entity to the workflow
 
     :param terra_workspace: a TerraWorkspace instance
     :param terra_workflow: a TerraWorkflow instance for the method
+    :param entity_type: the name of the Terra entity type
+    :param entity_set_type: the name of the Terra entity set type for `entity_type`
+    :param entity_id_col: the name of the ID column for the entity type
+    :param check_col: the column in the entity's data table to use for determining
+    whether the entity has already had a workflow run on it
+    :param resubmit_n_times: the number of times to resubmit an entity in the event it
+    has failed in the past
     :param dry_run: whether to skip updates to external data stores
     """
 
