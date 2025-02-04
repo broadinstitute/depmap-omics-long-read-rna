@@ -19,7 +19,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             input_bam = input_bam,
             input_bai = input_bai,
-            ref_annotation = ref_annotation_db,
+            ref_annotation_db = ref_annotation_db,
             ref_fasta = ref_fasta
     }
 
@@ -28,7 +28,7 @@ workflow quantify_long_reads {
             sample_id = sample_id,
             isoquant_gtf = run_isoquant.extended_annotation,
             star_junctions = star_junctions,
-            ref_annotation = ref_annotation_gtf,
+            ref_annotation_gtf = ref_annotation_gtf,
             ref_fasta = ref_fasta
     }
 
@@ -51,7 +51,7 @@ task run_isoquant {
         File input_bam
         File input_bai
         File ref_fasta
-        File ref_annotation
+        File ref_annotation_db
 
         String docker_image
         String docker_image_hash_or_tag
@@ -64,7 +64,7 @@ task run_isoquant {
 
     Int disk_space = (
         ceil(
-            size(input_bam, "GiB") + size(ref_annotation, "GiB")
+            size(input_bam, "GiB") + size(ref_annotation_db, "GiB")
             + size(ref_fasta, "GiB")
         ) + 20 + additional_disk_gb
     )
@@ -76,7 +76,7 @@ task run_isoquant {
 
         /usr/local/bin/isoquant.py \
             --reference ~{ref_fasta} \
-            --genedb ~{ref_annotation} \
+            --genedb ~{ref_annotation_db} \
             --complete_genedb \
             --bam ~{input_bam} \
             --data_type pacbio_ccs \
@@ -123,7 +123,7 @@ task run_sqanti3 {
 		String sample_id
         File isoquant_gtf
 		File star_junctions
-        File ref_annotation
+        File ref_annotation_gtf
         File ref_fasta
 
         String docker_image
@@ -138,7 +138,7 @@ task run_sqanti3 {
     Int disk_space = (
         ceil(
             size(isoquant_gtf, "GiB") * 3 + size(star_junctions, "GiB") * 3
-            + size(ref_annotation, "GiB") + size(ref_fasta, "GiB")
+            + size(ref_annotation_gtf, "GiB") + size(ref_fasta, "GiB")
         ) + 20 + additional_disk_gb
     )
 
@@ -154,7 +154,7 @@ task run_sqanti3 {
             --coverage ~{star_junctions}.unzipped \
             --output ~{sample_id} \
             ~{isoquant_gtf}.unzipped \
-            ~{ref_annotation} \
+            ~{ref_annotation_gtf} \
             ~{ref_fasta}
     >>>
 

@@ -1,15 +1,21 @@
+import logging
 import string
 import uuid
+from pathlib import Path
 from typing import List, Type
 
 import baseconv
 import pandas as pd
 from google.cloud import secretmanager_v1
+from nebelung.terra_workflow import TerraWorkflow
+from nebelung.terra_workspace import TerraWorkspace
 from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
+from depmap_omics_long_read_rna.__main__ import config
 from depmap_omics_long_read_rna.types import PydanticBaseModel
+from gumbo_gql_client import BaseModel
 
 
 def get_hasura_creds(gumbo_env: str) -> dict[str, str]:
@@ -45,7 +51,7 @@ def get_secret_from_sm(name: str) -> str:
 
 
 def model_to_df(
-    model: PydanticBaseModel,
+    model: BaseModel,
     pandera_schema: Type[PanderaBaseSchema],
     records_key: str = "records",
 ) -> TypedDataFrame[PanderaBaseSchema]:
@@ -110,3 +116,115 @@ def assign_hashed_uuids(
     )
 
     return df
+
+
+def submit_delta_job(
+    terra_workspace: TerraWorkspace,
+    terra_workflow: TerraWorkflow,
+    entity_type: str,
+    entity_set_type: str,
+    entity_id_col: str,
+    check_col: str,
+    resubmit_n_times: int = 1,
+    dry_run: bool = True,
+):
+    """
+    Identify entities in a Terra data table that need to have a workflow run on them by:
+
+        1. checking for the presence of a workflow output in a data table column
+        2. confirming the entity is eligible to be submitted in a job by checking for
+           previous submissions of that same entity to the workflow
+
+    :param terra_workspace: a TerraWorkspace instance
+    :param terra_workflow: a TerraWorkflow instance for the method
+    :param entity_type: the name of the Terra entity type
+    :param entity_set_type: the name of the Terra entity set type for `entity_type`
+    :param entity_id_col: the name of the ID column for the entity type
+    :param check_col: the column in the entity's data table to use for determining
+    whether the entity has already had a workflow run on it
+    :param resubmit_n_times: the number of times to resubmit an entity in the event it
+    has failed in the past
+    :param dry_run: whether to skip updates to external data stores
+    """
+
+    entities = terra_workspace.get_entities(entity_type)
+
+    if check_col not in entities.columns:
+        entities[check_col] = pd.NA
+
+    entities_todo = entities  # .loc[entities[check_col].isna()]
+
+    if len(entities_todo) == 0:
+        logging.info(f"No {entity_type}s to run {terra_workflow.method_name} for")
+        return
+
+    # get statuses of submitted entity workflow statuses
+    submittable_entities = terra_workspace.check_submittable_entities(
+        entity_type,
+        entity_ids=entities_todo[entity_id_col],
+        terra_workflow=terra_workflow,
+        resubmit_n_times=resubmit_n_times,
+        force_retry=False,
+    )
+
+    logging.info(f"Submittable entities: {submittable_entities}")
+
+    if len(submittable_entities["failed"]) > 0:
+        raise RuntimeError("Some entities have failed too many times")
+
+    # don't submit jobs for entities that are currently running, completed, or failed
+    # too many times
+    entities_todo = entities_todo.loc[
+        entities_todo[entity_id_col].isin(
+            list(
+                submittable_entities["unsubmitted"].union(
+                    submittable_entities["retryable"]
+                )
+            )
+        )
+    ]
+
+    if dry_run:
+        logging.info(f"(skipping) Submitting {terra_workflow.method_name} job")
+        return
+
+    entity_set_id = terra_workspace.create_entity_set(
+        entity_type,
+        entity_ids=entities_todo[entity_id_col],
+        suffix=terra_workflow.method_name,
+    )
+
+    terra_workspace.submit_workflow_run(
+        terra_workflow=terra_workflow,
+        entity=entity_set_id,
+        etype=entity_set_type,
+        expression=f"this.{entity_type}",
+        use_callcache=True,
+        use_reference_disks=False,
+        memory_retry_multiplier=1.5,
+    )
+
+
+def make_workflow_from_config(workflow_name: str) -> TerraWorkflow:
+    """
+    Make a TerraWorkflow object from a config entry.
+
+    :param workflow_name: the name of the workflow referenced in the config
+    :return: a TerraWorkflow instance
+    """
+
+    return TerraWorkflow(
+        method_namespace=config["terra"][workflow_name]["method_namespace"],
+        method_name=config["terra"][workflow_name]["method_name"],
+        method_config_namespace=config["terra"][workflow_name][
+            "method_config_namespace"
+        ],
+        method_config_name=config["terra"][workflow_name]["method_config_name"],
+        method_synopsis=config["terra"][workflow_name]["method_synopsis"],
+        workflow_wdl_path=Path(
+            config["terra"][workflow_name]["workflow_wdl_path"]
+        ).resolve(),
+        method_config_json_path=Path(
+            config["terra"][workflow_name]["method_config_json_path"]
+        ).resolve(),
+    )

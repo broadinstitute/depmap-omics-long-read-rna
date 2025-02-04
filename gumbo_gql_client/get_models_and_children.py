@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from .base_model import BaseModel
 
@@ -20,12 +20,8 @@ class GetModelsAndChildrenRecordsModelConditions(BaseModel):
 
 
 class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
-    profile_id: str
+    omics_profile_id: str
     datatype: Optional[str]
-    blacklist_omics: Optional[bool]
-    omics_order_date: Optional[Any]
-    smid_ordered: Optional[str]
-    smid_returned: Optional[str]
     omics_sequencings: List[
         "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings"
     ]
@@ -34,16 +30,28 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfiles(BaseModel):
 class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     BaseModel
 ):
-    bai_filepath: Optional[str]
-    bam_filepath: Optional[str]
+    omics_sequencing_id: str
     blacklist: bool
     expected_type: Optional[str]
-    sequencing_id: str
     source: Optional[str]
-    unaligned_bam_size: Optional[int]
+    version: Optional[int]
+    sequencing_alignments: List[
+        "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments"
+    ]
+
+
+class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments(
+    BaseModel
+):
+    sequencing_alignment_id: int
+    crai_bai_url: Optional[str]
+    cram_bam_url: str
+    reference_genome: Optional[str]
+    sequencing_alignment_source: str
 
 
 GetModelsAndChildren.model_rebuild()
 GetModelsAndChildrenRecords.model_rebuild()
 GetModelsAndChildrenRecordsModelConditions.model_rebuild()
 GetModelsAndChildrenRecordsModelConditionsOmicsProfiles.model_rebuild()
+GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings.model_rebuild()

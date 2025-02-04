@@ -2,8 +2,6 @@ import logging
 import os
 from pathlib import Path
 
-import pandas as pd
-from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
@@ -25,8 +23,8 @@ def do_upsert_delivery_bams(
     dry_run: bool,
 ) -> None:
     """
-    Search for uBAMs delivered to a GCS bucket by GP and populate a `delivery_bam` data
-    table on Terra.
+    Search for uBAMs delivered to a GCS bucket by GP and populate a `sample` data table
+    on Terra.
 
     :param gcs_source_bucket: the GCS bucket where GP delivers uBAMs
     :param gcs_source_glob: a glob expression to search for uBAMs in the bucket
@@ -44,7 +42,7 @@ def do_upsert_delivery_bams(
 
     # upsert to Terra data table
     bam_ids = bams.pop("cds_id")
-    bams.insert(0, "entity:delivery_bam_id", bam_ids)
+    bams.insert(0, "entity:sample_id", bam_ids)
 
     if dry_run:
         logging.info(f"(skipping) Upserting {len(bams)} delivery_bams")
@@ -66,7 +64,7 @@ def make_delivery_bam_df(
 
     bams_w_ids = bams.copy()
 
-    # extract the Gumbo model ID from the BAM filenames
+    # extract the model ID from the BAM filenames
     bams_w_ids["model_id"] = (
         bams_w_ids["url"]
         .apply(lambda x: Path(x).name)
@@ -109,11 +107,7 @@ def assign_cds_ids(
         samples,
         uuid_namespace=uuid_namespace,
         uuid_col_name="cds_id",
-        subset=[
-            "delivery_bam_crc32c",
-            "delivery_bam_size",
-            "delivery_bam_updated_at",
-        ],
+        subset=["delivery_bam_crc32c", "delivery_bam_size", "delivery_bam_updated_at"],
     )
 
     # convert UUIDs to base62 and truncate to match existing ID format
@@ -122,70 +116,3 @@ def assign_cds_ids(
     ).str.slice(-6)
 
     return type_data_frame(samples_w_ids, SamplesWithCDSIDs)
-
-
-def do_delta_align_delivery_bams(
-    terra_workspace: TerraWorkspace,
-    terra_workflow: TerraWorkflow,
-    dry_run: bool,
-) -> None:
-    """
-    Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.
-
-    :param terra_workspace: a TerraWorkspace instance
-    :param terra_workflow: a TerraWorkflow instance for the alignment method
-    :param dry_run: whether to skip updates to external data stores
-    """
-
-    bams = terra_workspace.get_entities("delivery_bam", DeliveryBams)
-
-    if "aligned_bam" not in bams.columns:
-        bams["aligned_bam"] = pd.NA
-
-    bams_to_align = bams.loc[bams["aligned_bam"].isna()]
-
-    if len(bams_to_align) == 0:
-        logging.info("No new BAMs to align")
-        return
-
-    # get statuses of submitted entity workflow statuses
-    submittable_entities = terra_workspace.check_submittable_entities(
-        entity_type="delivery_bam",
-        entity_ids=bams_to_align["delivery_bam_id"],
-        terra_workflow=terra_workflow,
-        resubmit_n_times=1,
-        force_retry=False,
-    )
-
-    logging.info(f"Submittable entities: {submittable_entities}")
-
-    if len(submittable_entities["failed"]) > 0:
-        raise RuntimeError("Some entities have failed too many times")
-
-    # don't submit jobs for entities that are currently running, completed, or failed
-    # too many times
-    bams_to_align = bams_to_align.loc[
-        bams_to_align["delivery_bam_id"].isin(
-            submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
-        )
-    ]
-
-    if dry_run:
-        logging.info("(skipping) Submitting align_long_reads job")
-        return
-
-    bam_set_id = terra_workspace.create_entity_set(
-        entity_type="delivery_bam",
-        entity_ids=bams_to_align["delivery_bam_id"],
-        suffix="align",
-    )
-
-    terra_workspace.submit_workflow_run(
-        terra_workflow=terra_workflow,
-        entity=bam_set_id,
-        etype="delivery_bam_set",
-        expression="this.delivery_bams",
-        use_callcache=True,
-        use_reference_disks=False,
-        memory_retry_multiplier=1.5,
-    )

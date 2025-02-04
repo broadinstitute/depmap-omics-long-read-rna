@@ -1,27 +1,33 @@
 query GetModelsAndChildren {
-    records: model {
-        model_id
-        cell_line_name
-        stripped_cell_line_name
-        model_conditions {
-            model_condition_id
-            omics_profiles {
-                profile_id
-                datatype
-                blacklist_omics
-                omics_order_date
-                smid_ordered
-                smid_returned
-                omics_sequencings {
-                    bai_filepath
-                    bam_filepath
-                    blacklist
-                    expected_type
-                    sequencing_id
-                    source
-                    unaligned_bam_size
-                }
-            }
+  records: model {
+    model_id
+    cell_line_name
+    stripped_cell_line_name
+    model_conditions {
+      model_condition_id
+      omics_profiles(
+        where: {
+          datatype: { _in: ["rna", "long_read_rna"] }
+          blacklist_omics: { _neq: true }
         }
+      ) {
+        omics_profile_id: profile_id
+        datatype
+        omics_sequencings(where: { blacklist: { _neq: true } }) {
+          omics_sequencing_id: sequencing_id
+          blacklist
+          expected_type
+          source
+          version
+          sequencing_alignments {
+            sequencing_alignment_id: id
+            crai_bai_url: index_url
+            cram_bam_url: url
+            reference_genome
+            sequencing_alignment_source
+          }
+        }
+      }
     }
+  }
 }

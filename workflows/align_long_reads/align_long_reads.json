@@ -1,12 +1,12 @@
 {
   "deleted": false,
   "inputs": {
-    "align_long_reads.input_bam": "this.delivery_bam",
+    "align_long_reads.input_bam": "this.sample",
     "align_long_reads.junc_bed": "\"gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed\"",
     "align_long_reads.minimap2.docker_image": "\"trinityctat/minimap2_lr\"",
     "align_long_reads.minimap2.docker_image_hash_or_tag": "\":latest\"",
     "align_long_reads.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
-    "align_long_reads.sample_id": "this.delivery_bam_id"
+    "align_long_reads.sample_id": "this.sample_id"
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
@@ -21,5 +21,5 @@
     "align_long_reads.aligned_bai": "this.aligned_bai",
     "align_long_reads.aligned_flagstat": "this.aligned_flagstat"
   },
-  "rootEntityType": "delivery_bam"
+  "rootEntityType": "sample"
 }

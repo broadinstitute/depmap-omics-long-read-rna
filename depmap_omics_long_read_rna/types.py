@@ -29,20 +29,77 @@ class ModelsAndChildren(CoercedDataFrame):
     model_conditions: Series
 
 
-class SeqTable(CoercedDataFrame):
+class AlignmentMetadataLong(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
     cell_line_name: Series[pd.StringDtype]
     stripped_cell_line_name: Series[pd.StringDtype]
     model_condition_id: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype]
+    omics_profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    unaligned_bam_size: Series[pd.Int64Dtype] = pa.Field(nullable=True)
-    sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    blacklist_omics: Series[pd.BooleanDtype]
-    blacklist: Series[pd.BooleanDtype]
-    expected_type: Series[pd.StringDtype] = pa.Field(nullable=True)
-    bam_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
-    bai_filepath: Series[pd.StringDtype] = pa.Field(nullable=True)
+    omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    source: Series[pd.StringDtype] = pa.Field(nullable=True)
+    version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
+
+
+class LongReadAlignmentMetadata(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype]
+    omics_profile_id: Series[pd.StringDtype]
+    model_condition_id: Series[pd.StringDtype]
+    model_id: Series[pd.StringDtype]
+    cell_line_name: Series[pd.StringDtype]
+    stripped_cell_line_name: Series[pd.StringDtype]
+    delivery_sequencing_alignment_id: Series[pd.Int64Dtype]
+    delivery_cram_bam: Series[pd.StringDtype]
+    aligned_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    aligned_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
+    aligned_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
+    reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
+
+
+class ShortReadMetadata(CoercedDataFrame):
+    sr_omics_sequencing_id: Series[pd.StringDtype]
+    sr_omics_profile_id: Series[pd.StringDtype]
+    model_condition_id: Series[pd.StringDtype]
+
+
+class ShortReadTerraSamples(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype]
+    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
+
+
+class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
+    sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    model_condition_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
+    stripped_cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
+    delivery_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(unique=True)
+    delivery_cram_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    aligned_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
+    aligned_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
+    reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_omics_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
 class ObjectMetadata(CoercedDataFrame):
@@ -76,11 +133,6 @@ class OnboardingSamples(CoercedDataFrame):
     aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
     model_id: Series[pd.StringDtype] = pa.Field(unique=True)
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
-    blacklist: Series[pd.BooleanDtype]
-
-
-class SamplesMaybeInGumbo(OnboardingSamples):
-    already_in_gumbo: Series[pd.BooleanDtype]
 
 
 class SamplesWithMetadata(OnboardingSamples):
@@ -94,34 +146,6 @@ class CopiedSampleFiles(CoercedDataFrame):
     new_url: Series[pd.StringDtype]
     url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
-
-
-class SamplesForGumbo(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype]
-    unaligned_bam_filepath: Series[pd.StringDtype]
-    unaligned_bam_size: Series[pd.StringDtype]
-    unaligned_bam_crc32c_hash: Series[pd.StringDtype]
-    bam_filepath: Series[pd.StringDtype]
-    bam_size: Series[pd.StringDtype]
-    bam_crc32c_hash: Series[pd.StringDtype]
-    bai_filepath: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype]
-    update_time: Series[pd.StringDtype]
-    sequencing_date: Series[pd.StringDtype]
-    source: Series[pd.StringDtype]
-    expected_type: Series[pd.StringDtype]
-    issue: Series[pd.StringDtype] = pa.Field(nullable=True)
-    blacklist: Series[pd.BooleanDtype]
-
-
-class VersionedSamples(SamplesForGumbo):
-    version: Series[int]
-
-
-class ShortReadMetadata(CoercedDataFrame):
-    sr_sample_id: Series[pd.StringDtype]
-    sr_profile_id: Series[pd.StringDtype]
-    model_id: Series[pd.StringDtype]
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)

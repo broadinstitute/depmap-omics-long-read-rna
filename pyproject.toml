@@ -7,25 +7,25 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-tqdm = "^4.66.1"
-google-cloud-storage = "^2.14.0"
-functions-framework = "^3.5.0"
-pydantic = "^2.9.2"
-numpy = "^2.1.1"
+tqdm = "^4.67.1"
+google-cloud-storage = "^2.19.0"
+functions-framework = "^3.8.2"
+pydantic = "^2.10.6"
+numpy = "^2.2.2"
 pandas = "^2.2.3"
-pandera = {extras = ["strategies"], version = "^0.20.4"}
+pandera = {extras = ["strategies"], version = "^0.22.1"}
 python-baseconv = "^1.2.2"
-google-cloud-logging = "^3.9.0"
+google-cloud-logging = "^3.11.4"
 python-dotenv = "^1.0.1"
-nebelung = "^1.3.0"
-typer = "^0.12.5"
-google-cloud-secret-manager = "^2.20.2"
+nebelung = "^2.1.0"
+typer = "^0.15.1"
+google-cloud-secret-manager = "^2.22.1"
 ariadne-codegen = "^0.14.0"
-pyarrow = "^18.0.0"
+pd-flatten = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "0.6.8"
-pyright = "^1.1.382"
+ruff = "^0.9.4"
+pyright = "^1.1.393"
 
 
 [[tool.poetry.source]]
@@ -47,4 +47,3 @@ exclude = ["gumbo_gql_client"]
 venvPath = "."
 venv = ".venv"
 include = ["depmap_omics_long_read_rna", "main.py"]
-reportInvalidTypeVarUse = "none"

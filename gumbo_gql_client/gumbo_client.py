@@ -1,9 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from .base_client import BaseClient
 from .get_models_and_children import GetModelsAndChildren
-from .input_types import omics_sequencing_insert_input
-from .insert_omics_sequencings import InsertOmicsSequencings
 
 
 def gql(q: str) -> str:
@@ -21,21 +19,24 @@ class GumboClient(BaseClient):
                 stripped_cell_line_name
                 model_conditions {
                   model_condition_id
-                  omics_profiles {
-                    profile_id
+                  omics_profiles(
+                    where: {datatype: {_in: ["rna", "long_read_rna"]}, blacklist_omics: {_neq: true}}
+                  ) {
+                    omics_profile_id: profile_id
                     datatype
-                    blacklist_omics
-                    omics_order_date
-                    smid_ordered
-                    smid_returned
-                    omics_sequencings {
-                      bai_filepath
-                      bam_filepath
+                    omics_sequencings(where: {blacklist: {_neq: true}}) {
+                      omics_sequencing_id: sequencing_id
                       blacklist
                       expected_type
-                      sequencing_id
                       source
-                      unaligned_bam_size
+                      version
+                      sequencing_alignments {
+                        sequencing_alignment_id: id
+                        crai_bai_url: index_url
+                        cram_bam_url: url
+                        reference_genome
+                        sequencing_alignment_source
+                      }
                     }
                   }
                 }
@@ -52,28 +53,3 @@ class GumboClient(BaseClient):
         )
         data = self.get_data(response)
         return GetModelsAndChildren.model_validate(data)
-
-    def insert_omics_sequencings(
-        self, username: str, objects: List[omics_sequencing_insert_input], **kwargs: Any
-    ) -> InsertOmicsSequencings:
-        query = gql(
-            """
-            mutation InsertOmicsSequencings($_username: String!, $objects: [omics_sequencing_insert_input!]!) {
-              set_username(args: {_username: $_username}) {
-                username
-              }
-              insert_omics_sequencing(objects: $objects) {
-                affected_rows
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {"_username": username, "objects": objects}
-        response = self.execute(
-            query=query,
-            operation_name="InsertOmicsSequencings",
-            variables=variables,
-            **kwargs
-        )
-        data = self.get_data(response)
-        return InsertOmicsSequencings.model_validate(data)

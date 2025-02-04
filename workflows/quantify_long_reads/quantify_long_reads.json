@@ -15,11 +15,11 @@
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
-    "methodNamespace": "Long_Read_Omics",
+    "methodNamespace": "depmap-omics-long-read-rna",
     "methodName": "quantify_long_reads",
     "methodVersion": 1
   },
-  "namespace": "Long_Read_Omics",
+  "namespace": "depmap-omics-long-read-rna",
   "name": "quantify_long_reads",
   "outputs": {
     "quantify_long_reads.transcript_counts": "this.transcript_counts",

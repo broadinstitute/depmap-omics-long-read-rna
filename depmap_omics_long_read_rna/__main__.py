@@ -11,15 +11,14 @@ from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.bams import (
-    do_delta_align_delivery_bams,
-    do_upsert_delivery_bams,
+from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
+from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
+from depmap_omics_long_read_rna.utils.utils import (
+    get_hasura_creds,
+    get_secret_from_sm,
+    make_workflow_from_config,
+    submit_delta_job,
 )
-from depmap_omics_long_read_rna.utils.onboarding import (
-    do_join_short_read_data,
-    do_onboard_samples,
-)
-from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, get_secret_from_sm
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.max_colwidth", 50)
@@ -53,27 +52,39 @@ def main(
     with open(config_path, "rb") as f:
         config.update(tomllib.load(f))
 
-    # get URL and password for Gumbo GraphQL API
-    hasura_creds = get_hasura_creds("prod")
+    if config["gumbo_env"] == "dev":
+        gumbo_client = GumboClient(
+            url="http://localhost:8080/v1/graphql",
+            username="dogspa",
+            headers={"X-Hasura-Admin-Secret": "secret"},
+        )
 
-    ctx.obj = {
-        "terra_workspace": TerraWorkspace(
-            workspace_namespace=config["terra"]["workspace_namespace"],
-            workspace_name=config["terra"]["workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
-        ),
-        "gumbo_client": GumboClient(
+    else:
+        # get URL and password for Gumbo GraphQL API from secrets manager
+        hasura_creds = get_hasura_creds(gumbo_env=config["gumbo_env"])
+
+        gumbo_client = GumboClient(
             url=hasura_creds["url"],
-            username="depmap-omics-long-read-rna",
+            username="dogspa",
             headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
-        ),
-    }
+        )
+
+    ctx.obj = {"gumbo_client": gumbo_client}
 
 
 @app.command()
-def update_workflow(
-    ctx: typer.Context, workflow_name: Annotated[str, typer.Option()]
-) -> None:
+def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
+    if workflow_name == "align_long_reads":
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+        )
+    else:
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
+        )
+
     # need a GitHub PAT for persisting WDL in gists
     github_pat = get_secret_from_sm(
         "projects/201811582504/secrets/github-pat-for-wdl-gists/versions/latest"
@@ -96,79 +107,66 @@ def update_workflow(
         github_pat=github_pat,
     )
 
-    ctx.obj["terra_workspace"].update_workflow(terra_workflow=terra_workflow)
+    terra_workspace.update_workflow(terra_workflow=terra_workflow)
 
 
 @app.command()
-def upsert_delivery_bams(ctx: typer.Context) -> None:
+def upsert_delivery_bams() -> None:
     do_upsert_delivery_bams(
-        gcs_source_bucket=config["onboarding"]["gcs_source"]["bucket"],
-        gcs_source_glob=config["onboarding"]["gcs_source"]["glob"],
+        gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
+        gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
         uuid_namespace=config["uuid_namespace"],
-        terra_workspace=ctx.obj["terra_workspace"],
-        dry_run=config["onboarding"]["dry_run"],
+        terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+        ),
+        dry_run=config["dry_run"],
     )
 
 
 @app.command()
-def delta_align_delivery_bams(ctx: typer.Context) -> None:
-    terra_workflow = TerraWorkflow(
-        method_namespace=config["terra"]["align_long_reads"]["method_namespace"],
-        method_name=config["terra"]["align_long_reads"]["method_name"],
-        method_config_namespace=config["terra"]["align_long_reads"][
-            "method_config_namespace"
-        ],
-        method_config_name=config["terra"]["align_long_reads"]["method_config_name"],
-        method_synopsis=config["terra"]["align_long_reads"]["method_synopsis"],
-        workflow_wdl_path=Path(
-            config["terra"]["align_long_reads"]["workflow_wdl_path"]
-        ).resolve(),
-        method_config_json_path=Path(
-            config["terra"]["align_long_reads"]["method_config_json_path"]
-        ).resolve(),
-    )
-
-    do_delta_align_delivery_bams(
-        terra_workspace=ctx.obj["terra_workspace"],
-        terra_workflow=terra_workflow,
-        dry_run=config["onboarding"]["dry_run"],
-    )
-
-
-@app.command()
-def onboard_samples(ctx: typer.Context) -> None:
-    do_onboard_samples(
-        gcp_project_id=config["gcp_project_id"],
-        unaligned_gcs_destination_bucket=config["onboarding"][
-            "unaligned_gcs_destination"
-        ]["bucket"],
-        unaligned_gcs_destination_prefix=config["onboarding"][
-            "unaligned_gcs_destination"
-        ]["prefix"],
-        aligned_gcs_destination_bucket=config["onboarding"]["aligned_gcs_destination"][
-            "bucket"
-        ],
-        aligned_gcs_destination_prefix=config["onboarding"]["aligned_gcs_destination"][
-            "prefix"
-        ],
-        terra_workspace=ctx.obj["terra_workspace"],
+def refresh_terra_samples(ctx: typer.Context) -> None:
+    do_refresh_terra_samples(
+        terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
+        ),
+        short_read_terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+            workspace_name=config["terra"]["short_read_workspace_name"],
+        ),
         gumbo_client=ctx.obj["gumbo_client"],
-        dry_run=config["onboarding"]["dry_run"],
     )
 
 
 @app.command()
-def join_short_read_data(ctx: typer.Context) -> None:
-    short_read_terra_workspace = TerraWorkspace(
-        workspace_namespace=config["terra"]["short_read_workspace_namespace"],
-        workspace_name=config["terra"]["short_read_workspace_name"],
-    )
+def delta_job(
+    workflow_name: Annotated[str, typer.Option()],
+    entity_type: Annotated[str, typer.Option()],
+    entity_set_type: Annotated[str, typer.Option()],
+    entity_id_col: Annotated[str, typer.Option()],
+    check_col: Annotated[str, typer.Option()],
+) -> None:
+    if workflow_name == "align_long_reads":
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+        )
+    else:
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
+        )
 
-    do_join_short_read_data(
-        terra_workspace=ctx.obj["terra_workspace"],
-        short_read_terra_workspace=short_read_terra_workspace,
-        gumbo_client=ctx.obj["gumbo_client"],
-        dry_run=config["onboarding"]["dry_run"],
+    submit_delta_job(
+        terra_workspace=terra_workspace,
+        terra_workflow=make_workflow_from_config(workflow_name),
+        entity_type=entity_type,
+        entity_set_type=entity_set_type,
+        entity_id_col=entity_id_col,
+        check_col=check_col,
+        dry_run=config["dry_run"],
     )
 
 
