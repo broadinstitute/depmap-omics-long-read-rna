@@ -21,10 +21,10 @@ nebelung = "^2.1.0"
 typer = "^0.15.1"
 google-cloud-secret-manager = "^2.22.1"
 ariadne-codegen = "^0.14.0"
-pd-flatten = "^0.1.0"
+pd-flatten = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "0.6.8"
+ruff = "^0.9.4"
 pyright = "^1.1.393"
 
 
