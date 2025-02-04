@@ -2,7 +2,7 @@ import logging
 import string
 import uuid
 from pathlib import Path
-from typing import List, Type
+from typing import Any, List, Type
 
 import baseconv
 import pandas as pd
@@ -13,7 +13,6 @@ from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
-from depmap_omics_long_read_rna.__main__ import config
 from depmap_omics_long_read_rna.types import PydanticBaseModel
 from gumbo_gql_client import BaseModel
 
@@ -205,10 +204,13 @@ def submit_delta_job(
     )
 
 
-def make_workflow_from_config(workflow_name: str) -> TerraWorkflow:
+def make_workflow_from_config(
+    config: dict[str, Any], workflow_name: str
+) -> TerraWorkflow:
     """
     Make a TerraWorkflow object from a config entry.
 
+    :param config: a config dictionaryu
     :param workflow_name: the name of the workflow referenced in the config
     :return: a TerraWorkflow instance
     """

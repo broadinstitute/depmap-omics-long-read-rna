@@ -77,7 +77,9 @@ def run(cloud_event: CloudEvent) -> None:
 
         submit_delta_job(
             terra_workspace=terra_delivery_workspace,
-            terra_workflow=make_workflow_from_config("align_long_reads"),
+            terra_workflow=make_workflow_from_config(
+                config, workflow_name="align_long_reads"
+            ),
             entity_type="sample",
             entity_set_type="sample_set",
             entity_id_col="sample_id",
@@ -96,7 +98,9 @@ def run(cloud_event: CloudEvent) -> None:
 
         submit_delta_job(
             terra_workspace=terra_workspace,
-            terra_workflow=make_workflow_from_config("quantify_long_reads"),
+            terra_workflow=make_workflow_from_config(
+                config, workflow_name="quantify_long_reads"
+            ),
             entity_type="sample",
             entity_set_type="sample_set",
             entity_id_col="sample_id",

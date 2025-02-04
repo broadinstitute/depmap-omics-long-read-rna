@@ -161,7 +161,7 @@ def delta_job(
 
     submit_delta_job(
         terra_workspace=terra_workspace,
-        terra_workflow=make_workflow_from_config(workflow_name),
+        terra_workflow=make_workflow_from_config(config, workflow_name),
         entity_type=entity_type,
         entity_set_type=entity_set_type,
         entity_id_col=entity_id_col,
