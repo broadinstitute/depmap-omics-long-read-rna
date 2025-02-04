@@ -1,3 +1,4 @@
+import logging
 import string
 import uuid
 from typing import List, Type
@@ -5,6 +6,8 @@ from typing import List, Type
 import baseconv
 import pandas as pd
 from google.cloud import secretmanager_v1
+from nebelung.terra_workflow import TerraWorkflow
+from nebelung.terra_workspace import TerraWorkspace
 from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
@@ -111,3 +114,75 @@ def assign_hashed_uuids(
     )
 
     return df
+
+
+def submit_delta_job(
+    terra_workspace: TerraWorkspace,
+    terra_workflow: TerraWorkflow,
+    entity_type: str,
+    entity_set_type: str,
+    entity_id_col: str,
+    check_col: str,
+    resubmit_n_times: int = 1,
+    dry_run: bool = True,
+):
+    """
+    TODO
+
+    :param terra_workspace: a TerraWorkspace instance
+    :param terra_workflow: a TerraWorkflow instance for the method
+    :param dry_run: whether to skip updates to external data stores
+    """
+
+    entities = terra_workspace.get_entities(entity_type)
+
+    if check_col not in entities.columns:
+        entities[check_col] = pd.NA
+
+    entities_todo = entities  # .loc[entities[check_col].isna()]
+
+    if len(entities_todo) == 0:
+        logging.info(f"No {entity_type}s to run {terra_workflow.method_name} for")
+        return
+
+    # get statuses of submitted entity workflow statuses
+    submittable_entities = terra_workspace.check_submittable_entities(
+        entity_type,
+        entity_ids=entities_todo[entity_id_col],
+        terra_workflow=terra_workflow,
+        resubmit_n_times=resubmit_n_times,
+        force_retry=False,
+    )
+
+    logging.info(f"Submittable entities: {submittable_entities}")
+
+    if len(submittable_entities["failed"]) > 0:
+        raise RuntimeError("Some entities have failed too many times")
+
+    # don't submit jobs for entities that are currently running, completed, or failed
+    # too many times
+    entities_todo = entities_todo.loc[
+        entities_todo[entity_id_col].isin(
+            submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
+        )
+    ]
+
+    if dry_run:
+        logging.info(f"(skipping) Submitting {terra_workflow.method_name} job")
+        return
+
+    entity_set_id = terra_workspace.create_entity_set(
+        entity_type,
+        entity_ids=entities_todo[entity_id_col],
+        suffix=terra_workflow.method_name,
+    )
+
+    terra_workspace.submit_workflow_run(
+        terra_workflow=terra_workflow,
+        entity=entity_set_id,
+        etype=entity_set_type,
+        expression=f"this.{entity_type}",
+        use_callcache=True,
+        use_reference_disks=False,
+        memory_retry_multiplier=1.5,
+    )

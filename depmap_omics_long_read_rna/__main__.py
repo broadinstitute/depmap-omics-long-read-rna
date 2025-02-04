@@ -11,12 +11,13 @@ from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.delivery_bams import (
-    do_delta_align_delivery_bams,
-    do_upsert_delivery_bams,
-)
+from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
 from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
-from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, get_secret_from_sm
+from depmap_omics_long_read_rna.utils.utils import (
+    get_hasura_creds,
+    get_secret_from_sm,
+    submit_delta_job,
+)
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.max_colwidth", 50)
@@ -36,6 +37,31 @@ config: dict[str, Any] = {}
 # noinspection PyUnusedLocal
 def done(*args, **kwargs):
     logging.info("Done.")
+
+
+def make_workflow_from_config(workflow_name: str) -> TerraWorkflow:
+    """
+    Make a TerraWorkflow object from a config entry.
+
+    :param workflow_name: the name of the workflow referenced in the config
+    :return: a TerraWorkflow instance
+    """
+
+    return TerraWorkflow(
+        method_namespace=config["terra"][workflow_name]["method_namespace"],
+        method_name=config["terra"][workflow_name]["method_name"],
+        method_config_namespace=config["terra"][workflow_name][
+            "method_config_namespace"
+        ],
+        method_config_name=config["terra"][workflow_name]["method_config_name"],
+        method_synopsis=config["terra"][workflow_name]["method_synopsis"],
+        workflow_wdl_path=Path(
+            config["terra"][workflow_name]["workflow_wdl_path"]
+        ).resolve(),
+        method_config_json_path=Path(
+            config["terra"][workflow_name]["method_config_json_path"]
+        ).resolve(),
+    )
 
 
 @app.callback(result_callback=done)
@@ -124,50 +150,47 @@ def upsert_delivery_bams() -> None:
 
 
 @app.command()
-def delta_align_delivery_bams() -> None:
-    terra_workflow = TerraWorkflow(
-        method_namespace=config["terra"]["align_long_reads"]["method_namespace"],
-        method_name=config["terra"]["align_long_reads"]["method_name"],
-        method_config_namespace=config["terra"]["align_long_reads"][
-            "method_config_namespace"
-        ],
-        method_config_name=config["terra"]["align_long_reads"]["method_config_name"],
-        method_synopsis=config["terra"]["align_long_reads"]["method_synopsis"],
-        workflow_wdl_path=Path(
-            config["terra"]["align_long_reads"]["workflow_wdl_path"]
-        ).resolve(),
-        method_config_json_path=Path(
-            config["terra"]["align_long_reads"]["method_config_json_path"]
-        ).resolve(),
-    )
-
-    do_delta_align_delivery_bams(
+def refresh_terra_samples(ctx: typer.Context) -> None:
+    do_refresh_terra_samples(
         terra_workspace=TerraWorkspace(
-            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
-            workspace_name=config["terra"]["delivery_workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
         ),
-        terra_workflow=terra_workflow,
-        dry_run=config["dry_run"],
+        short_read_terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+            workspace_name=config["terra"]["short_read_workspace_name"],
+        ),
+        gumbo_client=ctx.obj["gumbo_client"],
     )
 
 
 @app.command()
-def refresh_terra_samples(ctx: typer.Context) -> None:
-    terra_workspace = TerraWorkspace(
-        workspace_namespace=config["terra"]["workspace_namespace"],
-        workspace_name=config["terra"]["workspace_name"],
-    )
+def delta_job(
+    workflow_name: Annotated[str, typer.Option()],
+    entity_type: Annotated[str, typer.Option()],
+    entity_set_type: Annotated[str, typer.Option()],
+    entity_id_col: Annotated[str, typer.Option()],
+    check_col: Annotated[str, typer.Option()],
+) -> None:
+    if workflow_name == "align_long_reads":
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+        )
+    else:
+        terra_workspace = TerraWorkspace(
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
+        )
 
-    short_read_terra_workspace = TerraWorkspace(
-        workspace_namespace=config["terra"]["short_read_workspace_namespace"],
-        workspace_name=config["terra"]["short_read_workspace_name"],
-    )
-
-    do_refresh_terra_samples(
+    submit_delta_job(
         terra_workspace=terra_workspace,
-        short_read_terra_workspace=short_read_terra_workspace,
-        gumbo_client=ctx.obj["gumbo_client"],
+        terra_workflow=make_workflow_from_config(workflow_name),
+        entity_type=entity_type,
+        entity_set_type=entity_set_type,
+        entity_id_col=entity_id_col,
+        check_col=check_col,
+        dry_run=config["dry_run"],
     )
 
 

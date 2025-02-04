@@ -2,8 +2,6 @@ import logging
 import os
 from pathlib import Path
 
-import pandas as pd
-from nebelung.terra_workflow import TerraWorkflow
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
@@ -118,68 +116,3 @@ def assign_cds_ids(
     ).str.slice(-6)
 
     return type_data_frame(samples_w_ids, SamplesWithCDSIDs)
-
-
-def do_delta_align_delivery_bams(
-    terra_workspace: TerraWorkspace, terra_workflow: TerraWorkflow, dry_run: bool
-) -> None:
-    """
-    Identify delivered uBAMs that haven't been aligned yet and submit a job to do that.
-
-    :param terra_workspace: a TerraWorkspace instance
-    :param terra_workflow: a TerraWorkflow instance for the alignment method
-    :param dry_run: whether to skip updates to external data stores
-    """
-
-    bams = terra_workspace.get_entities("sample", DeliveryBams)
-
-    if "aligned_bam" not in bams.columns:
-        bams["aligned_bam"] = pd.NA
-
-    bams_to_align = bams.loc[bams["aligned_bam"].isna()]
-
-    if len(bams_to_align) == 0:
-        logging.info("No new BAMs to align")
-        return
-
-    # get statuses of submitted entity workflow statuses
-    submittable_entities = terra_workspace.check_submittable_entities(
-        entity_type="sample",
-        entity_ids=bams_to_align["sample_id"],
-        terra_workflow=terra_workflow,
-        resubmit_n_times=1,
-        force_retry=False,
-    )
-
-    logging.info(f"Submittable entities: {submittable_entities}")
-
-    if len(submittable_entities["failed"]) > 0:
-        raise RuntimeError("Some entities have failed too many times")
-
-    # don't submit jobs for entities that are currently running, completed, or failed
-    # too many times
-    bams_to_align = bams_to_align.loc[
-        bams_to_align["sample_id"].isin(
-            submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
-        )
-    ]
-
-    if dry_run:
-        logging.info("(skipping) Submitting align_long_reads job")
-        return
-
-    bam_set_id = terra_workspace.create_entity_set(
-        entity_type="sample",
-        entity_ids=bams_to_align["sample_id"],
-        suffix="align",
-    )
-
-    terra_workspace.submit_workflow_run(
-        terra_workflow=terra_workflow,
-        entity=bam_set_id,
-        etype="sample_set",
-        expression="this.samples",
-        use_callcache=True,
-        use_reference_disks=False,
-        memory_retry_multiplier=1.5,
-    )
