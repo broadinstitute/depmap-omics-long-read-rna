@@ -16,6 +16,7 @@ from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     get_secret_from_sm,
+    make_workflow_from_config,
     submit_delta_job,
 )
 
@@ -37,31 +38,6 @@ config: dict[str, Any] = {}
 # noinspection PyUnusedLocal
 def done(*args, **kwargs):
     logging.info("Done.")
-
-
-def make_workflow_from_config(workflow_name: str) -> TerraWorkflow:
-    """
-    Make a TerraWorkflow object from a config entry.
-
-    :param workflow_name: the name of the workflow referenced in the config
-    :return: a TerraWorkflow instance
-    """
-
-    return TerraWorkflow(
-        method_namespace=config["terra"][workflow_name]["method_namespace"],
-        method_name=config["terra"][workflow_name]["method_name"],
-        method_config_namespace=config["terra"][workflow_name][
-            "method_config_namespace"
-        ],
-        method_config_name=config["terra"][workflow_name]["method_config_name"],
-        method_synopsis=config["terra"][workflow_name]["method_synopsis"],
-        workflow_wdl_path=Path(
-            config["terra"][workflow_name]["workflow_wdl_path"]
-        ).resolve(),
-        method_config_json_path=Path(
-            config["terra"][workflow_name]["method_config_json_path"]
-        ).resolve(),
-    )
 
 
 @app.callback(result_callback=done)

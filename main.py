@@ -9,11 +9,14 @@ from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
-from depmap_omics_long_read_rna.__main__ import make_workflow_from_config
 from depmap_omics_long_read_rna.types import GumboClient
 from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
 from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
-from depmap_omics_long_read_rna.utils.utils import get_hasura_creds, submit_delta_job
+from depmap_omics_long_read_rna.utils.utils import (
+    get_hasura_creds,
+    make_workflow_from_config,
+    submit_delta_job,
+)
 
 
 @functions_framework.cloud_event
