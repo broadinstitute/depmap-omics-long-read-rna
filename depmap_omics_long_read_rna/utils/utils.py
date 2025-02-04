@@ -163,7 +163,11 @@ def submit_delta_job(
     # too many times
     entities_todo = entities_todo.loc[
         entities_todo[entity_id_col].isin(
-            submittable_entities["unsubmitted"].union(submittable_entities["retryable"])
+            list(
+                submittable_entities["unsubmitted"].union(
+                    submittable_entities["retryable"]
+                )
+            )
         )
     ]
 

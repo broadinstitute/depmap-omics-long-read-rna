@@ -174,9 +174,9 @@ def join_sr_metadata(
         right_on="sr_omics_sequencing_id",
     ).drop(columns="sample_id")
 
-    samples = samples.merge(sr_metadata, how="left", on="model_condition_id")
+    samples_w_metadata = samples.merge(sr_metadata, how="left", on="model_condition_id")
 
-    return type_data_frame(samples, LongReadTerraSamples)
+    return type_data_frame(samples_w_metadata, LongReadTerraSamples)
 
 
 def get_sr_terra_samples(
@@ -192,7 +192,8 @@ def get_sr_terra_samples(
     sr_terra_samples = short_read_terra_workspace.get_entities("sample")
 
     sr_terra_samples = (
-        sr_terra_samples[
+        sr_terra_samples.loc[
+            :,
             [
                 "sample_id",
                 "star_junctions",
@@ -202,7 +203,7 @@ def get_sr_terra_samples(
                 "rsem_genes_stranded",
                 "rsem_isoforms",
                 "rsem_isoforms_stranded",
-            ]
+            ],
         ]
         .rename(
             columns={
