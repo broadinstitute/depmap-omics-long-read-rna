@@ -83,7 +83,7 @@ def run(cloud_event: CloudEvent) -> None:
             entity_type="sample",
             entity_set_type="sample_set",
             entity_id_col="sample_id",
-            check_col="aligned_bam",
+            expression="this.samples",
             dry_run=config["dry_run"],
         )
 
@@ -96,17 +96,18 @@ def run(cloud_event: CloudEvent) -> None:
             gumbo_client=gumbo_client,
         )
 
-        submit_delta_job(
-            terra_workspace=terra_workspace,
-            terra_workflow=make_workflow_from_config(
-                config, workflow_name="quantify_long_reads"
-            ),
-            entity_type="sample",
-            entity_set_type="sample_set",
-            entity_id_col="sample_id",
-            check_col="transcript_counts",
-            dry_run=config["dry_run"],
-        )
+        for workflow_name in ["quantify_long_reads", "call_fusions"]:
+            submit_delta_job(
+                terra_workspace=terra_workspace,
+                terra_workflow=make_workflow_from_config(
+                    config, workflow_name=workflow_name
+                ),
+                entity_type="sample",
+                entity_set_type="sample_set",
+                entity_id_col="sample_id",
+                expression="this.samples",
+                dry_run=config["dry_run"],
+            )
 
     else:
         raise NotImplementedError(f"Invalid command: {ce_data['cmd']}")
