@@ -23,20 +23,20 @@ def list_blobs(
     if prefix is not None and glob is not None:
         raise ValueError("At most one of `prefix` and `glob` can be specified")
     elif prefix is not None:
-        pages = storage_client.list_blobs(
+        pages = storage_client.list_blobs(  # pyright: ignore
             bucket_or_name=bucket_name,
             prefix=prefix,
             delimiter="/",
             fields="items(name,crc32c,size,updated),nextPageToken",
         ).pages
     elif glob is not None:
-        pages = storage_client.list_blobs(
+        pages = storage_client.list_blobs(  # pyright: ignore
             bucket_or_name=bucket_name,
             match_glob=glob,
             fields="items(name,crc32c,size,updated),nextPageToken",
         ).pages
     else:
-        pages = storage_client.list_blobs(
+        pages = storage_client.list_blobs(  # pyright: ignore
             bucket_or_name=bucket_name,
             fields="items(name,crc32c,size,updated),nextPageToken",
         ).pages
