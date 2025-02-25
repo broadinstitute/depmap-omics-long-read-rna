@@ -42,3 +42,12 @@ method_config_name = "quantify_long_reads"
 method_synopsis = "Quantify long reads"
 workflow_wdl_path = "./workflows/quantify_long_reads/quantify_long_reads.wdl"
 method_config_json_path = "./workflows/quantify_long_reads/quantify_long_reads.json"
+
+[terra.call_fusions]
+method_namespace = "cds-pipelines"
+method_name = "call_fusions"
+method_config_namespace = "cds-pipelines"
+method_config_name = "call_fusions"
+method_synopsis = "Quantify long reads"
+workflow_wdl_path = "./workflows/call_fusions/call_fusions.wdl"
+method_config_json_path = "./workflows/call_fusions/call_fusions.json"
