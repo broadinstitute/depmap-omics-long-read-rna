@@ -132,7 +132,7 @@ def delta_job(
     entity_type: Annotated[str, typer.Option()],
     entity_set_type: Annotated[str, typer.Option()],
     entity_id_col: Annotated[str, typer.Option()],
-    check_col: Annotated[str, typer.Option()],
+    expression: Annotated[str, typer.Option()],
 ) -> None:
     if workflow_name == "align_long_reads":
         terra_workspace = TerraWorkspace(
@@ -151,7 +151,7 @@ def delta_job(
         entity_type=entity_type,
         entity_set_type=entity_set_type,
         entity_id_col=entity_id_col,
-        check_col=check_col,
+        expression=expression,
         dry_run=config["dry_run"],
     )
 
