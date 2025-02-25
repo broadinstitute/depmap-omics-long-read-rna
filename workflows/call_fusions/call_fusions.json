@@ -2,7 +2,7 @@
   "deleted": false,
   "inputs": {
     "call_fusions.ctat_lr_fusion.docker_image": "\"trinityctat/ctat_lr_fusion\"",
-    "call_fusions.ctat_lr_fusion.docker_image_hash_or_tag": "\"@sha256:0596c42e54c6a0b8708f8c790337523ab291f45571401959677c5179c88f8d65\"",
+    "call_fusions.ctat_lr_fusion.docker_image_hash_or_tag": "\":1.1.0\"",
     "call_fusions.genome_lib_tar_with_star_idx": "\"gs://mdl-ctat-genome-libs/__genome_libs_StarFv1.10/GRCh38_gencode_v22_CTAT_lib_Mar012021.for_mm2fusion.withSTARidx.tar\"",
     "call_fusions.input_bam": "this.aligned_cram_bam",
     "call_fusions.ref_fasta": "workspace.referenceData_hg38_ref_fasta",

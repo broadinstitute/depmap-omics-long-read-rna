@@ -144,7 +144,7 @@ task ctat_lr_fusion {
             --min_novel_junction_support ~{min_novel_junction_support} \
             --min_per_id ~{min_per_id} \
             --CPU ~{cpu} \
-            --STAR_xtra_params '--limitBAMsortRAM 139122145184' \
+            --STAR_xtra_params '--limitBAMsortRAM 12884901888' \
             --vis \
             ~{"--left_fq " + sr_fastq1} \
             ~{"--right_fq " + sr_fastq2 } \
