@@ -10,11 +10,11 @@
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
-    "methodNamespace": "Long_Read_Omics",
+    "methodNamespace": "cds-pipelines",
     "methodName": "align_long_reads",
     "methodVersion": 1
   },
-  "namespace": "Long_Read_Omics",
+  "namespace": "cds-pipelines",
   "name": "align_long_reads",
   "outputs": {
     "align_long_reads.aligned_bam": "this.aligned_bam",

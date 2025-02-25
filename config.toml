@@ -18,7 +18,6 @@ bucket = "cclebams"
 prefix = "long_read_rna_hg38/"
 
 [terra]
-repo_namespace = "depmap-omics-long-read-rna"
 delivery_workspace_namespace = "broad-firecloud-ccle"
 delivery_workspace_name = "Long_Read_Omics"
 short_read_workspace_namespace = "broad-firecloud-ccle"
@@ -27,18 +26,18 @@ workspace_namespace = "broad-firecloud-ccle"
 workspace_name = "depmap-omics-long-read-rna"
 
 [terra.align_long_reads]
-method_namespace = "depmap-omics-long-read-rna"
+method_namespace = "cds-pipelines"
 method_name = "align_long_reads"
-method_config_namespace = "depmap-omics-long-read-rna"
+method_config_namespace = "cds-pipelines"
 method_config_name = "align_long_reads"
 method_synopsis = "Align long read uBAM"
 workflow_wdl_path = "./workflows/align_long_reads/align_long_reads.wdl"
 method_config_json_path = "./workflows/align_long_reads/align_long_reads.json"
 
 [terra.quantify_long_reads]
-method_namespace = "depmap-omics-long-read-rna"
+method_namespace = "cds-pipelines"
 method_name = "quantify_long_reads"
-method_config_namespace = "depmap-omics-long-read-rna"
+method_config_namespace = "cds-pipelines"
 method_config_name = "quantify_long_reads"
 method_synopsis = "Quantify long reads"
 workflow_wdl_path = "./workflows/quantify_long_reads/quantify_long_reads.wdl"
