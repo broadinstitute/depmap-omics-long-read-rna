@@ -110,8 +110,8 @@ task ctat_lr_fusion {
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 4
-        Int mem_gb = 16
+        Int cpu = 12
+        Int mem_gb = 64
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
@@ -125,6 +125,8 @@ task ctat_lr_fusion {
             + size(sr_fastq2, "GiB")
         ) + 20 + additional_disk_gb
     )
+
+    Int bam_sort_ram_bytes = mem_gb * 1000 * 1000 * 1000 * 0.75
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
 
@@ -144,7 +146,7 @@ task ctat_lr_fusion {
             --min_novel_junction_support ~{min_novel_junction_support} \
             --min_per_id ~{min_per_id} \
             --CPU ~{cpu} \
-            --STAR_xtra_params '--limitBAMsortRAM 12884901888' \
+            --STAR_xtra_params '--limitBAMsortRAM ~{bam_sort_ram_bytes}' \
             --vis \
             ~{"--left_fq " + sr_fastq1} \
             ~{"--right_fq " + sr_fastq2 } \
