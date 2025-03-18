@@ -7,6 +7,7 @@ workflow call_fusions {
 
         String sample_id
         File sr_bam
+        File sr_bai
         File ref_fasta
         File input_bam
         File genome_lib_tar_with_star_idx
@@ -21,6 +22,7 @@ workflow call_fusions {
         input:
             sample_id = sample_id,
             input_bam = sr_bam,
+            input_bai = sr_bai,
             ref_fasta = ref_fasta
     }
 
@@ -31,6 +33,7 @@ workflow call_fusions {
             genome_lib_tar = genome_lib_tar_with_star_idx,
             sr_fastq1 = sr_sam_to_fastq.fastq1,
             sr_fastq2 = sr_sam_to_fastq.fastq2,
+            sr_bam_size_gb = size(sr_bam, "GiB"),
             min_per_id = min_per_id,
             min_j = min_j,
             min_sum_js = min_sum_js,
@@ -52,18 +55,19 @@ task sam_to_fastq {
     input {
         String sample_id
         File input_bam
+        File input_bai
         File ref_fasta
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 4
-        Int mem_gb = 16
+        Int cpu = 2
+        Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
     }
 
-    Int disk_space = ceil(size(input_bam, "GiB") * 6) + additional_disk_gb
+    Int disk_space = ceil(size(input_bam, "GiB") * 10) + additional_disk_gb
 
     command <<<
         set -euo pipefail
@@ -101,6 +105,7 @@ task ctat_lr_fusion {
         File genome_lib_tar
         File? sr_fastq1
         File? sr_fastq2
+        Float? sr_bam_size_gb
         Int min_per_id
         Int min_j
         Int min_sum_js
@@ -110,23 +115,27 @@ task ctat_lr_fusion {
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 12
-        Int mem_gb = 64
+        Int cpu = 6
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
+        Int additional_mem_gb = 0
     }
 
     Int disk_space = (
         ceil(
             size(input_bam, "GiB")
-            + 3 * size(genome_lib_tar, "GiB")
+            + 4 * size(genome_lib_tar, "GiB")
             + size(sr_fastq1, "GiB")
             + size(sr_fastq2, "GiB")
         ) + 20 + additional_disk_gb
     )
 
-    Int bam_sort_ram_bytes = mem_gb * 1000 * 1000 * 1000 * 0.75
+    Int mem_gb = if defined(sr_bam_size_gb) then (
+        ceil(20 * sr_bam_size_gb) + additional_mem_gb
+    ) else 12
+
+    Int bam_sort_ram_bytes = ceil(mem_gb * 1000 * 1000 * 1000 * 0.85)
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
 

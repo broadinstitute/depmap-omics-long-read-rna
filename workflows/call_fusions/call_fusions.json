@@ -8,6 +8,7 @@
     "call_fusions.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "call_fusions.sample_id": "this.sample_id",
     "call_fusions.sr_bam": "this.sr_cram_bam",
+    "call_fusions.sr_bai": "this.sr_crai_bai",
     "call_fusions.sr_sam_to_fastq.docker_image": "\"us-docker.pkg.dev/depmap-omics/public/samtools\"",
     "call_fusions.sr_sam_to_fastq.docker_image_hash_or_tag": "\"@sha256:43c413dde9472748f58b2b6b089885fd5f968799666ce21e90edee10f68afb93\""
   },
