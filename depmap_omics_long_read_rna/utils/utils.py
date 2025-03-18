@@ -230,7 +230,7 @@ def make_workflow_from_config(
     """
     Make a TerraWorkflow object from a config entry.
 
-    :param config: a config dictionaryu
+    :param config: a config dictionary
     :param workflow_name: the name of the workflow referenced in the config
     :return: a TerraWorkflow instance
     """
