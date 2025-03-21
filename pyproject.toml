@@ -17,7 +17,7 @@ pandera = {extras = ["strategies"], version = "^0.22.1"}
 python-baseconv = "^1.2.2"
 google-cloud-logging = "^3.11.4"
 python-dotenv = "^1.0.1"
-nebelung = "^2.3.0"
+nebelung = "^2.4.0"
 typer = "^0.15.2"
 google-cloud-secret-manager = "^2.23.2"
 ariadne-codegen = "^0.14.0"

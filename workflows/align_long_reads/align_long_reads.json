@@ -1,7 +1,7 @@
 {
   "deleted": false,
   "inputs": {
-    "align_long_reads.input_bam": "this.sample",
+    "align_long_reads.input_bam": "this.delivery_bam",
     "align_long_reads.junc_bed": "\"gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed\"",
     "align_long_reads.minimap2.docker_image": "\"trinityctat/minimap2_lr\"",
     "align_long_reads.minimap2.docker_image_hash_or_tag": "\":latest\"",

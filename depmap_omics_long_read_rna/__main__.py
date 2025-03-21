@@ -51,24 +51,24 @@ def main(
     with open(config_path, "rb") as f:
         config.update(tomllib.load(f))
 
-    if config["gumbo_env"] == "dev":
-        gumbo_client = GumboClient(
-            url="http://localhost:8080/v1/graphql",
-            username="dogspa",
-            headers={"X-Hasura-Admin-Secret": "secret"},
-        )
+    def get_gumbo_client() -> GumboClient:
+        if config["gumbo_env"] == "dev":
+            return GumboClient(
+                url="http://localhost:8080/v1/graphql",
+                username="dogspa",
+                headers={"X-Hasura-Admin-Secret": "secret"},
+            )
 
-    else:
         # get URL and password for Gumbo GraphQL API from secrets manager
         hasura_creds = get_hasura_creds(gumbo_env=config["gumbo_env"])
 
-        gumbo_client = GumboClient(
+        return GumboClient(
             url=hasura_creds["url"],
             username="dogspa",
             headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
         )
 
-    ctx.obj = {"gumbo_client": gumbo_client}
+    ctx.obj = {"get_gumbo_client": get_gumbo_client}
 
 
 @app.command()
@@ -122,7 +122,7 @@ def refresh_terra_samples(ctx: typer.Context) -> None:
             workspace_namespace=config["terra"]["short_read_workspace_namespace"],
             workspace_name=config["terra"]["short_read_workspace_name"],
         ),
-        gumbo_client=ctx.obj["gumbo_client"],
+        gumbo_client=ctx.obj["get_gumbo_client"](),
     )
 
 

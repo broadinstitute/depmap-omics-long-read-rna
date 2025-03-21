@@ -34,7 +34,7 @@ def do_upsert_delivery_bams(
     """
 
     # get delivered (u)BAM file metadata
-    src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
+    src_bams = list_blobs(bucket_name=gcs_source_bucket, glob=gcs_source_glob)
     bams = make_delivery_bam_df(src_bams)
 
     # generate sample/sequencing/CDS IDs
@@ -64,15 +64,15 @@ def make_delivery_bam_df(
 
     bams_w_ids = bams.copy()
 
-    # extract the model ID from the BAM filenames
-    bams_w_ids["model_id"] = (
+    # extract the profile ID from the BAM filenames
+    bams_w_ids["omics_profile_id"] = (
         bams_w_ids["url"]
         .apply(lambda x: Path(x).name)
-        .str.extract(r"^(ACH-[A-Z 0-9]+)")
+        .str.extract(r"^(PR-[A-Z a-z 0-9]+)")
     )
 
-    if bool(bams_w_ids["model_id"].isna().any()):
-        raise ValueError("There are BAM files not named with model IDs (ACH-*)")
+    if bool(bams_w_ids["omics_profile_id"].isna().any()):
+        raise ValueError("There are BAM files not named with profile IDs (PR-*.bam)")
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
 

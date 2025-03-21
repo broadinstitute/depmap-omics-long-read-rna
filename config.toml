@@ -3,11 +3,11 @@ title = "DepMap Omics Long Read RNA"
 gcp_project_id = "depmap-omics"
 gumbo_env = "prod"
 uuid_namespace = "00000000-0000-0000-0000-000000000000"
-dry_run = true
+dry_run = false
 
 [alignment.gcs_source]
 bucket = "fc-aaf4de93-c104-45c4-a01a-a036869119c6"
-glob = "tag*/merge/*.bam"
+glob = "tag*/**/merge/PR-*.bam"
 
 [alignment.unaligned_gcs_destination]
 bucket = "cclebams"

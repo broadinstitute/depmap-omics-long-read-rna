@@ -120,7 +120,7 @@ class DeliveryBams(CoercedDataFrame):
     delivery_bam_updated_at: Series[pd.StringDtype]
     aligned_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     aligned_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
 class SamplesWithCDSIDs(DeliveryBams):
