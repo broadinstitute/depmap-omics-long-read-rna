@@ -18,8 +18,7 @@
   "name": "align_long_reads",
   "outputs": {
     "align_long_reads.aligned_bam": "this.aligned_bam",
-    "align_long_reads.aligned_bai": "this.aligned_bai",
-    "align_long_reads.aligned_flagstat": "this.aligned_flagstat"
+    "align_long_reads.aligned_bai": "this.aligned_bai"
   },
   "rootEntityType": "sample"
 }
