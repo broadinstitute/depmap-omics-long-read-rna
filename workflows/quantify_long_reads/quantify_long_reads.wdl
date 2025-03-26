@@ -11,7 +11,7 @@ workflow quantify_long_reads {
         File ref_fasta
         File ref_annotation_gtf
         File ref_annotation_db
-        File star_junctions
+        File? star_junctions
     }
 
     call run_isoquant {
@@ -122,7 +122,7 @@ task run_sqanti3 {
 	input {
 		String sample_id
         File isoquant_gtf
-		File star_junctions
+		File? star_junctions
         File ref_annotation_gtf
         File ref_fasta
 
@@ -145,17 +145,26 @@ task run_sqanti3 {
     command <<<
         set -euo pipefail
 
-        zcat ~{isoquant_gtf} | awk '{ if ($7 != ".") print }' > ~{isoquant_gtf}.unzipped
-        zcat ~{star_junctions} > ~{star_junctions}.unzipped
+        zcat "~{isoquant_gtf}" \
+            | awk '{ if ($7 != ".") print }' \
+            > "~{isoquant_gtf}.unzipped"
+
+        if [[ -f "~{star_junctions}" ]];
+        then
+            zcat "~{star_junctions}" > "~{star_junctions}.unzipped"
+            coverage_opt="--coverage ~{star_junctions}.unzipped"
+        else
+            coverage_opt=""
+        fi
 
         python /usr/local/src/SQANTI3-5.1.2/sqanti3_qc.py \
             --report skip \
             --skipORF \
-            --coverage ~{star_junctions}.unzipped \
-            --output ~{sample_id} \
-            ~{isoquant_gtf}.unzipped \
-            ~{ref_annotation_gtf} \
-            ~{ref_fasta}
+            $coverage_opt \
+            --output "~{sample_id}" \
+            "~{isoquant_gtf}.unzipped" \
+            "~{ref_annotation_gtf}" \
+            "~{ref_fasta}"
     >>>
 
     output {
