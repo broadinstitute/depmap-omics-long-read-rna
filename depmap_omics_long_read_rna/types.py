@@ -69,24 +69,16 @@ class ShortReadMetadata(CoercedDataFrame):
 
 class ShortReadTerraSamples(CoercedDataFrame):
     sample_id: Series[pd.StringDtype]
-    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
 class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    model_condition_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
-    stripped_cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
+    model_condition_id: Series[pd.StringDtype]
+    model_id: Series[pd.StringDtype]
+    cell_line_name: Series[pd.StringDtype]
+    stripped_cell_line_name: Series[pd.StringDtype]
     delivery_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(unique=True)
     delivery_cram_bam: Series[pd.StringDtype] = pa.Field(unique=True)
     aligned_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
@@ -95,15 +87,7 @@ class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_omics_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
 class ObjectMetadata(CoercedDataFrame):

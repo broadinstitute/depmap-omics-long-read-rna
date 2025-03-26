@@ -192,34 +192,8 @@ def get_sr_terra_samples(
     sr_terra_samples = short_read_terra_workspace.get_entities("sample")
 
     sr_terra_samples = (
-        sr_terra_samples.loc[
-            :,
-            [
-                "sample_id",
-                "star_junctions",
-                "fusion_predictions",
-                "fusion_predictions_abridged",
-                "internal_bam_filepath",
-                "internal_bai_filepath",
-                "rsem_genes",
-                "rsem_genes_stranded",
-                "rsem_isoforms",
-                "rsem_isoforms_stranded",
-            ],
-        ]
-        .rename(
-            columns={
-                "star_junctions": "sr_star_junctions",
-                "fusion_predictions": "sr_fusion_predictions",
-                "fusion_predictions_abridged": "sr_fusion_predictions_abridged",
-                "internal_bam_filepath": "sr_cram_bam",
-                "internal_bai_filepath": "sr_crai_bai",
-                "rsem_genes": "sr_rsem_genes",
-                "rsem_genes_stranded": "sr_rsem_genes_stranded",
-                "rsem_isoforms": "sr_rsem_isoforms",
-                "rsem_isoforms_stranded": "sr_rsem_isoforms_stranded",
-            }
-        )
+        sr_terra_samples.loc[:, ["sample_id", "delivery_cram_bam"]]
+        .rename(columns={"delivery_cram_bam": "sr_cram_bam"})
         .astype("string")
     )
 
