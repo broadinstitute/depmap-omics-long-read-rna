@@ -17,8 +17,13 @@ class GumboClient(BaseClient):
                 model_id
                 cell_line_name
                 stripped_cell_line_name
-                model_conditions {
+                model_conditions(
+                  where: {_and: [{_or: [{drug: {_is_null: true}}, {drug: {_eq: "DMSO"}}]}, {_or: [{expansion_team: {_is_null: true}}, {expansion_team: {_neq: "DMSO"}}]}]}
+                ) {
                   model_condition_id
+                  drug
+                  expansion_team
+                  source
                   omics_profiles(
                     where: {datatype: {_in: ["rna", "long_read_rna"]}, blacklist_omics: {_neq: true}}
                   ) {
@@ -26,9 +31,7 @@ class GumboClient(BaseClient):
                     datatype
                     omics_sequencings(where: {blacklist: {_neq: true}}) {
                       omics_sequencing_id: sequencing_id
-                      blacklist
-                      expected_type
-                      source
+                      stranded
                       version
                       sequencing_alignments {
                         sequencing_alignment_id: id

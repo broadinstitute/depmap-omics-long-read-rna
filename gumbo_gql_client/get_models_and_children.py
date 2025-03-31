@@ -16,6 +16,9 @@ class GetModelsAndChildrenRecords(BaseModel):
 
 class GetModelsAndChildrenRecordsModelConditions(BaseModel):
     model_condition_id: str
+    drug: Optional[str]
+    expansion_team: Optional[str]
+    source: Optional[str]
     omics_profiles: List["GetModelsAndChildrenRecordsModelConditionsOmicsProfiles"]
 
 
@@ -31,9 +34,7 @@ class GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencings(
     BaseModel
 ):
     omics_sequencing_id: str
-    blacklist: bool
-    expected_type: Optional[str]
-    source: Optional[str]
+    stranded: Optional[bool]
     version: Optional[int]
     sequencing_alignments: List[
         "GetModelsAndChildrenRecordsModelConditionsOmicsProfilesOmicsSequencingsSequencingAlignments"

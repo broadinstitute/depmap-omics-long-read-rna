@@ -33,9 +33,12 @@ class AlignmentMetadataLong(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
     cell_line_name: Series[pd.StringDtype]
     stripped_cell_line_name: Series[pd.StringDtype]
+    drug: Series[pd.StringDtype] = pa.Field(nullable=True)
+    expansion_team: Series[pd.StringDtype] = pa.Field(nullable=True)
     model_condition_id: Series[pd.StringDtype]
     omics_profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
+    stranded: Series[pd.BooleanDtype] = pa.Field(nullable=True)
     omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     source: Series[pd.StringDtype] = pa.Field(nullable=True)
     version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
@@ -61,10 +64,20 @@ class LongReadAlignmentMetadata(CoercedDataFrame):
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class ShortReadMetadata(CoercedDataFrame):
-    sr_omics_sequencing_id: Series[pd.StringDtype]
-    sr_omics_profile_id: Series[pd.StringDtype]
+class ShortReadPriorities(CoercedDataFrame):
+    model_id: Series[pd.StringDtype]
     model_condition_id: Series[pd.StringDtype]
+    sr_omics_profile_id: Series[pd.StringDtype]
+    sr_omics_sequencing_id: Series[pd.StringDtype]
+    sr_sequencing_alignment_id: Series[pd.StringDtype]
+    sr_crai_bai: Series[pd.StringDtype]
+    sr_cram_bam: Series[pd.StringDtype]
+    version: Series[pd.Int64Dtype]
+    drug_priority: Series[pd.Int64Dtype]
+    stranded_priority: Series[pd.Int64Dtype]
+    source_priority: Series[pd.Int64Dtype]
+    expansion_team_priority: Series[pd.Int64Dtype]
+    sequencing_alignment_source_priority: Series[pd.Int64Dtype]
 
 
 class ShortReadTerraSamples(CoercedDataFrame):
@@ -72,7 +85,7 @@ class ShortReadTerraSamples(CoercedDataFrame):
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
+class LongReadTerraSamples(LongReadAlignmentMetadata):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
     model_condition_id: Series[pd.StringDtype]
@@ -85,8 +98,11 @@ class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
     aligned_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
     aligned_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_model_condition_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_omics_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 

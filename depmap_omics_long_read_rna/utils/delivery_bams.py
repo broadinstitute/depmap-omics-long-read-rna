@@ -41,12 +41,20 @@ def do_upsert_delivery_bams(
     bams = assign_cds_ids(bams, uuid_namespace)
 
     # upsert to Terra data table
-    bam_ids = bams.pop("cds_id")
-    bams.insert(0, "entity:sample_id", bam_ids)
+    sample_ids = bams.pop("cds_id")
+    bams.insert(0, "entity:sample_id", sample_ids)
 
     if dry_run:
         logging.info(f"(skipping) Upserting {len(bams)} delivery_bams")
         return
+
+    existing_samples = terra_workspace.get_entities("sample")
+    bams = bams.loc[
+        ~bams["delivery_bam_crc32c"].isin(existing_samples["delivery_bam_crc32c"])
+    ]
+
+    if len(bams) == 0:
+        logging.info("No new delivery BAMs")
 
     terra_workspace.upload_entities(bams)
 
@@ -75,8 +83,6 @@ def make_delivery_bam_df(
         raise ValueError("There are BAM files not named with profile IDs (PR-*.bam)")
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
-
-    bams_w_ids["bam_id"] = bams_w_ids["bam_url"].apply(os.path.basename)
 
     bams_w_ids = bams_w_ids.rename(
         columns={
@@ -107,7 +113,7 @@ def assign_cds_ids(
         samples,
         uuid_namespace=uuid_namespace,
         uuid_col_name="cds_id",
-        subset=["delivery_bam_crc32c", "delivery_bam_size", "delivery_bam_updated_at"],
+        subset=["delivery_bam_crc32c"],
     )
 
     # convert UUIDs to base62 and truncate to match existing ID format

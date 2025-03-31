@@ -68,6 +68,4 @@ def list_blobs(
         df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
     )
 
-    df = df.loc[~df["url"].str.contains("2240/")]
-
     return type_data_frame(df, ObjectMetadata)
