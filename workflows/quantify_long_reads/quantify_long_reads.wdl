@@ -57,7 +57,7 @@ task run_isoquant {
         String docker_image_hash_or_tag
         Int cpu = 8
         Int mem_gb = 32
-        Int preemptible = 2
+        Int preemptible = 1
         Int max_retries = 1
         Int additional_disk_gb = 0
     }

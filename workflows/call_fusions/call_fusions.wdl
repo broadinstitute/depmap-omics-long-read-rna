@@ -115,11 +115,11 @@ task ctat_lr_fusion {
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 6
-        Int preemptible = 2
+        Int cpu = 16
+        Int mem_gb = 48
+        Int preemptible = 1
         Int max_retries = 1
         Int additional_disk_gb = 0
-        Int additional_mem_gb = 0
     }
 
     Int disk_space = (
@@ -130,10 +130,6 @@ task ctat_lr_fusion {
             + size(sr_fastq2, "GiB")
         ) + 20 + additional_disk_gb
     )
-
-    Int mem_gb = if defined(sr_bam_size_gb) then (
-        ceil(20 * sr_bam_size_gb) + additional_mem_gb
-    ) else 12
 
     Int bam_sort_ram_bytes = ceil(mem_gb * 1000 * 1000 * 1000 * 0.85)
 
