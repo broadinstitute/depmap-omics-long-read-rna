@@ -218,7 +218,7 @@ def choose_matched_short_read_sample(
     """
 
     # collect base long read metadata for joining
-    lr = samples[["model_id", "model_condition_id"]].drop_duplicates()
+    lr = samples.loc[:, ["model_id", "model_condition_id"]].drop_duplicates()
 
     # get top short read sample within matching model condition
     lr_sr = (

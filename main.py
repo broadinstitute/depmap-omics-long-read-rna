@@ -88,12 +88,7 @@ def run(cloud_event: CloudEvent) -> None:
         )
 
         do_refresh_terra_samples(
-            terra_workspace=terra_workspace,
-            short_read_terra_workspace=TerraWorkspace(
-                workspace_namespace=config["terra"]["short_read_workspace_namespace"],
-                workspace_name=config["terra"]["short_read_workspace_name"],
-            ),
-            gumbo_client=gumbo_client,
+            terra_workspace=terra_workspace, gumbo_client=gumbo_client
         )
 
         for workflow_name in ["quantify_long_reads", "call_fusions"]:
