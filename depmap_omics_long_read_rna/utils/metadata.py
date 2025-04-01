@@ -174,7 +174,7 @@ def prioritize_short_read_sample(
         )
     )
 
-    # clean the `*_priority` columns
+    # clean string columns
     for c in ["drug", "source", "expansion_team", "sequencing_alignment_source"]:
         sr[c] = sr[c].str.lower().fillna("")
 

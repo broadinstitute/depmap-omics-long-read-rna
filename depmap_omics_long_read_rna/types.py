@@ -70,7 +70,7 @@ class ShortReadPriorities(CoercedDataFrame):
     sr_omics_profile_id: Series[pd.StringDtype]
     sr_omics_sequencing_id: Series[pd.StringDtype]
     sr_sequencing_alignment_id: Series[pd.StringDtype]
-    sr_crai_bai: Series[pd.StringDtype]
+    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype]
     version: Series[pd.Int64Dtype]
     drug_priority: Series[pd.Int64Dtype]
@@ -80,7 +80,7 @@ class ShortReadPriorities(CoercedDataFrame):
     sequencing_alignment_source_priority: Series[pd.Int64Dtype]
 
 
-class LongReadTerraSamples(LongReadAlignmentMetadata):
+class LongReadTerraSamples(CoercedDataFrame):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
     model_condition_id: Series[pd.StringDtype]
@@ -99,6 +99,10 @@ class LongReadTerraSamples(LongReadAlignmentMetadata):
     sr_sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
+
+    @pa.dataframe_check
+    def crai_required(cls, df: pd.DataFrame) -> Series[bool]:
+        return ~(df["sr_cram_bam"].str.endswith(".cram") & df["sr_crai_bai"].isna())
 
 
 class ObjectMetadata(CoercedDataFrame):

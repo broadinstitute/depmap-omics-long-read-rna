@@ -6,8 +6,8 @@ workflow call_fusions {
         String workflow_source_url # populated automatically with URL of this script
 
         String sample_id
-        File sr_bam
-        File sr_bai
+        File sr_cram_bam
+        File? sr_crai_bai
         File ref_fasta
         File input_bam
         File genome_lib_tar_with_star_idx
@@ -21,8 +21,8 @@ workflow call_fusions {
     call sam_to_fastq as sr_sam_to_fastq {
         input:
             sample_id = sample_id,
-            input_bam = sr_bam,
-            input_bai = sr_bai,
+            input_bam = sr_cram_bam,
+            input_bai = sr_crai_bai,
             ref_fasta = ref_fasta
     }
 
@@ -33,7 +33,7 @@ workflow call_fusions {
             genome_lib_tar = genome_lib_tar_with_star_idx,
             sr_fastq1 = sr_sam_to_fastq.fastq1,
             sr_fastq2 = sr_sam_to_fastq.fastq2,
-            sr_bam_size_gb = size(sr_bam, "GiB"),
+            sr_cram_bam_size_gb = size(sr_cram_bam, "GiB"),
             min_per_id = min_per_id,
             min_j = min_j,
             min_sum_js = min_sum_js,
@@ -55,7 +55,7 @@ task sam_to_fastq {
     input {
         String sample_id
         File input_bam
-        File input_bai
+        File? input_bai
         File ref_fasta
 
         String docker_image
@@ -74,9 +74,9 @@ task sam_to_fastq {
 
         samtools fastq \
             -@ ~{cpu} \
-            -1 ~{sample_id}.1.fastq \
-            -2 ~{sample_id}.2.fastq \
-            ~{input_bam}
+            -1 "~{sample_id}.1.fastq" \
+            -2 "~{sample_id}.2.fastq" \
+            "~{input_bam}"
     >>>
 
     output {
@@ -105,7 +105,7 @@ task ctat_lr_fusion {
         File genome_lib_tar
         File? sr_fastq1
         File? sr_fastq2
-        Float? sr_bam_size_gb
+        Float? sr_cram_bam_size_gb
         Int min_per_id
         Int min_j
         Int min_sum_js
@@ -116,10 +116,11 @@ task ctat_lr_fusion {
         String docker_image
         String docker_image_hash_or_tag
         Int cpu = 16
-        Int mem_gb = 48
+        Int mem_gb = 64
         Int preemptible = 1
         Int max_retries = 1
         Int additional_disk_gb = 0
+        Int additional_mem_gb = 0
     }
 
     Int disk_space = (
@@ -139,12 +140,12 @@ task ctat_lr_fusion {
         set -euo pipefail
 
         # untar the genome lib
-        tar xvf ~{genome_lib_tar}
-        rm ~{genome_lib_tar}
+        tar xvf "~{genome_lib_tar}"
+        rm "~{genome_lib_tar}"
 
         # ctat-LR-fusion
         ctat-LR-fusion \
-            --LR_bam ~{input_bam} \
+            --LR_bam "~{input_bam}" \
             --genome_lib_dir ctat_genome_lib_build_dir \
             --min_J ~{min_j} \
             --min_sumJS ~{min_sum_js} \
@@ -159,22 +160,36 @@ task ctat_lr_fusion {
             ~{no_ctat_mm2_flag} \
             ~{"--FI_extra_params " + fi_extra_params }
 
-        mv out/ctat-LR-fusion.fusion_predictions.preliminary.tsv ~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.tsv
-        mv out/ctat-LR-fusion.fusion_predictions.preliminary.abridged.tsv ~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.abridged.tsv
-        mv out/ctat-LR-fusion.fusion_predictions.tsv ~{sample_id}.ctat-LR-fusion.fusion_predictions.tsv
-        mv out/ctat-LR-fusion.fusion_predictions.abridged.tsv ~{sample_id}.ctat-LR-fusion.fusion_predictions.abridged.tsv
-        mv out/ctat-LR-fusion.fusion_inspector_web.html ~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html
-        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa ~{sample_id}.ctat-LR-fusion.igv.genome.fa
-        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa.fai ~{sample_id}.ctat-LR-fusion.igv.genome.fa.fai
-        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.gtf ~{sample_id}.ctat-LR-fusion.igv.annot.gtf
-        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.bed ~{sample_id}.ctat-LR-fusion.igv.annot.bed
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam ~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam.bai ~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam.bai
-        mv out/fusion_intermediates_dir/IGV_prep/igv.pfam.bed ~{sample_id}.ctat-LR-fusion.igv.pfam.bed
-        mv out/fusion_intermediates_dir/IGV_prep/igv.seqsimilar.bed ~{sample_id}.ctat-LR-fusion.igv.seqsimilar.bed
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.breakoint.roi.bed ~{sample_id}.ctat-LR-fusion.igv.LR.breakoint.roi.bed
+        mv out/ctat-LR-fusion.fusion_predictions.preliminary.tsv \
+            "~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.tsv"
+        mv out/ctat-LR-fusion.fusion_predictions.preliminary.abridged.tsv \
+            "~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.abridged.tsv"
+        mv out/ctat-LR-fusion.fusion_predictions.tsv \
+            "~{sample_id}.ctat-LR-fusion.fusion_predictions.tsv"
+        mv out/ctat-LR-fusion.fusion_predictions.abridged.tsv \
+            "~{sample_id}.ctat-LR-fusion.fusion_predictions.abridged.tsv"
+        mv out/ctat-LR-fusion.fusion_inspector_web.html \
+            "~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa \
+            "~{sample_id}.ctat-LR-fusion.igv.genome.fa"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa.fai \
+            "~{sample_id}.ctat-LR-fusion.igv.genome.fa.fai"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.gtf \
+            "~{sample_id}.ctat-LR-fusion.igv.annot.gtf"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.bed \
+            "~{sample_id}.ctat-LR-fusion.igv.annot.bed"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam \
+            "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam.bai \
+            "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam.bai"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.pfam.bed \
+            "~{sample_id}.ctat-LR-fusion.igv.pfam.bed"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.seqsimilar.bed \
+            "~{sample_id}.ctat-LR-fusion.igv.seqsimilar.bed"
+        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.breakoint.roi.bed \
+            "~{sample_id}.ctat-LR-fusion.igv.LR.breakoint.roi.bed"
 
-        tar -zcvhf ~{sample_id}.ctat-LR-fusion.igv.tar.gz ~{sample_id}.ctat-LR-fusion.igv.*
+        tar -zchf ~{sample_id}.ctat-LR-fusion.igv.tar.gz ~{sample_id}.ctat-LR-fusion.igv.*
     >>>
 
     output {
