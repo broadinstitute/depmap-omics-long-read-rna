@@ -80,11 +80,6 @@ class ShortReadPriorities(CoercedDataFrame):
     sequencing_alignment_source_priority: Series[pd.Int64Dtype]
 
 
-class ShortReadTerraSamples(CoercedDataFrame):
-    sample_id: Series[pd.StringDtype]
-    sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
 class LongReadTerraSamples(LongReadAlignmentMetadata):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
