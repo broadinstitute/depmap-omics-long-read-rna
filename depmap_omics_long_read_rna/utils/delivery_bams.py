@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from nebelung.terra_workspace import TerraWorkspace

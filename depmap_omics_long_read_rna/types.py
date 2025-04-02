@@ -101,7 +101,7 @@ class LongReadTerraSamples(CoercedDataFrame):
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
 
     @pa.dataframe_check
-    def crai_required(cls, df: pd.DataFrame) -> Series[bool]:
+    def crai_required(cls, df: pd.DataFrame) -> pd.Series:
         return ~(df["sr_cram_bam"].str.endswith(".cram") & df["sr_crai_bai"].isna())
 
 
