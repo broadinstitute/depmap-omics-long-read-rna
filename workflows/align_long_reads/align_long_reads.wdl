@@ -74,8 +74,9 @@ task minimap2 {
         samtools index \
             -b \
             -@ ~{index_threads} \
-            -o "~{output_basename}.bai"
             "~{output_basename}.bam"
+
+        mv "~{output_basename}.bam.bai" "~{output_basename}.bai"
     >>>
 
     output {

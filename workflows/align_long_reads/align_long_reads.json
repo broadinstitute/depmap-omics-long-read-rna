@@ -4,7 +4,7 @@
     "align_long_reads.input_bam": "this.delivery_bam",
     "align_long_reads.junc_bed": "\"gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed\"",
     "align_long_reads.minimap2.docker_image": "\"trinityctat/minimap2_lr\"",
-    "align_long_reads.minimap2.docker_image_hash_or_tag": "\":latest\"",
+    "align_long_reads.minimap2.docker_image_hash_or_tag": "\"@sha256:e0afeb749ec8d56ae839b6fd9ed95653391b94a230abe04bd0f92132512642b9\"",
     "align_long_reads.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "align_long_reads.sample_id": "this.sample_id"
   },
