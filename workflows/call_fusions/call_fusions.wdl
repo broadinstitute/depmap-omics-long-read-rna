@@ -6,9 +6,11 @@ workflow call_fusions {
         String workflow_source_url # populated automatically with URL of this script
 
         String sample_id
+        String sr_cram_or_bam
         File sr_cram_bam
         File? sr_crai_bai
-        File ref_fasta
+        File? ref_fasta
+        File? ref_fasta_index
         File input_bam
         File genome_lib_tar_with_star_idx
         Int min_per_id = 70
@@ -21,9 +23,11 @@ workflow call_fusions {
     call sam_to_fastq as sr_sam_to_fastq {
         input:
             sample_id = sample_id,
-            input_bam = sr_cram_bam,
-            input_bai = sr_crai_bai,
-            ref_fasta = ref_fasta
+            cram_or_bam = sr_cram_or_bam,
+            cram_bam = sr_cram_bam,
+            crai_bai = sr_crai_bai,
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index
     }
 
     call ctat_lr_fusion {
@@ -54,29 +58,46 @@ workflow call_fusions {
 task sam_to_fastq {
     input {
         String sample_id
-        File input_bam
-        File? input_bai
-        File ref_fasta
+        File cram_bam
+        File? crai_bai
+        String cram_or_bam
+        File? ref_fasta
+        File? ref_fasta_index
 
         String docker_image
         String docker_image_hash_or_tag
-        Int cpu = 2
+        Int cpu = 4
         Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
     }
 
-    Int disk_space = ceil(size(input_bam, "GiB") * 10) + additional_disk_gb
+    Float bam_size_gb = if cram_or_bam == "BAM" then (
+        size(cram_bam, "GiB")
+    ) else 2 * size(cram_bam, "GiB")
+
+    Int disk_space = ceil(bam_size_gb * 10) + 20 + additional_disk_gb
+    Int n_threads = cpu - 1
 
     command <<<
         set -euo pipefail
 
-        samtools fastq \
-            -@ ~{cpu} \
-            -1 "~{sample_id}.1.fastq" \
-            -2 "~{sample_id}.2.fastq" \
-            "~{input_bam}"
+        if [[ "~{cram_or_bam}" == "CRAM" ]];
+        then
+            samtools fastq \
+                -@ ~{n_threads} \
+                --reference "~{ref_fasta}" \
+                -1 "~{sample_id}.1.fq.gz" \
+                -2 "~{sample_id}.2.fq.gz" \
+                "~{cram_bam}"
+        else
+            samtools fastq \
+                -@ ~{n_threads} \
+                -1 "~{sample_id}.1.fq.gz" \
+                -2 "~{sample_id}.2.fq.gz" \
+                "~{cram_bam}"
+        fi
     >>>
 
     output {
@@ -120,7 +141,6 @@ task ctat_lr_fusion {
         Int preemptible = 1
         Int max_retries = 1
         Int additional_disk_gb = 0
-        Int additional_mem_gb = 0
     }
 
     Int disk_space = (
@@ -132,7 +152,7 @@ task ctat_lr_fusion {
         ) + 20 + additional_disk_gb
     )
 
-    Int bam_sort_ram_bytes = ceil(mem_gb * 1000 * 1000 * 1000 * 0.85)
+    Int bam_sort_ram_gb = ceil(mem_gb * 0.85)
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
 
@@ -152,13 +172,13 @@ task ctat_lr_fusion {
             --min_novel_junction_support ~{min_novel_junction_support} \
             --min_per_id ~{min_per_id} \
             --CPU ~{cpu} \
-            --STAR_xtra_params '--limitBAMsortRAM ~{bam_sort_ram_bytes}' \
+            --STAR_xtra_params '--limitBAMsortRAM ~{bam_sort_ram_gb}000000000' \
             --vis \
             ~{"--left_fq " + sr_fastq1} \
             ~{"--right_fq " + sr_fastq2 } \
-            -o out \
             ~{no_ctat_mm2_flag} \
             ~{"--FI_extra_params " + fi_extra_params }
+            -o out
 
         mv out/ctat-LR-fusion.fusion_predictions.preliminary.tsv \
             "~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.tsv"

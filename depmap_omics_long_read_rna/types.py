@@ -99,6 +99,9 @@ class LongReadTerraSamples(CoercedDataFrame):
     sr_sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_file_format: Series[pd.StringDtype] = pa.Field(
+        isin={"CRAM", "BAM"}, nullable=True
+    )
 
     @pa.dataframe_check
     def crai_required(cls, df: pd.DataFrame) -> pd.Series:

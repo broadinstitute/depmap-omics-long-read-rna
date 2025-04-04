@@ -276,4 +276,8 @@ def choose_matched_short_read_sample(
     # can finally join SR data to LR data
     samples = samples.merge(lr_sr, how="left", on=["model_id", "model_condition_id"])
 
+    samples["sr_file_format"] = (
+        samples["sr_cram_bam"].str.rsplit(".", n=1).str.get(1).str.upper()
+    )
+
     return type_data_frame(samples, LongReadTerraSamples, remove_unknown_cols=True)
