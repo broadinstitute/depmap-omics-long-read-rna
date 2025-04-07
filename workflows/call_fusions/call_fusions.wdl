@@ -88,14 +88,14 @@ task sam_to_fastq {
             samtools fastq \
                 -@ ~{n_threads} \
                 --reference "~{ref_fasta}" \
-                -1 "~{sample_id}.1.fq.gz" \
-                -2 "~{sample_id}.2.fq.gz" \
+                -1 "~{sample_id}.1.fastq" \
+                -2 "~{sample_id}.2.fastq" \
                 "~{cram_bam}"
         else
             samtools fastq \
                 -@ ~{n_threads} \
-                -1 "~{sample_id}.1.fq.gz" \
-                -2 "~{sample_id}.2.fq.gz" \
+                -1 "~{sample_id}.1.fastq" \
+                -2 "~{sample_id}.2.fastq" \
                 "~{cram_bam}"
         fi
     >>>
@@ -152,7 +152,7 @@ task ctat_lr_fusion {
         ) + 20 + additional_disk_gb
     )
 
-    Int bam_sort_ram_gb = ceil(mem_gb * 0.85)
+    Int bam_sort_ram_gb = ceil(mem_gb * 0.95)
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
 
@@ -177,7 +177,7 @@ task ctat_lr_fusion {
             ~{"--left_fq " + sr_fastq1} \
             ~{"--right_fq " + sr_fastq2 } \
             ~{no_ctat_mm2_flag} \
-            ~{"--FI_extra_params " + fi_extra_params }
+            ~{"--FI_extra_params " + fi_extra_params } \
             -o out
 
         mv out/ctat-LR-fusion.fusion_predictions.preliminary.tsv \
