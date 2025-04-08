@@ -63,6 +63,7 @@ task sam_to_fastq {
         String cram_or_bam
         File? ref_fasta
         File? ref_fasta_index
+        Int max_n_reads = 50000000
 
         String docker_image
         String docker_image_hash_or_tag
@@ -97,6 +98,24 @@ task sam_to_fastq {
                 -1 "~{sample_id}.1.fastq" \
                 -2 "~{sample_id}.2.fastq" \
                 "~{cram_bam}"
+        fi
+
+        N_READS=$(awk 'END {print NR/4}' "~{sample_id}.1.fastq")
+
+        if (( $(echo "$N_READS > ~{max_n_reads}" | bc -l) )); then
+            echo "Downsampling $N_READS reads to ~{max_n_reads}"
+
+            seqtk sample -s100 "~{sample_id}.1.fastq" ~{max_n_reads} \
+                > "~{sample_id}.1.less.fastq" \
+                && rm "~{sample_id}.1.fastq" \
+                && mv "~{sample_id}.1.less.fastq" "~{sample_id}.1.fastq"
+
+            seqtk sample -s100 "~{sample_id}.2.fastq" ~{max_n_reads} \
+                > "~{sample_id}.2.less.fastq" \
+                && rm "~{sample_id}.2.fastq" \
+                && mv "~{sample_id}.2.less.fastq" "~{sample_id}.2.fastq"
+        else
+            echo "$N_READS <= ~{max_n_reads} reads (no downsampling)"
         fi
     >>>
 
@@ -152,7 +171,7 @@ task ctat_lr_fusion {
         ) + 20 + additional_disk_gb
     )
 
-    Int bam_sort_ram_gb = ceil(mem_gb * 0.95)
+    Int bam_sort_ram_gb = ceil(mem_gb * 0.85)
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
 
