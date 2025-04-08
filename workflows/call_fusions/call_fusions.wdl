@@ -105,12 +105,12 @@ task sam_to_fastq {
         if (( $(echo "$N_READS > ~{max_n_reads}" | bc -l) )); then
             echo "Downsampling $N_READS reads to ~{max_n_reads}"
 
-            seqtk sample -s100 "~{sample_id}.1.fastq" ~{max_n_reads} \
+            seqtk sample -2 -s100 "~{sample_id}.1.fastq" ~{max_n_reads} \
                 > "~{sample_id}.1.less.fastq" \
                 && rm "~{sample_id}.1.fastq" \
                 && mv "~{sample_id}.1.less.fastq" "~{sample_id}.1.fastq"
 
-            seqtk sample -s100 "~{sample_id}.2.fastq" ~{max_n_reads} \
+            seqtk sample -2 -s100 "~{sample_id}.2.fastq" ~{max_n_reads} \
                 > "~{sample_id}.2.less.fastq" \
                 && rm "~{sample_id}.2.fastq" \
                 && mv "~{sample_id}.2.less.fastq" "~{sample_id}.2.fastq"

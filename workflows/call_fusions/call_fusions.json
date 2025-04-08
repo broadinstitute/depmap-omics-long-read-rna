@@ -12,7 +12,7 @@
     "call_fusions.sr_cram_bam": "this.sr_cram_bam",
     "call_fusions.sr_crai_bai": "this.sr_crai_bai",
     "call_fusions.sr_sam_to_fastq.docker_image": "\"us-docker.pkg.dev/depmap-omics/public/samtools_seqtk\"",
-    "call_fusions.sr_sam_to_fastq.docker_image_hash_or_tag": "\"@sha256:cdb07fb96032d5b43c8d696e34fc901cee11026a8ad7681aa8d40d242abfe4cf\""
+    "call_fusions.sr_sam_to_fastq.docker_image_hash_or_tag": "\"@sha256:cfe52d39bfe67067bfd9414019814482d3f66afac9f2e127582b5b8c3cdf177c\""
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
