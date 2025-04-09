@@ -129,6 +129,8 @@ def delta_job(
     entity_set_type: Annotated[str, typer.Option()],
     entity_id_col: Annotated[str, typer.Option()],
     expression: Annotated[str, typer.Option()],
+    input_col: Annotated[list[str] | None, typer.Option()] = None,
+    output_col: Annotated[list[str] | None, typer.Option()] = None,
 ) -> None:
     if workflow_name == "align_long_reads":
         terra_workspace = TerraWorkspace(
@@ -141,6 +143,15 @@ def delta_job(
             workspace_name=config["terra"]["workspace_name"],
         )
 
+    input_cols_set = None
+    output_cols_set = None
+
+    if input_col is not None:
+        input_cols_set = set(input_col)
+
+    if output_col is not None:
+        output_cols_set = set(output_col)
+
     submit_delta_job(
         terra_workspace=terra_workspace,
         terra_workflow=make_workflow_from_config(config, workflow_name),
@@ -149,6 +160,9 @@ def delta_job(
         entity_id_col=entity_id_col,
         expression=expression,
         dry_run=config["dry_run"],
+        resubmit_n_times=10,
+        input_cols=input_cols_set,
+        output_cols=output_cols_set,
     )
 
 

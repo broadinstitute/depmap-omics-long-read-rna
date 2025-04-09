@@ -126,6 +126,8 @@ def submit_delta_job(
     expression: str,
     resubmit_n_times: int = 1,
     dry_run: bool = True,
+    input_cols: set[str] | None = None,
+    output_cols: set[str] | None = None,
 ):
     """
     Identify entities in a Terra data table that need to have a workflow run on them by:
@@ -143,6 +145,10 @@ def submit_delta_job(
     :param resubmit_n_times: the number of times to resubmit an entity in the event it
     has failed in the past
     :param dry_run: whether to skip updates to external data stores
+    :param input_cols: the set of column names that must all be present in the entity
+    type in order for an entity to be submittable
+    :param output_cols: the set of column names that must all be missing in the entity
+    type in order for an entity to be submittable
     """
 
     # get the method config for this workflow in this workspace
@@ -151,25 +157,29 @@ def submit_delta_job(
     assert not workflow_config["deleted"]
     assert workflow_config["rootEntityType"] == entity_type
 
-    # identify columns in data table used for input/output
-    required_cols = {
-        v[5:] for k, v in workflow_config["inputs"].items() if v.startswith("this.")
-    }
+    # identify columns in data table used for input/output if not explicitly provided
+    if input_cols is None:
+        input_cols = {
+            v[5:] for k, v in workflow_config["inputs"].items() if v.startswith("this.")
+        }
 
-    output_cols = {
-        v[5:] for k, v in workflow_config["outputs"].items() if v.startswith("this.")
-    }
+    if output_cols is None:
+        output_cols = {
+            v[5:]
+            for k, v in workflow_config["outputs"].items()
+            if v.startswith("this.")
+        }
 
     # get the entities for this workflow entity type
     entities = terra_workspace.get_entities(entity_type)
 
-    for c in required_cols.union(output_cols):
+    for c in input_cols.union(output_cols):
         if c not in entities.columns:
             entities[c] = pd.NA
 
     # identify entities that have all required inputs but no outputs
     entities_todo = entities.loc[
-        entities[list(required_cols)].notna().all(axis=1)
+        entities[list(input_cols)].notna().all(axis=1)
         & entities[list(output_cols)].isna().all(axis=1)
     ]
 
