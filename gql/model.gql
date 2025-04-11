@@ -11,7 +11,7 @@ query GetModelsAndChildren {
           {
             _or: [
               { expansion_team: { _is_null: true } }
-              { expansion_team: { _neq: "DMSO" } }
+              { expansion_team: { _neq: "PRISM" } }
             ]
           }
         ]
