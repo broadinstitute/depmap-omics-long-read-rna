@@ -22,22 +22,25 @@ def onboard_aligned_bams(
     terra_workspace: TerraWorkspace, gumbo_client: GumboClient, dry_run: bool
 ) -> None:
     """
-    TODO
+    Copy BAM/BAI files to cclebams and onboard sequencing alignment records to Gumbo.
 
     :param terra_workspace: a TerraWorkspace instance
     :param gumbo_client: an instance of the Gumbo GraphQL client
     :param dry_run: whether to skip updates to external data stores
     """
 
+    # get the alignment files from Terra
     samples = terra_workspace.get_entities("sample")
     samples = samples.loc[:, ["sample_id", "aligned_bam", "aligned_bai"]].dropna()
 
+    # get sequencing alignment records for long read omics_sequencings from Gumbo
     existing_alignments = model_to_df(
         gumbo_client.long_read_sequencing_alignments(),
         ExistingAlignments,
         mutator=partial(pd_flatten, name_columns_with_parent=False),
     )
 
+    # check which sequencings have delivery BAMs but not analysis-ready/aligned BAMs
     seq_ids_no_cds = set(
         existing_alignments.loc[
             existing_alignments["sequencing_alignment_source"].eq("GP"),
@@ -50,8 +53,10 @@ def onboard_aligned_bams(
         ]
     )
 
+    # subset to newly-aligned sequencings that need to be onboarded
     samples = samples.loc[samples["sample_id"].isin(list(seq_ids_no_cds))]
 
+    # get GCS blob metadata for the BAMs
     objects_metadata = get_objects_metadata(samples["aligned_bam"])
 
     samples = type_data_frame(
@@ -61,8 +66,10 @@ def onboard_aligned_bams(
         AlignedSamplesWithObjectMetadata,
     )
 
+    # confirm again using file size that these BAMs don't already exist as Gumbo records
     assert ~bool(samples["size"].isin(existing_alignments["size"]).any())
 
+    # copy BAMs and BAIs to our bucket
     sample_files = copy_to_cclebams(
         samples,
         gcp_project_id="depmap-omics",
@@ -73,6 +80,7 @@ def onboard_aligned_bams(
 
     samples = update_sample_file_urls(samples, sample_files)
 
+    # create sequencing_alignment records in Gumbo
     persist_sequencing_alignments(gumbo_client, samples, dry_run)
 
 
