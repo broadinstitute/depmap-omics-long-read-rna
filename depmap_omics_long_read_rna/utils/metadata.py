@@ -15,9 +15,8 @@ from depmap_omics_long_read_rna.types import (
 from depmap_omics_long_read_rna.utils.utils import model_to_df
 
 
-def do_refresh_terra_samples(
-    terra_workspace: TerraWorkspace,
-    gumbo_client: GumboClient,
+def refresh_terra_samples(
+    terra_workspace: TerraWorkspace, gumbo_client: GumboClient
 ) -> None:
     """
     Upsert the sample data table in Terra with the latest long read sample metadata from

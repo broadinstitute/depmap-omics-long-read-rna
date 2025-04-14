@@ -147,11 +147,38 @@ class SamplesWithMetadata(OnboardingSamples):
 
 
 class CopiedSampleFiles(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype]
+    sample_id: Series[pd.StringDtype]
     url_kind: Series[pd.StringDtype]
     new_url: Series[pd.StringDtype]
     url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
+
+
+class ExistingAlignments(CoercedDataFrame):
+    omics_sequencing_id: Series[pd.StringDtype]
+    sequencing_alignment_source: Series[pd.StringDtype]
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+
+
+class AlignedSamples(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
+
+
+class AlignedSamplesWithObjectMetadata(AlignedSamples):
+    crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+
+
+class NewSequencingAlignments(CoercedDataFrame):
+    omics_sequencing_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    url: Series[pd.StringDtype] = pa.Field(unique=True)
+    index_url: Series[pd.StringDtype] = pa.Field(unique=True)
+    sequencing_alignment_source: Series[pd.StringDtype]
+    reference_genome: Series[pd.StringDtype]
+    crc32c_hash: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
 
 
 PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)

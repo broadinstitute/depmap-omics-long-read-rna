@@ -14,7 +14,7 @@ from depmap_omics_long_read_rna.utils.gcp import list_blobs
 from depmap_omics_long_read_rna.utils.utils import assign_hashed_uuids, uuid_to_base62
 
 
-def do_upsert_delivery_bams(
+def upsert_delivery_bams(
     gcs_source_bucket: str,
     gcs_source_glob: str,
     uuid_namespace: str,

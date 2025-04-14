@@ -432,6 +432,16 @@ from .input_types import (
     timestamptz_comparison_exp,
     uuid_comparison_exp,
 )
+from .insert_sequencing_alignments import (
+    InsertSequencingAlignments,
+    InsertSequencingAlignmentsInsertSequencingAlignment,
+    InsertSequencingAlignmentsSetUsername,
+)
+from .long_read_sequencing_alignments import (
+    LongReadSequencingAlignments,
+    LongReadSequencingAlignmentsRecords,
+    LongReadSequencingAlignmentsRecordsSequencingAlignments,
+)
 
 __all__ = [
     "BaseClient",
@@ -449,7 +459,13 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
     "GumboClient",
+    "InsertSequencingAlignments",
+    "InsertSequencingAlignmentsInsertSequencingAlignment",
+    "InsertSequencingAlignmentsSetUsername",
     "Int_comparison_exp",
+    "LongReadSequencingAlignments",
+    "LongReadSequencingAlignmentsRecords",
+    "LongReadSequencingAlignmentsRecordsSequencingAlignments",
     "String_array_comparison_exp",
     "String_comparison_exp",
     "Upload",

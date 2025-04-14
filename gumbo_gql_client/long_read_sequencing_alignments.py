@@ -4,19 +4,20 @@ from .base_model import BaseModel
 
 
 class LongReadSequencingAlignments(BaseModel):
-    omics_sequencing: List["LongReadSequencingAlignmentsOmicsSequencing"]
+    records: List["LongReadSequencingAlignmentsRecords"]
 
 
-class LongReadSequencingAlignmentsOmicsSequencing(BaseModel):
-    sequencing_id: str
+class LongReadSequencingAlignmentsRecords(BaseModel):
+    omics_sequencing_id: str
     sequencing_alignments: List[
-        "LongReadSequencingAlignmentsOmicsSequencingSequencingAlignments"
+        "LongReadSequencingAlignmentsRecordsSequencingAlignments"
     ]
 
 
-class LongReadSequencingAlignmentsOmicsSequencingSequencingAlignments(BaseModel):
+class LongReadSequencingAlignmentsRecordsSequencingAlignments(BaseModel):
     sequencing_alignment_source: str
+    size: int
 
 
 LongReadSequencingAlignments.model_rebuild()
-LongReadSequencingAlignmentsOmicsSequencing.model_rebuild()
+LongReadSequencingAlignmentsRecords.model_rebuild()

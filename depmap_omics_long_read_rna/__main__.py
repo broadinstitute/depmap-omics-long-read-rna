@@ -10,8 +10,15 @@ import typer
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
-from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
+from depmap_omics_long_read_rna.utils.aligned_bams import (
+    onboard_aligned_bams as do_onboard_aligned_bams,
+)
+from depmap_omics_long_read_rna.utils.delivery_bams import (
+    upsert_delivery_bams as do_upsert_delivery_bams,
+)
+from depmap_omics_long_read_rna.utils.metadata import (
+    refresh_terra_samples as do_refresh_terra_samples,
+)
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     get_secret_from_sm,
@@ -107,6 +114,19 @@ def upsert_delivery_bams() -> None:
             workspace_name=config["terra"]["delivery_workspace_name"],
             owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         ),
+        dry_run=config["dry_run"],
+    )
+
+
+@app.command()
+def onboard_aligned_bams(ctx: typer.Context) -> None:
+    do_onboard_aligned_bams(
+        terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
+            workspace_name=config["terra"]["delivery_workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+        ),
+        gumbo_client=ctx.obj["get_gumbo_client"](),
         dry_run=config["dry_run"],
     )
 

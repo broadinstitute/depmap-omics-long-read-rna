@@ -2,7 +2,7 @@ import logging
 import string
 import uuid
 from pathlib import Path
-from typing import Any, List, Type
+from typing import Any, Callable, List, Type
 
 import baseconv
 import pandas as pd
@@ -14,7 +14,6 @@ from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
 
 from depmap_omics_long_read_rna.types import PydanticBaseModel
-from gumbo_gql_client import BaseModel
 
 
 def get_hasura_creds(gumbo_env: str) -> dict[str, str]:
@@ -50,9 +49,11 @@ def get_secret_from_sm(name: str) -> str:
 
 
 def model_to_df(
-    model: BaseModel,
+    model: PydanticBaseModel,
     pandera_schema: Type[PanderaBaseSchema],
     records_key: str = "records",
+    remove_unknown_cols: bool = False,
+    mutator: Callable[[pd.DataFrame], pd.DataFrame] = lambda _: _,
 ) -> TypedDataFrame[PanderaBaseSchema]:
     """
     Dump a Pydantic model and convert it to a data frame typed by a Pandera schema.
@@ -60,10 +61,16 @@ def model_to_df(
     :param model: a Pydandict model containing a list of objects keyed by `records_key`
     :param pandera_schema: the Pandera schema to cast the model to
     :param records_key: the key/method name in `model` containing the records
+    :param remove_unknown_cols: remove columns not specified in the schema
+    :param mutator: an optional function to call on the data frame before typing (e.g.
+    to rename columns to expected Pydantic field names)
     """
 
     records = model.model_dump()[records_key]
-    return type_data_frame(records, pandera_schema)
+
+    df = pd.DataFrame(records)
+    df = mutator(df)
+    return type_data_frame(df, pandera_schema, remove_unknown_cols)
 
 
 def df_to_model(
