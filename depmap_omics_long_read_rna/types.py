@@ -179,6 +179,3 @@ class NewSequencingAlignments(CoercedDataFrame):
     reference_genome: Series[pd.StringDtype]
     crc32c_hash: Series[pd.StringDtype] = pa.Field(unique=True)
     size: Series[pd.Int64Dtype] = pa.Field(unique=True)
-
-
-PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)

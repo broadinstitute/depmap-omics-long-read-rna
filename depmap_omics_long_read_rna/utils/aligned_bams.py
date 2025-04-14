@@ -19,9 +19,7 @@ from gumbo_gql_client import sequencing_alignment_insert_input
 
 
 def onboard_aligned_bams(
-    terra_workspace: TerraWorkspace,
-    gumbo_client: GumboClient,
-    dry_run: bool,
+    terra_workspace: TerraWorkspace, gumbo_client: GumboClient, dry_run: bool
 ) -> None:
     """
     TODO
@@ -151,5 +149,5 @@ def persist_sequencing_alignments(
         gumbo_client.username, objects=sequencing_alignment_inserts
     )
 
-    affected_rows = res.insert_sequencing_alignment.affected_rows
+    affected_rows = res.insert_sequencing_alignment.affected_rows  # pyright: ignore
     logging.info(f"Inserted {affected_rows} sequencing alignments")

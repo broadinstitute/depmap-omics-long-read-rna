@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
-from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
+from depmap_omics_long_read_rna.utils.aligned_bams import onboard_aligned_bams
+from depmap_omics_long_read_rna.utils.delivery_bams import upsert_delivery_bams
+from depmap_omics_long_read_rna.utils.metadata import refresh_terra_samples
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     make_workflow_from_config,
@@ -67,11 +68,17 @@ def run(cloud_event: CloudEvent) -> None:
     )
 
     if ce_data["cmd"] == "do-all":
-        do_upsert_delivery_bams(
+        upsert_delivery_bams(
             gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
             gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
             uuid_namespace=config["uuid_namespace"],
             terra_workspace=terra_delivery_workspace,
+            dry_run=config["onboarding"]["dry_run"],
+        )
+
+        onboard_aligned_bams(
+            terra_workspace=terra_delivery_workspace,
+            gumbo_client=gumbo_client,
             dry_run=config["onboarding"]["dry_run"],
         )
 
@@ -87,7 +94,7 @@ def run(cloud_event: CloudEvent) -> None:
             dry_run=config["dry_run"],
         )
 
-        do_refresh_terra_samples(
+        refresh_terra_samples(
             terra_workspace=terra_workspace, gumbo_client=gumbo_client
         )
 

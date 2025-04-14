@@ -12,8 +12,7 @@ from nebelung.terra_workspace import TerraWorkspace
 from nebelung.types import PanderaBaseSchema
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
-
-from depmap_omics_long_read_rna.types import PydanticBaseModel
+from pydantic import BaseModel
 
 
 def get_hasura_creds(gumbo_env: str) -> dict[str, str]:
@@ -49,7 +48,7 @@ def get_secret_from_sm(name: str) -> str:
 
 
 def model_to_df(
-    model: PydanticBaseModel,
+    model: BaseModel,
     pandera_schema: Type[PanderaBaseSchema],
     records_key: str = "records",
     remove_unknown_cols: bool = False,
@@ -73,9 +72,7 @@ def model_to_df(
     return type_data_frame(df, pandera_schema, remove_unknown_cols)
 
 
-def df_to_model(
-    df: pd.DataFrame, pydantic_schema: Type[PydanticBaseModel]
-) -> List[PydanticBaseModel]:
+def df_to_model(df: pd.DataFrame, pydantic_schema: Type[BaseModel]) -> List[BaseModel]:
     """
     Convert a Pandas data frame to a Pydantic model.
 
