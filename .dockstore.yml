@@ -1,0 +1,35 @@
+version: 1.2
+workflows:
+  - subclass: WDL
+    name: align_lr_rna
+    readMePath: /workflows/align_lr_rna/README.md
+    primaryDescriptorPath: /workflows/align_lr_rna/align_lr_rna.wdl
+    testParameterFiles:
+      - /workflows/align_lr_rna/align_lr_rna.json
+    filters:
+      branches:
+        - main
+        - dev
+    publish: True
+  - subclass: WDL
+    name: call_lr_rna_fusions
+    readMePath: /workflows/call_lr_rna_fusions/README.md
+    primaryDescriptorPath: /workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl
+    testParameterFiles:
+      - /workflows/call_lr_rna_fusions/call_lr_rna_fusions.json
+    filters:
+      branches:
+        - main
+        - dev
+    publish: True
+  - subclass: WDL
+    name: quantify_lr_rna
+    readMePath: /workflows/quantify_lr_rna/README.md
+    primaryDescriptorPath: /workflows/quantify_lr_rna/quantify_lr_rna.wdl
+    testParameterFiles:
+      - /workflows/quantify_lr_rna/quantify_lr_rna.json
+    filters:
+      branches:
+        - main
+        - dev
+    publish: True
