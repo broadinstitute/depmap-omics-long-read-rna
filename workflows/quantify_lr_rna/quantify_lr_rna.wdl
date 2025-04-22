@@ -1,6 +1,6 @@
 version 1.0
 
-workflow quantify_long_reads {
+workflow quantify_lr_rna {
     input {
         String workflow_version = "1.0" # internal semver
         String workflow_source_url # populated automatically with URL of this script

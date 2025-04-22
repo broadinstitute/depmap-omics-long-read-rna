@@ -80,7 +80,7 @@ def main(
 
 @app.command()
 def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
-    if workflow_name == "align_long_reads":
+    if workflow_name == "align_lr_rna":
         terra_workspace = TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],
@@ -152,7 +152,7 @@ def delta_job(
     input_col: Annotated[list[str] | None, typer.Option()] = None,
     output_col: Annotated[list[str] | None, typer.Option()] = None,
 ) -> None:
-    if workflow_name == "align_long_reads":
+    if workflow_name == "align_lr_rna":
         terra_workspace = TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],

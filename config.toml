@@ -17,29 +17,29 @@ short_read_workspace_name = "depmap-omics-rna"
 workspace_namespace = "broad-firecloud-ccle"
 workspace_name = "depmap-omics-long-read-rna"
 
-[terra.align_long_reads]
+[terra.align_lr_rna]
 method_namespace = "cds-pipelines"
-method_name = "align_long_reads"
+method_name = "align_lr_rna"
 method_config_namespace = "cds-pipelines"
-method_config_name = "align_long_reads"
+method_config_name = "align_lr_rna"
 method_synopsis = "Align long read uBAM"
-workflow_wdl_path = "./workflows/align_long_reads/align_long_reads.wdl"
-method_config_json_path = "./workflows/align_long_reads/align_long_reads.json"
+workflow_wdl_path = "./workflows/align_lr_rna/align_lr_rna.wdl"
+method_config_json_path = "./workflows/align_lr_rna/align_lr_rna.json"
 
-[terra.quantify_long_reads]
+[terra.quantify_lr_rna]
 method_namespace = "cds-pipelines"
-method_name = "quantify_long_reads"
+method_name = "quantify_lr_rna"
 method_config_namespace = "cds-pipelines"
-method_config_name = "quantify_long_reads"
+method_config_name = "quantify_lr_rna"
 method_synopsis = "Quantify long reads"
-workflow_wdl_path = "./workflows/quantify_long_reads/quantify_long_reads.wdl"
-method_config_json_path = "./workflows/quantify_long_reads/quantify_long_reads.json"
+workflow_wdl_path = "./workflows/quantify_lr_rna/quantify_lr_rna.wdl"
+method_config_json_path = "./workflows/quantify_lr_rna/quantify_lr_rna.json"
 
-[terra.call_fusions]
+[terra.call_lr_rna_fusions]
 method_namespace = "cds-pipelines"
-method_name = "call_fusions"
+method_name = "call_lr_rna_fusions"
 method_config_namespace = "cds-pipelines"
-method_config_name = "call_fusions"
-method_synopsis = "Quantify long reads"
-workflow_wdl_path = "./workflows/call_fusions/call_fusions.wdl"
-method_config_json_path = "./workflows/call_fusions/call_fusions.json"
+method_config_name = "call_lr_rna_fusions"
+method_synopsis = "Call long read fusions"
+workflow_wdl_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl"
+method_config_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.json"

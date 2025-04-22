@@ -85,7 +85,7 @@ def run(cloud_event: CloudEvent) -> None:
         submit_delta_job(
             terra_workspace=terra_delivery_workspace,
             terra_workflow=make_workflow_from_config(
-                config, workflow_name="align_long_reads"
+                config, workflow_name="align_lr_rna"
             ),
             entity_type="sample",
             entity_set_type="sample_set",
@@ -98,7 +98,7 @@ def run(cloud_event: CloudEvent) -> None:
             terra_workspace=terra_workspace, gumbo_client=gumbo_client
         )
 
-        for workflow_name in ["quantify_long_reads", "call_fusions"]:
+        for workflow_name in ["quantify_lr_rna", "call_lr_rna_fusions"]:
             submit_delta_job(
                 terra_workspace=terra_workspace,
                 terra_workflow=make_workflow_from_config(
