@@ -33,9 +33,12 @@ class AlignmentMetadataLong(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
     cell_line_name: Series[pd.StringDtype]
     stripped_cell_line_name: Series[pd.StringDtype]
+    drug: Series[pd.StringDtype] = pa.Field(nullable=True)
+    expansion_team: Series[pd.StringDtype] = pa.Field(nullable=True)
     model_condition_id: Series[pd.StringDtype]
     omics_profile_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
+    stranded: Series[pd.BooleanDtype] = pa.Field(nullable=True)
     omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     source: Series[pd.StringDtype] = pa.Field(nullable=True)
     version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
@@ -61,45 +64,48 @@ class LongReadAlignmentMetadata(CoercedDataFrame):
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class ShortReadMetadata(CoercedDataFrame):
-    sr_omics_sequencing_id: Series[pd.StringDtype]
-    sr_omics_profile_id: Series[pd.StringDtype]
+class ShortReadPriorities(CoercedDataFrame):
+    model_id: Series[pd.StringDtype]
     model_condition_id: Series[pd.StringDtype]
+    sr_omics_profile_id: Series[pd.StringDtype]
+    sr_omics_sequencing_id: Series[pd.StringDtype]
+    sr_sequencing_alignment_id: Series[pd.StringDtype]
+    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_cram_bam: Series[pd.StringDtype]
+    version: Series[pd.Int64Dtype]
+    drug_priority: Series[pd.Int64Dtype]
+    stranded_priority: Series[pd.Int64Dtype]
+    source_priority: Series[pd.Int64Dtype]
+    expansion_team_priority: Series[pd.Int64Dtype]
+    sequencing_alignment_source_priority: Series[pd.Int64Dtype]
 
 
-class ShortReadTerraSamples(CoercedDataFrame):
-    sample_id: Series[pd.StringDtype]
-    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
-
-
-class LongReadTerraSamples(LongReadAlignmentMetadata, ShortReadMetadata):
+class LongReadTerraSamples(CoercedDataFrame):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    model_condition_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
-    stripped_cell_line_name: Series[pd.StringDtype] = pa.Field(unique=True)
+    model_condition_id: Series[pd.StringDtype]
+    model_id: Series[pd.StringDtype]
+    cell_line_name: Series[pd.StringDtype]
+    stripped_cell_line_name: Series[pd.StringDtype]
     delivery_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(unique=True)
     delivery_cram_bam: Series[pd.StringDtype] = pa.Field(unique=True)
     aligned_sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
     aligned_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
     aligned_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_model_condition_id: Series[pd.StringDtype] = pa.Field(nullable=True)
     sr_omics_profile_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_fusion_predictions_abridged: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_genes_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_rsem_isoforms_stranded: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_sequencing_alignment_id: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_cram_bam: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sr_file_format: Series[pd.StringDtype] = pa.Field(
+        isin={"CRAM", "BAM"}, nullable=True
+    )
+
+    @pa.dataframe_check
+    def crai_required(cls, df: pd.DataFrame) -> pd.Series:
+        return ~(df["sr_cram_bam"].str.endswith(".cram") & df["sr_crai_bai"].isna())
 
 
 class ObjectMetadata(CoercedDataFrame):
@@ -116,7 +122,7 @@ class DeliveryBams(CoercedDataFrame):
     delivery_bam_updated_at: Series[pd.StringDtype]
     aligned_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     aligned_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
 class SamplesWithCDSIDs(DeliveryBams):
@@ -141,11 +147,35 @@ class SamplesWithMetadata(OnboardingSamples):
 
 
 class CopiedSampleFiles(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype]
+    sample_id: Series[pd.StringDtype]
     url_kind: Series[pd.StringDtype]
     new_url: Series[pd.StringDtype]
     url: Series[pd.StringDtype]
     copied: Series[pd.BooleanDtype]
 
 
-PydanticBaseModel = TypeVar("PydanticBaseModel", bound=BaseModel)
+class ExistingAlignments(CoercedDataFrame):
+    omics_sequencing_id: Series[pd.StringDtype]
+    sequencing_alignment_source: Series[pd.StringDtype]
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+
+
+class AlignedSamples(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
+
+
+class AlignedSamplesWithObjectMetadata(AlignedSamples):
+    crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+
+
+class NewSequencingAlignments(CoercedDataFrame):
+    omics_sequencing_id: Series[pd.StringDtype] = pa.Field(unique=True)
+    url: Series[pd.StringDtype] = pa.Field(unique=True)
+    index_url: Series[pd.StringDtype] = pa.Field(unique=True)
+    sequencing_alignment_source: Series[pd.StringDtype]
+    reference_genome: Series[pd.StringDtype]
+    crc32c_hash: Series[pd.StringDtype] = pa.Field(unique=True)
+    size: Series[pd.Int64Dtype] = pa.Field(unique=True)

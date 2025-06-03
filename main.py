@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.delivery_bams import do_upsert_delivery_bams
-from depmap_omics_long_read_rna.utils.metadata import do_refresh_terra_samples
+from depmap_omics_long_read_rna.utils.aligned_bams import onboard_aligned_bams
+from depmap_omics_long_read_rna.utils.delivery_bams import upsert_delivery_bams
+from depmap_omics_long_read_rna.utils.metadata import refresh_terra_samples
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     make_workflow_from_config,
@@ -67,7 +68,7 @@ def run(cloud_event: CloudEvent) -> None:
     )
 
     if ce_data["cmd"] == "do-all":
-        do_upsert_delivery_bams(
+        upsert_delivery_bams(
             gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
             gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
             uuid_namespace=config["uuid_namespace"],
@@ -75,38 +76,40 @@ def run(cloud_event: CloudEvent) -> None:
             dry_run=config["onboarding"]["dry_run"],
         )
 
+        onboard_aligned_bams(
+            terra_workspace=terra_delivery_workspace,
+            gumbo_client=gumbo_client,
+            dry_run=config["onboarding"]["dry_run"],
+        )
+
         submit_delta_job(
             terra_workspace=terra_delivery_workspace,
             terra_workflow=make_workflow_from_config(
-                config, workflow_name="align_long_reads"
+                config, workflow_name="align_lr_rna"
             ),
             entity_type="sample",
             entity_set_type="sample_set",
             entity_id_col="sample_id",
-            check_col="aligned_bam",
+            expression="this.samples",
             dry_run=config["dry_run"],
         )
 
-        do_refresh_terra_samples(
-            terra_workspace=terra_workspace,
-            short_read_terra_workspace=TerraWorkspace(
-                workspace_namespace=config["terra"]["short_read_workspace_namespace"],
-                workspace_name=config["terra"]["short_read_workspace_name"],
-            ),
-            gumbo_client=gumbo_client,
+        refresh_terra_samples(
+            terra_workspace=terra_workspace, gumbo_client=gumbo_client
         )
 
-        submit_delta_job(
-            terra_workspace=terra_workspace,
-            terra_workflow=make_workflow_from_config(
-                config, workflow_name="quantify_long_reads"
-            ),
-            entity_type="sample",
-            entity_set_type="sample_set",
-            entity_id_col="sample_id",
-            check_col="transcript_counts",
-            dry_run=config["dry_run"],
-        )
+        for workflow_name in ["quantify_lr_rna", "call_lr_rna_fusions"]:
+            submit_delta_job(
+                terra_workspace=terra_workspace,
+                terra_workflow=make_workflow_from_config(
+                    config, workflow_name=workflow_name
+                ),
+                entity_type="sample",
+                entity_set_type="sample_set",
+                entity_id_col="sample_id",
+                expression="this.samples",
+                dry_run=config["dry_run"],
+            )
 
     else:
         raise NotImplementedError(f"Invalid command: {ce_data['cmd']}")

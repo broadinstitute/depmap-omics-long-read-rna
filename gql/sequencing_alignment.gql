@@ -1,0 +1,11 @@
+mutation InsertSequencingAlignments(
+  $_username: String!
+  $objects: [sequencing_alignment_insert_input!]!
+) {
+  set_username(args: { _username: $_username }) {
+    username
+  }
+  insert_sequencing_alignment(objects: $objects) {
+    affected_rows
+  }
+}

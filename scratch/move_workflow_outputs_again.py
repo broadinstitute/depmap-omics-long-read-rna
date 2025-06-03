@@ -89,28 +89,33 @@ workspace = TerraWorkspace(
 src_samples = delivery_workspace.get_entities("cds_sample")[
     [
         "cds_sample_id",
-        "chimeric_fi_listing",
-        "chimeric_preliminary_candidates",
-        "extended_annotation",
         "fusion_igv",
         "fusion_inspector",
         "fusion_predictions",
         "fusion_predictions_abridged",
         "fusion_predictions_preliminary",
         "fusion_predictions_preliminary_abridged",
-        "gene_counts",
-        "gene_tpm",
-        "model_counts",
-        "sq_class",
-        "sq_junctions",
-        "transcript_counts",
-        "transcript_model_tpm",
-        "transcript_tpm",
     ]
-].rename(columns={"cds_sample_id": "sample_id"})
+].rename(
+    columns={
+        "cds_sample_id": "sample_id",
+        "fusion_igv": "fusion_igv_tar",
+        "fusion_inspector": "fusion_report_html",
+        "fusion_predictions": "fusion_report",
+        "fusion_predictions_abridged": "fusion_report_abridged",
+        "fusion_predictions_preliminary": "fusion_prelim_report",
+        "fusion_predictions_preliminary_abridged": "fusion_prelim_report_abridged",
+    }
+)
 
 dest_samples = workspace.get_entities("sample")
-src_samples = src_samples.loc[src_samples["sample_id"].isin(dest_samples["sample_id"])]
+
+src_samples = src_samples.loc[
+    src_samples["sample_id"].isin(
+        dest_samples.loc[dest_samples["fusion_igv_tar"].isna(), "sample_id"]
+    )
+    & src_samples["fusion_igv_tar"].notna()
+]
 
 src_bucket_name = call_firecloud_api(
     firecloud_api.get_workspace,
@@ -161,3 +166,9 @@ melted = (
 )
 
 workspace.upload_entities(melted)
+
+dest_samples = workspace.get_entities("sample")
+df = dest_samples[["model_id", "fusion_igv_tar"]].dropna()
+df["fusion_igv_tar_model_id"] = df["fusion_igv_tar"].str.extract(r"(ACH-[0-9]+)")
+df = df.astype("string")
+print(df.loc[df["model_id"].ne(df["fusion_igv_tar_model_id"])])

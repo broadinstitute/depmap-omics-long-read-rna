@@ -11,21 +11,21 @@ tqdm = "^4.67.1"
 google-cloud-storage = "^2.19.0"
 functions-framework = "^3.8.2"
 pydantic = "^2.10.6"
-numpy = "^2.2.2"
+numpy = "^2.2.4"
 pandas = "^2.2.3"
 pandera = {extras = ["strategies"], version = "^0.22.1"}
 python-baseconv = "^1.2.2"
 google-cloud-logging = "^3.11.4"
 python-dotenv = "^1.0.1"
-nebelung = "^2.1.0"
-typer = "^0.15.1"
-google-cloud-secret-manager = "^2.22.1"
+nebelung = "^2.4.0"
+typer = "^0.15.2"
+google-cloud-secret-manager = "^2.23.2"
 ariadne-codegen = "^0.14.0"
 pd-flatten = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.9.4"
-pyright = "^1.1.393"
+ruff = "^0.9.10"
+pyright = "^1.1.396"
 
 
 [[tool.poetry.source]]

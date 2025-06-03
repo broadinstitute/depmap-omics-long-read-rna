@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from nebelung.terra_workspace import TerraWorkspace
@@ -15,7 +14,7 @@ from depmap_omics_long_read_rna.utils.gcp import list_blobs
 from depmap_omics_long_read_rna.utils.utils import assign_hashed_uuids, uuid_to_base62
 
 
-def do_upsert_delivery_bams(
+def upsert_delivery_bams(
     gcs_source_bucket: str,
     gcs_source_glob: str,
     uuid_namespace: str,
@@ -34,19 +33,27 @@ def do_upsert_delivery_bams(
     """
 
     # get delivered (u)BAM file metadata
-    src_bams = list_blobs(gcs_source_bucket, glob=gcs_source_glob)
+    src_bams = list_blobs(bucket_name=gcs_source_bucket, glob=gcs_source_glob)
     bams = make_delivery_bam_df(src_bams)
 
     # generate sample/sequencing/CDS IDs
     bams = assign_cds_ids(bams, uuid_namespace)
 
     # upsert to Terra data table
-    bam_ids = bams.pop("cds_id")
-    bams.insert(0, "entity:sample_id", bam_ids)
+    sample_ids = bams.pop("cds_id")
+    bams.insert(0, "entity:sample_id", sample_ids)
 
     if dry_run:
         logging.info(f"(skipping) Upserting {len(bams)} delivery_bams")
         return
+
+    existing_samples = terra_workspace.get_entities("sample")
+    bams = bams.loc[
+        ~bams["delivery_bam_crc32c"].isin(existing_samples["delivery_bam_crc32c"])
+    ]
+
+    if len(bams) == 0:
+        logging.info("No new delivery BAMs")
 
     terra_workspace.upload_entities(bams)
 
@@ -64,19 +71,17 @@ def make_delivery_bam_df(
 
     bams_w_ids = bams.copy()
 
-    # extract the model ID from the BAM filenames
-    bams_w_ids["model_id"] = (
+    # extract the profile ID from the BAM filenames
+    bams_w_ids["omics_profile_id"] = (
         bams_w_ids["url"]
         .apply(lambda x: Path(x).name)
-        .str.extract(r"^(ACH-[A-Z 0-9]+)")
+        .str.extract(r"^(PR-[A-Z a-z 0-9]+)")
     )
 
-    if bool(bams_w_ids["model_id"].isna().any()):
-        raise ValueError("There are BAM files not named with model IDs (ACH-*)")
+    if bool(bams_w_ids["omics_profile_id"].isna().any()):
+        raise ValueError("There are BAM files not named with profile IDs (PR-*.bam)")
 
     bams_w_ids = bams_w_ids.rename(columns={"url": "bam_url"})
-
-    bams_w_ids["bam_id"] = bams_w_ids["bam_url"].apply(os.path.basename)
 
     bams_w_ids = bams_w_ids.rename(
         columns={
@@ -107,7 +112,7 @@ def assign_cds_ids(
         samples,
         uuid_namespace=uuid_namespace,
         uuid_col_name="cds_id",
-        subset=["delivery_bam_crc32c", "delivery_bam_size", "delivery_bam_updated_at"],
+        subset=["delivery_bam_crc32c"],
     )
 
     # convert UUIDs to base62 and truncate to match existing ID format
