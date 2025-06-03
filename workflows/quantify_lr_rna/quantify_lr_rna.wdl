@@ -3,8 +3,7 @@ version 1.0
 workflow quantify_lr_rna {
     input {
         String workflow_version = "1.0" # internal semver
-        String workflow_source_url # populated automatically with URL of this script
-
+        #String workflow_source_url # populated automatically with URL of this script
         String sample_id
         File input_bam
         File input_bai
@@ -12,6 +11,10 @@ workflow quantify_lr_rna {
         File ref_annotation_gtf
         File ref_annotation_db
         File? star_junctions
+        Boolean complete_genedb = true
+        Boolean check_canonical = false
+        String? prefix 
+
     }
 
     call run_isoquant {
@@ -20,13 +23,16 @@ workflow quantify_lr_rna {
             input_bam = input_bam,
             input_bai = input_bai,
             ref_annotation_db = ref_annotation_db,
-            ref_fasta = ref_fasta
+            ref_fasta = ref_fasta,
+            complete_genedb = complete_genedb,
+            check_canonical = check_canonical,
+            prefix = prefix
     }
 
     call run_sqanti3 {
         input:
             sample_id = sample_id,
-            isoquant_gtf = run_isoquant.extended_annotation,
+            isoquant_gtf = run_isoquant.extended_annotation, #replace that with this run_isoquant.extended_annotation
             star_junctions = star_junctions,
             ref_annotation_gtf = ref_annotation_gtf,
             ref_fasta = ref_fasta
@@ -40,18 +46,41 @@ workflow quantify_lr_rna {
         File gene_tpm = run_isoquant.gene_tpm
         File extended_annotation = run_isoquant.extended_annotation
         File gene_counts = run_isoquant.gene_counts
+        File read_assignments_tsv = run_isoquant.read_assignments_tsv
+        File exon_counts = run_isoquant.exon_counts
+        File intron_counts = run_isoquant.intron_counts
+        File transcript_model_reads= run_isoquant.transcript_model_reads
         File sq_junctions = run_sqanti3.sq_junctions
         File sq_class = run_sqanti3.sq_class
+        File sq_report_pdf = run_sqanti3.sq_report_pdf
     }
 }
 
 task run_isoquant {
     input {
-        String sample_id
+
+        String data_type = "pacbio_ccs"
+        File ref_fasta
+        #File? ref_fasta_index #not neccessary
+        File ref_annotation_db
+        Boolean complete_genedb
         File input_bam
         File input_bai
-        File ref_fasta
-        File ref_annotation_db
+        String stranded = "forward"
+        Boolean fl_data = true
+        String sample_id
+        Boolean check_canonical
+        String transcript_quantification = "unique_only"
+        String gene_quantification = "unique_splicing_consistent"
+        #String ?matching_strategy = "precise"
+        #String ?splice_correction_strategy = "default_pacbio"
+        #String ?model_construction_strategy = "default_pacbio"
+        String ?report_novel_unspliced = "true"
+        String ?report_canonical = "auto"
+        String ?polya_requirement = "auto"
+        String ?labels
+        String? prefix
+        #Boolean debug = false
 
         String docker_image
         String docker_image_hash_or_tag
@@ -61,6 +90,11 @@ task run_isoquant {
         Int max_retries = 1
         Int additional_disk_gb = 0
     }
+
+    String fl_data_option = if fl_data then "--fl_data" else ""
+    String prefix_option = if defined(prefix) then "--prefix ~{prefix}" else ""
+    String labels_option = if defined(labels) then "--labels ~{labels}" else ""
+    String check_canonical_option = if check_canonical then "--check_canonical" else ""
 
     Int disk_space = (
         ceil(
@@ -78,14 +112,15 @@ task run_isoquant {
             --reference ~{ref_fasta} \
             --genedb ~{ref_annotation_db} \
             --complete_genedb \
+            --count_exons \
             --bam ~{input_bam} \
-            --data_type pacbio_ccs \
-            --stranded forward \
-            --transcript_quantification unique_splicing_consistent \
+            --data_type ~{data_type} \
+            --stranded ~{stranded} \
+            --transcript_quantification ~{transcript_quantification} \
             --model_construction_strategy fl_pacbio \
-            --gene_quantification unique_splicing_consistent \
-            --report_canonical all \
-            --report_novel_unspliced false \
+            --gene_quantification ~{gene_quantification} \
+            --report_canonical ~{report_canonical} \
+            --report_novel_unspliced ~{report_novel_unspliced} \
             --threads ~{cpu} \
             --labels ~{sample_id} \
             --prefix ~{sample_id} \
@@ -102,6 +137,11 @@ task run_isoquant {
         File gene_tpm = "isoquant_output/~{sample_id}/~{sample_id}.gene_tpm.tsv.gz"
         File gene_counts = "isoquant_output/~{sample_id}/~{sample_id}.gene_counts.tsv.gz"
         File extended_annotation = "isoquant_output/~{sample_id}/~{sample_id}.extended_annotation.gtf.gz"
+        File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"
+        File exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"
+        File intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"
+        File transcript_model_reads= "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_reads.tsv.gz"
+
     }
 
     runtime {
@@ -119,17 +159,17 @@ task run_isoquant {
 }
 
 task run_sqanti3 {
-	input {
-		String sample_id
+    input {
+        String sample_id
         File isoquant_gtf
-		File? star_junctions
+        File? star_junctions
         File ref_annotation_gtf
         File ref_fasta
 
         String docker_image
         String docker_image_hash_or_tag
         Int cpu = 2
-        Int mem_gb = 8
+        Int mem_gb = 64
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
@@ -143,33 +183,32 @@ task run_sqanti3 {
     )
 
     command <<<
+
         set -euo pipefail
 
-        zcat "~{isoquant_gtf}" \
-            | awk '{ if ($7 != ".") print }' \
-            > "~{isoquant_gtf}.unzipped"
+        zcat "~{isoquant_gtf}" | awk '{ if ($7 != ".") print }' > "~{sample_id}.unzipped.gtf"
 
-        if [[ -f "~{star_junctions}" ]];
-        then
-            zcat "~{star_junctions}" > "~{star_junctions}.unzipped"
-            coverage_opt="--coverage ~{star_junctions}.unzipped"
+        if [ -n "~{star_junctions}" ]; then
+            zcat "~{star_junctions}" > junctions.txt
+            coverage_opt="--coverage junctions.txt"
         else
             coverage_opt=""
         fi
 
-        python /usr/local/src/SQANTI3-5.1.2/sqanti3_qc.py \
-            --report skip \
-            --skipORF \
+        python /usr/local/src/SQANTI3-5.3.6/sqanti3_qc.py \
+            --report pdf \
             $coverage_opt \
             --output "~{sample_id}" \
-            "~{isoquant_gtf}.unzipped" \
+            "~{sample_id}.unzipped.gtf" \
             "~{ref_annotation_gtf}" \
             "~{ref_fasta}"
+
     >>>
 
     output {
-    	File sq_junctions = "~{sample_id}_junctions.txt"
+        File sq_junctions = "~{sample_id}_junctions.txt"
         File sq_class = "~{sample_id}_classification.txt"
+        File sq_report_pdf = "~{sample_id}_SQANTI3_report.pdf"
     }
 
     runtime {
