@@ -11,6 +11,7 @@ from depmap_omics_long_read_rna.types import (
     CopiedSampleFiles,
     ExistingAlignments,
     GumboClient,
+    ModelsAndChildren,
     NewSequencingAlignments,
 )
 from depmap_omics_long_read_rna.utils.gcp import copy_to_cclebams, get_objects_metadata
@@ -34,10 +35,20 @@ def onboard_aligned_bams(
     samples = samples.loc[:, ["sample_id", "aligned_bam", "aligned_bai"]].dropna()
 
     # get sequencing alignment records for long read omics_sequencings from Gumbo
-    existing_alignments = model_to_df(
-        gumbo_client.long_read_sequencing_alignments(),
+    models = model_to_df(
+        gumbo_client.mapped_short_long_rna_samples(timeout=30.0), ModelsAndChildren
+    )
+
+    existing_alignments = type_data_frame(
+        pd_flatten(
+            models.loc[
+                models["datatype"].eq("long_read_rna"),
+                ["omics_sequencing_id", "omics_sequencing"],
+            ],
+            name_columns_with_parent=False,
+        ),
         ExistingAlignments,
-        mutator=partial(pd_flatten, name_columns_with_parent=False),
+        remove_unknown_cols=True,
     )
 
     # check which sequencings have delivery BAMs but not analysis-ready/aligned BAMs
@@ -55,6 +66,10 @@ def onboard_aligned_bams(
 
     # subset to newly-aligned sequencings that need to be onboarded
     samples = samples.loc[samples["sample_id"].isin(list(seq_ids_no_cds))]
+
+    if samples.shape[0] == 0:
+        logging.info("No new aligned BAMs to onboard")
+        return
 
     # get GCS blob metadata for the BAMs
     objects_metadata = get_objects_metadata(samples["aligned_bam"])

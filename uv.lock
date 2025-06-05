@@ -957,14 +957,14 @@ wheels = [
 
 [[package]]
 name = "pd-flatten"
-version = "0.1.1"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pandas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/bc/a0854a19ae5a4c5f4a1822c18883f8fa9b66a2a5e0ab21eea204b788e330/pd_flatten-0.1.1.tar.gz", hash = "sha256:be05bef70aae0ce8736c2935d2609b1bc2206fce45f707e428b759ee35c58841", size = 2846, upload-time = "2025-01-31T16:35:27.932Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/26/8bce1769c57b5fc616b1da331e5df1ab9cd37d25aa0b4a6eb71933903864/pd_flatten-0.1.2.tar.gz", hash = "sha256:bfe71c8f5e18287506dfe3e0a929df109467e4fd8707792505b8b78a584d1afc", size = 2947, upload-time = "2025-06-05T19:33:53.964Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/47/389f463f9c3e4d1b8048e07722d4d0e1e6087779e28becda9850a23ce8e9/pd_flatten-0.1.1-py3-none-any.whl", hash = "sha256:8b0903dd03f06eca915c576fd2099e88f9c06f6e21b1d9c26105c9b6827196f2", size = 3423, upload-time = "2025-01-31T16:35:26.088Z" },
+    { url = "https://files.pythonhosted.org/packages/06/8a/1a80aad41da4c7d4f7855cd185bf3f9460f85ec0ccfde75e09d3a04abbd7/pd_flatten-0.1.2-py3-none-any.whl", hash = "sha256:8ae8d8b5a3569bcc79e358a917ab273768212ed7400ef4dc154250018b005ad2", size = 3510, upload-time = "2025-06-05T19:33:52.816Z" },
 ]
 
 [[package]]
