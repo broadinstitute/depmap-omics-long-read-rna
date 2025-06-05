@@ -10,6 +10,15 @@ from .enums import (
     depmap_model_type_constraint,
     depmap_model_type_update_column,
     genomic_fingerprint_comparison_constraint,
+    genomic_fingerprint_comparison_select_column,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_avg_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_max_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_min_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_sum_arguments_columns,
+    genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_var_samp_arguments_columns,
     genomic_fingerprint_comparison_update_column,
     genomic_fingerprint_constraint,
     genomic_fingerprint_failure_constraint,
@@ -17,6 +26,7 @@ from .enums import (
     genomic_fingerprint_failure_genomic_fingerprint_comparison_select_column,
     genomic_fingerprint_failure_genomic_fingerprint_comparison_update_column,
     genomic_fingerprint_failure_update_column,
+    genomic_fingerprint_select_column,
     genomic_fingerprint_update_column,
     media_constraint,
     media_update_column,
@@ -274,6 +284,41 @@ class float8_comparison_exp(BaseModel):
     nin: Optional[List[Any]] = Field(alias="_nin", default=None)
 
 
+class genomic_fingerprint_aggregate_bool_exp(BaseModel):
+    count: Optional["genomic_fingerprint_aggregate_bool_exp_count"] = None
+
+
+class genomic_fingerprint_aggregate_bool_exp_count(BaseModel):
+    arguments: Optional[List[genomic_fingerprint_select_column]] = None
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_bool_exp"] = None
+    predicate: "Int_comparison_exp"
+
+
+class genomic_fingerprint_aggregate_order_by(BaseModel):
+    avg: Optional["genomic_fingerprint_avg_order_by"] = None
+    count: Optional[order_by] = None
+    max: Optional["genomic_fingerprint_max_order_by"] = None
+    min: Optional["genomic_fingerprint_min_order_by"] = None
+    stddev: Optional["genomic_fingerprint_stddev_order_by"] = None
+    stddev_pop: Optional["genomic_fingerprint_stddev_pop_order_by"] = None
+    stddev_samp: Optional["genomic_fingerprint_stddev_samp_order_by"] = None
+    sum: Optional["genomic_fingerprint_sum_order_by"] = None
+    var_pop: Optional["genomic_fingerprint_var_pop_order_by"] = None
+    var_samp: Optional["genomic_fingerprint_var_samp_order_by"] = None
+    variance: Optional["genomic_fingerprint_variance_order_by"] = None
+
+
+class genomic_fingerprint_arr_rel_insert_input(BaseModel):
+    data: List["genomic_fingerprint_insert_input"]
+    on_conflict: Optional["genomic_fingerprint_on_conflict"] = None
+
+
+class genomic_fingerprint_avg_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
 class genomic_fingerprint_bool_exp(BaseModel):
     and_: Optional[List["genomic_fingerprint_bool_exp"]] = Field(
         alias="_and", default=None
@@ -283,11 +328,154 @@ class genomic_fingerprint_bool_exp(BaseModel):
         alias="_or", default=None
     )
     created_at: Optional["timestamptz_comparison_exp"] = None
+    genomic_fingerprint_comparisons_1: Optional[
+        "genomic_fingerprint_comparison_bool_exp"
+    ] = Field(alias="genomic_fingerprint_comparisons1", default=None)
+    genomic_fingerprint_comparisons_1_aggregate: Optional[
+        "genomic_fingerprint_comparison_aggregate_bool_exp"
+    ] = Field(alias="genomic_fingerprint_comparisons1_aggregate", default=None)
+    genomic_fingerprint_comparisons_2: Optional[
+        "genomic_fingerprint_comparison_bool_exp"
+    ] = Field(alias="genomic_fingerprint_comparisons2", default=None)
+    genomic_fingerprint_comparisons_2_aggregate: Optional[
+        "genomic_fingerprint_comparison_aggregate_bool_exp"
+    ] = Field(alias="genomic_fingerprint_comparisons2_aggregate", default=None)
     genotypes: Optional["String_comparison_exp"] = None
     id: Optional["bigint_comparison_exp"] = None
     sequencing_alignment: Optional["sequencing_alignment_bool_exp"] = None
     sequencing_alignment_id: Optional["bigint_comparison_exp"] = None
     vcf_url: Optional["String_comparison_exp"] = None
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp(BaseModel):
+    avg: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_avg"] = None
+    corr: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_corr"] = None
+    count: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_count"] = None
+    covar_samp: Optional[
+        "genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp"
+    ] = None
+    max: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_max"] = None
+    min: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_min"] = None
+    stddev_samp: Optional[
+        "genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp"
+    ] = None
+    sum: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_sum"] = None
+    var_samp: Optional["genomic_fingerprint_comparison_aggregate_bool_exp_var_samp"] = (
+        None
+    )
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_avg(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_avg_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_corr(BaseModel):
+    arguments: "genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments"
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments(BaseModel):
+    x: (
+        genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments_columns
+    ) = Field(alias="X")
+    y: (
+        genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments_columns
+    ) = Field(alias="Y")
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_count(BaseModel):
+    arguments: Optional[List[genomic_fingerprint_comparison_select_column]] = None
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "Int_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp(BaseModel):
+    arguments: "genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments"
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments(BaseModel):
+    x: (
+        genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments_columns
+    ) = Field(alias="X")
+    y: (
+        genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments_columns
+    ) = Field(alias="Y")
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_max(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_max_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_min(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_min_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_sum(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_sum_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_bool_exp_var_samp(BaseModel):
+    arguments: genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_var_samp_arguments_columns
+    distinct: Optional[bool] = None
+    filter: Optional["genomic_fingerprint_comparison_bool_exp"] = None
+    predicate: "float8_comparison_exp"
+
+
+class genomic_fingerprint_comparison_aggregate_order_by(BaseModel):
+    avg: Optional["genomic_fingerprint_comparison_avg_order_by"] = None
+    count: Optional[order_by] = None
+    max: Optional["genomic_fingerprint_comparison_max_order_by"] = None
+    min: Optional["genomic_fingerprint_comparison_min_order_by"] = None
+    stddev: Optional["genomic_fingerprint_comparison_stddev_order_by"] = None
+    stddev_pop: Optional["genomic_fingerprint_comparison_stddev_pop_order_by"] = None
+    stddev_samp: Optional["genomic_fingerprint_comparison_stddev_samp_order_by"] = None
+    sum: Optional["genomic_fingerprint_comparison_sum_order_by"] = None
+    var_pop: Optional["genomic_fingerprint_comparison_var_pop_order_by"] = None
+    var_samp: Optional["genomic_fingerprint_comparison_var_samp_order_by"] = None
+    variance: Optional["genomic_fingerprint_comparison_variance_order_by"] = None
+
+
+class genomic_fingerprint_comparison_arr_rel_insert_input(BaseModel):
+    data: List["genomic_fingerprint_comparison_insert_input"]
+    on_conflict: Optional["genomic_fingerprint_comparison_on_conflict"] = None
+
+
+class genomic_fingerprint_comparison_avg_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
 
 
 class genomic_fingerprint_comparison_bool_exp(BaseModel):
@@ -357,6 +545,38 @@ class genomic_fingerprint_comparison_insert_input(BaseModel):
     score: Optional[Any] = None
 
 
+class genomic_fingerprint_comparison_max_order_by(BaseModel):
+    created_at: Optional[order_by] = None
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    patient_id_1: Optional[order_by] = Field(alias="patient_id1", default=None)
+    patient_id_2: Optional[order_by] = Field(alias="patient_id2", default=None)
+    score: Optional[order_by] = None
+
+
+class genomic_fingerprint_comparison_min_order_by(BaseModel):
+    created_at: Optional[order_by] = None
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    patient_id_1: Optional[order_by] = Field(alias="patient_id1", default=None)
+    patient_id_2: Optional[order_by] = Field(alias="patient_id2", default=None)
+    score: Optional[order_by] = None
+
+
 class genomic_fingerprint_comparison_obj_rel_insert_input(BaseModel):
     data: "genomic_fingerprint_comparison_insert_input"
     on_conflict: Optional["genomic_fingerprint_comparison_on_conflict"] = None
@@ -407,6 +627,45 @@ class genomic_fingerprint_comparison_set_input(BaseModel):
     score: Optional[Any] = None
 
 
+class genomic_fingerprint_comparison_stddev_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
+class genomic_fingerprint_comparison_stddev_pop_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
+class genomic_fingerprint_comparison_stddev_samp_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
 class genomic_fingerprint_comparison_stream_cursor_input(BaseModel):
     initial_value: "genomic_fingerprint_comparison_stream_cursor_value_input"
     ordering: Optional[cursor_ordering] = None
@@ -428,6 +687,19 @@ class genomic_fingerprint_comparison_stream_cursor_value_input(BaseModel):
     score: Optional[Any] = None
 
 
+class genomic_fingerprint_comparison_sum_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
 class genomic_fingerprint_comparison_updates(BaseModel):
     inc: Optional["genomic_fingerprint_comparison_inc_input"] = Field(
         alias="_inc", default=None
@@ -436,6 +708,45 @@ class genomic_fingerprint_comparison_updates(BaseModel):
         alias="_set", default=None
     )
     where: "genomic_fingerprint_comparison_bool_exp"
+
+
+class genomic_fingerprint_comparison_var_pop_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
+class genomic_fingerprint_comparison_var_samp_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
+
+
+class genomic_fingerprint_comparison_variance_order_by(BaseModel):
+    genomic_fingerprint_id_1: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id1", default=None
+    )
+    genomic_fingerprint_id_2: Optional[order_by] = Field(
+        alias="genomic_fingerprint_id2", default=None
+    )
+    id: Optional[order_by] = None
+    n_common_snps: Optional[order_by] = None
+    n_matching_genotypes: Optional[order_by] = None
+    score: Optional[order_by] = None
 
 
 class genomic_fingerprint_failure_bool_exp(BaseModel):
@@ -550,6 +861,7 @@ class genomic_fingerprint_failure_genomic_fingerprint_comparison_bool_exp(BaseMo
     genomic_fingerprint_comparison: Optional[
         "genomic_fingerprint_comparison_bool_exp"
     ] = None
+    genomic_fingerprint_failure: Optional["genomic_fingerprint_failure_bool_exp"] = None
     genomicfingerprintcomparison_id: Optional["bigint_comparison_exp"] = None
     genomicfingerprintfailure_id: Optional["bigint_comparison_exp"] = None
     id: Optional["bigint_comparison_exp"] = None
@@ -566,6 +878,9 @@ class genomic_fingerprint_failure_genomic_fingerprint_comparison_insert_input(
 ):
     genomic_fingerprint_comparison: Optional[
         "genomic_fingerprint_comparison_obj_rel_insert_input"
+    ] = None
+    genomic_fingerprint_failure: Optional[
+        "genomic_fingerprint_failure_obj_rel_insert_input"
     ] = None
     genomicfingerprintcomparison_id: Optional[int] = None
     genomicfingerprintfailure_id: Optional[int] = None
@@ -602,6 +917,7 @@ class genomic_fingerprint_failure_genomic_fingerprint_comparison_order_by(BaseMo
     genomic_fingerprint_comparison: Optional[
         "genomic_fingerprint_comparison_order_by"
     ] = None
+    genomic_fingerprint_failure: Optional["genomic_fingerprint_failure_order_by"] = None
     genomicfingerprintcomparison_id: Optional[order_by] = None
     genomicfingerprintfailure_id: Optional[order_by] = None
     id: Optional[order_by] = None
@@ -715,6 +1031,11 @@ class genomic_fingerprint_failure_insert_input(BaseModel):
     updated_at: Optional[Any] = None
 
 
+class genomic_fingerprint_failure_obj_rel_insert_input(BaseModel):
+    data: "genomic_fingerprint_failure_insert_input"
+    on_conflict: Optional["genomic_fingerprint_failure_on_conflict"] = None
+
+
 class genomic_fingerprint_failure_on_conflict(BaseModel):
     constraint: genomic_fingerprint_failure_constraint
     update_columns: List[genomic_fingerprint_failure_update_column]
@@ -774,11 +1095,33 @@ class genomic_fingerprint_inc_input(BaseModel):
 
 class genomic_fingerprint_insert_input(BaseModel):
     created_at: Optional[Any] = None
+    genomic_fingerprint_comparisons_1: Optional[
+        "genomic_fingerprint_comparison_arr_rel_insert_input"
+    ] = Field(alias="genomic_fingerprint_comparisons1", default=None)
+    genomic_fingerprint_comparisons_2: Optional[
+        "genomic_fingerprint_comparison_arr_rel_insert_input"
+    ] = Field(alias="genomic_fingerprint_comparisons2", default=None)
     genotypes: Optional[str] = None
     id: Optional[int] = None
     sequencing_alignment: Optional["sequencing_alignment_obj_rel_insert_input"] = None
     sequencing_alignment_id: Optional[int] = None
     vcf_url: Optional[str] = None
+
+
+class genomic_fingerprint_max_order_by(BaseModel):
+    created_at: Optional[order_by] = None
+    genotypes: Optional[order_by] = None
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+    vcf_url: Optional[order_by] = None
+
+
+class genomic_fingerprint_min_order_by(BaseModel):
+    created_at: Optional[order_by] = None
+    genotypes: Optional[order_by] = None
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+    vcf_url: Optional[order_by] = None
 
 
 class genomic_fingerprint_on_conflict(BaseModel):
@@ -789,6 +1132,12 @@ class genomic_fingerprint_on_conflict(BaseModel):
 
 class genomic_fingerprint_order_by(BaseModel):
     created_at: Optional[order_by] = None
+    genomic_fingerprint_comparisons_1_aggregate: Optional[
+        "genomic_fingerprint_comparison_aggregate_order_by"
+    ] = Field(alias="genomic_fingerprint_comparisons1_aggregate", default=None)
+    genomic_fingerprint_comparisons_2_aggregate: Optional[
+        "genomic_fingerprint_comparison_aggregate_order_by"
+    ] = Field(alias="genomic_fingerprint_comparisons2_aggregate", default=None)
     genotypes: Optional[order_by] = None
     id: Optional[order_by] = None
     sequencing_alignment: Optional["sequencing_alignment_order_by"] = None
@@ -808,6 +1157,21 @@ class genomic_fingerprint_set_input(BaseModel):
     vcf_url: Optional[str] = None
 
 
+class genomic_fingerprint_stddev_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
+class genomic_fingerprint_stddev_pop_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
+class genomic_fingerprint_stddev_samp_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
 class genomic_fingerprint_stream_cursor_input(BaseModel):
     initial_value: "genomic_fingerprint_stream_cursor_value_input"
     ordering: Optional[cursor_ordering] = None
@@ -821,10 +1185,30 @@ class genomic_fingerprint_stream_cursor_value_input(BaseModel):
     vcf_url: Optional[str] = None
 
 
+class genomic_fingerprint_sum_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
 class genomic_fingerprint_updates(BaseModel):
     inc: Optional["genomic_fingerprint_inc_input"] = Field(alias="_inc", default=None)
     set: Optional["genomic_fingerprint_set_input"] = Field(alias="_set", default=None)
     where: "genomic_fingerprint_bool_exp"
+
+
+class genomic_fingerprint_var_pop_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
+class genomic_fingerprint_var_samp_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
+
+
+class genomic_fingerprint_variance_order_by(BaseModel):
+    id: Optional[order_by] = None
+    sequencing_alignment_id: Optional[order_by] = None
 
 
 class jsonb_cast_exp(BaseModel):
@@ -949,6 +1333,7 @@ class model_bool_exp(BaseModel):
     model_data_sharing_comments: Optional["String_comparison_exp"] = None
     model_derivation_material: Optional["String_comparison_exp"] = None
     model_id: Optional["String_comparison_exp"] = None
+    model_id_alias: Optional["String_comparison_exp"] = None
     model_subtype_features: Optional["String_comparison_exp"] = None
     model_transfer: Optional["String_comparison_exp"] = None
     model_transfer_comments: Optional["String_comparison_exp"] = None
@@ -1383,6 +1768,7 @@ class model_insert_input(BaseModel):
     model_data_sharing_comments: Optional[str] = None
     model_derivation_material: Optional[str] = None
     model_id: Optional[str] = None
+    model_id_alias: Optional[str] = None
     model_subtype_features: Optional[str] = None
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
@@ -1477,6 +1863,7 @@ class model_order_by(BaseModel):
     model_data_sharing_comments: Optional[order_by] = None
     model_derivation_material: Optional[order_by] = None
     model_id: Optional[order_by] = None
+    model_id_alias: Optional[order_by] = None
     model_subtype_features: Optional[order_by] = None
     model_transfer: Optional[order_by] = None
     model_transfer_comments: Optional[order_by] = None
@@ -1562,6 +1949,7 @@ class model_set_input(BaseModel):
     model_data_sharing_comments: Optional[str] = None
     model_derivation_material: Optional[str] = None
     model_id: Optional[str] = None
+    model_id_alias: Optional[str] = None
     model_subtype_features: Optional[str] = None
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
@@ -1647,6 +2035,7 @@ class model_stream_cursor_value_input(BaseModel):
     model_data_sharing_comments: Optional[str] = None
     model_derivation_material: Optional[str] = None
     model_id: Optional[str] = None
+    model_id_alias: Optional[str] = None
     model_subtype_features: Optional[str] = None
     model_transfer: Optional[str] = None
     model_transfer_comments: Optional[str] = None
@@ -1695,6 +2084,52 @@ class model_updates(BaseModel):
     inc: Optional["model_inc_input"] = Field(alias="_inc", default=None)
     set: Optional["model_set_input"] = Field(alias="_set", default=None)
     where: "model_bool_exp"
+
+
+class omics_mapping_bool_exp(BaseModel):
+    and_: Optional[List["omics_mapping_bool_exp"]] = Field(alias="_and", default=None)
+    not_: Optional["omics_mapping_bool_exp"] = Field(alias="_not", default=None)
+    or_: Optional[List["omics_mapping_bool_exp"]] = Field(alias="_or", default=None)
+    datatype: Optional["String_comparison_exp"] = None
+    id: Optional["bigint_comparison_exp"] = None
+    model: Optional["model_bool_exp"] = None
+    model_condition: Optional["model_condition_bool_exp"] = None
+    model_condition_id: Optional["String_comparison_exp"] = None
+    model_id: Optional["String_comparison_exp"] = None
+    omics_profile: Optional["omics_profile_bool_exp"] = None
+    omics_profile_id: Optional["String_comparison_exp"] = None
+    omics_sequencing: Optional["omics_sequencing_bool_exp"] = None
+    omics_sequencing_id: Optional["String_comparison_exp"] = None
+    priority: Optional["bigint_comparison_exp"] = None
+
+
+class omics_mapping_order_by(BaseModel):
+    datatype: Optional[order_by] = None
+    id: Optional[order_by] = None
+    model: Optional["model_order_by"] = None
+    model_condition: Optional["model_condition_order_by"] = None
+    model_condition_id: Optional[order_by] = None
+    model_id: Optional[order_by] = None
+    omics_profile: Optional["omics_profile_order_by"] = None
+    omics_profile_id: Optional[order_by] = None
+    omics_sequencing: Optional["omics_sequencing_order_by"] = None
+    omics_sequencing_id: Optional[order_by] = None
+    priority: Optional[order_by] = None
+
+
+class omics_mapping_stream_cursor_input(BaseModel):
+    initial_value: "omics_mapping_stream_cursor_value_input"
+    ordering: Optional[cursor_ordering] = None
+
+
+class omics_mapping_stream_cursor_value_input(BaseModel):
+    datatype: Optional[str] = None
+    id: Optional[int] = None
+    model_condition_id: Optional[str] = None
+    model_id: Optional[str] = None
+    omics_profile_id: Optional[str] = None
+    omics_sequencing_id: Optional[str] = None
+    priority: Optional[int] = None
 
 
 class omics_profile_aggregate_bool_exp(BaseModel):
@@ -3214,6 +3649,10 @@ class sequencing_alignment_bool_exp(BaseModel):
         alias="crc32c_hash", default=None
     )
     created_at: Optional["timestamptz_comparison_exp"] = None
+    genomic_fingerprints: Optional["genomic_fingerprint_bool_exp"] = None
+    genomic_fingerprints_aggregate: Optional[
+        "genomic_fingerprint_aggregate_bool_exp"
+    ] = None
     id: Optional["bigint_comparison_exp"] = None
     index_url: Optional["String_comparison_exp"] = None
     omics_sequencing: Optional["omics_sequencing_bool_exp"] = None
@@ -3238,6 +3677,7 @@ class sequencing_alignment_inc_input(BaseModel):
 class sequencing_alignment_insert_input(BaseModel):
     crc_32_c_hash: Optional[str] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[Any] = None
+    genomic_fingerprints: Optional["genomic_fingerprint_arr_rel_insert_input"] = None
     id: Optional[int] = None
     index_url: Optional[str] = None
     omics_sequencing: Optional["omics_sequencing_obj_rel_insert_input"] = None
@@ -3293,6 +3733,9 @@ class sequencing_alignment_on_conflict(BaseModel):
 class sequencing_alignment_order_by(BaseModel):
     crc_32_c_hash: Optional[order_by] = Field(alias="crc32c_hash", default=None)
     created_at: Optional[order_by] = None
+    genomic_fingerprints_aggregate: Optional[
+        "genomic_fingerprint_aggregate_order_by"
+    ] = None
     id: Optional[order_by] = None
     index_url: Optional[order_by] = None
     omics_sequencing: Optional["omics_sequencing_order_by"] = None
@@ -4126,7 +4569,23 @@ depmap_model_type_obj_rel_insert_input.model_rebuild()
 depmap_model_type_on_conflict.model_rebuild()
 depmap_model_type_stream_cursor_input.model_rebuild()
 depmap_model_type_updates.model_rebuild()
+genomic_fingerprint_aggregate_bool_exp.model_rebuild()
+genomic_fingerprint_aggregate_bool_exp_count.model_rebuild()
+genomic_fingerprint_aggregate_order_by.model_rebuild()
+genomic_fingerprint_arr_rel_insert_input.model_rebuild()
 genomic_fingerprint_bool_exp.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_avg.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_corr.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_count.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_max.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_min.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_sum.model_rebuild()
+genomic_fingerprint_comparison_aggregate_bool_exp_var_samp.model_rebuild()
+genomic_fingerprint_comparison_aggregate_order_by.model_rebuild()
+genomic_fingerprint_comparison_arr_rel_insert_input.model_rebuild()
 genomic_fingerprint_comparison_bool_exp.model_rebuild()
 genomic_fingerprint_comparison_insert_input.model_rebuild()
 genomic_fingerprint_comparison_obj_rel_insert_input.model_rebuild()
@@ -4146,6 +4605,7 @@ genomic_fingerprint_failure_genomic_fingerprint_comparison_order_by.model_rebuil
 genomic_fingerprint_failure_genomic_fingerprint_comparison_stream_cursor_input.model_rebuild()
 genomic_fingerprint_failure_genomic_fingerprint_comparison_updates.model_rebuild()
 genomic_fingerprint_failure_insert_input.model_rebuild()
+genomic_fingerprint_failure_obj_rel_insert_input.model_rebuild()
 genomic_fingerprint_failure_on_conflict.model_rebuild()
 genomic_fingerprint_failure_order_by.model_rebuild()
 genomic_fingerprint_failure_stream_cursor_input.model_rebuild()
@@ -4182,6 +4642,9 @@ model_on_conflict.model_rebuild()
 model_order_by.model_rebuild()
 model_stream_cursor_input.model_rebuild()
 model_updates.model_rebuild()
+omics_mapping_bool_exp.model_rebuild()
+omics_mapping_order_by.model_rebuild()
+omics_mapping_stream_cursor_input.model_rebuild()
 omics_profile_aggregate_bool_exp.model_rebuild()
 omics_profile_aggregate_bool_exp_bool_and.model_rebuild()
 omics_profile_aggregate_bool_exp_bool_or.model_rebuild()

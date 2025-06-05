@@ -1,11 +1,10 @@
-from typing import Optional, TypeVar
+from typing import Optional
 
 import httpx
 import pandas as pd
 import pandera as pa
 from nebelung.types import CoercedDataFrame
 from pandera.typing import Series
-from pydantic import BaseModel
 
 from gumbo_gql_client.gumbo_client import GumboClient as AriadneGumboClient
 
@@ -24,29 +23,30 @@ class GumboClient(AriadneGumboClient):
 
 class ModelsAndChildren(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
-    cell_line_name: Series[pd.StringDtype]
-    stripped_cell_line_name: Series[pd.StringDtype] = pa.Field(nullable=True)
-    model_conditions: Series
+    model_condition_id: Series[pd.StringDtype]
+    omics_profile_id: Series[pd.StringDtype]
+    omics_sequencing_id: Series[pd.StringDtype]
+    datatype: Series[pd.StringDtype]
+    priority: Series[pd.Int64Dtype]
+    model: Series
+    omics_sequencing: Series
 
 
 class AlignmentMetadataLong(CoercedDataFrame):
     model_id: Series[pd.StringDtype]
-    cell_line_name: Series[pd.StringDtype]
-    stripped_cell_line_name: Series[pd.StringDtype]
-    drug: Series[pd.StringDtype] = pa.Field(nullable=True)
-    expansion_team: Series[pd.StringDtype] = pa.Field(nullable=True)
     model_condition_id: Series[pd.StringDtype]
     omics_profile_id: Series[pd.StringDtype]
+    omics_sequencing_id: Series[pd.StringDtype]
     datatype: Series[pd.StringDtype]
-    stranded: Series[pd.BooleanDtype] = pa.Field(nullable=True)
-    omics_sequencing_id: Series[pd.StringDtype] = pa.Field(nullable=True)
-    source: Series[pd.StringDtype] = pa.Field(nullable=True)
-    version: Series[pd.Int64Dtype] = pa.Field(nullable=True)
-    sequencing_alignment_id: Series[pd.Int64Dtype] = pa.Field(nullable=True)
+    priority: Series[pd.Int64Dtype]
+    cell_line_name: Series[pd.StringDtype]
+    stripped_cell_line_name: Series[pd.StringDtype]
+    sequencing_alignment_id: Series[pd.Int64Dtype]
     crai_bai_url: Series[pd.StringDtype] = pa.Field(nullable=True)
-    cram_bam_url: Series[pd.StringDtype] = pa.Field(nullable=True)
+    cram_bam_url: Series[pd.StringDtype]
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sequencing_alignment_source: Series[pd.StringDtype] = pa.Field(nullable=True)
+    sequencing_alignment_source: Series[pd.StringDtype]
+    size: Series[pd.Int64Dtype]
 
 
 class LongReadAlignmentMetadata(CoercedDataFrame):
@@ -64,20 +64,9 @@ class LongReadAlignmentMetadata(CoercedDataFrame):
     reference_genome: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class ShortReadPriorities(CoercedDataFrame):
-    model_id: Series[pd.StringDtype]
-    model_condition_id: Series[pd.StringDtype]
-    sr_omics_profile_id: Series[pd.StringDtype]
-    sr_omics_sequencing_id: Series[pd.StringDtype]
-    sr_sequencing_alignment_id: Series[pd.StringDtype]
-    sr_crai_bai: Series[pd.StringDtype] = pa.Field(nullable=True)
-    sr_cram_bam: Series[pd.StringDtype]
-    version: Series[pd.Int64Dtype]
-    drug_priority: Series[pd.Int64Dtype]
-    stranded_priority: Series[pd.Int64Dtype]
-    source_priority: Series[pd.Int64Dtype]
-    expansion_team_priority: Series[pd.Int64Dtype]
-    sequencing_alignment_source_priority: Series[pd.Int64Dtype]
+class ShortReadTerraSamples(CoercedDataFrame):
+    sample_id: Series[pd.StringDtype]
+    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
 class LongReadTerraSamples(CoercedDataFrame):
@@ -102,6 +91,7 @@ class LongReadTerraSamples(CoercedDataFrame):
     sr_file_format: Series[pd.StringDtype] = pa.Field(
         isin={"CRAM", "BAM"}, nullable=True
     )
+    sr_star_junctions: Series[pd.StringDtype] = pa.Field(nullable=True)
 
     @pa.dataframe_check
     def crai_required(cls, df: pd.DataFrame) -> pd.Series:

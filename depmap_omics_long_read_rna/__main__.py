@@ -138,6 +138,10 @@ def refresh_terra_samples(ctx: typer.Context) -> None:
             workspace_namespace=config["terra"]["workspace_namespace"],
             workspace_name=config["terra"]["workspace_name"],
         ),
+        short_read_terra_workspace=TerraWorkspace(
+            workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+            workspace_name=config["terra"]["short_read_workspace_name"],
+        ),
         gumbo_client=ctx.obj["get_gumbo_client"](),
     )
 
