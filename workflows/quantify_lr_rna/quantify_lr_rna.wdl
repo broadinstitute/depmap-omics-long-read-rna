@@ -11,7 +11,6 @@ workflow quantify_lr_rna {
         File ref_annotation_gtf
         File ref_annotation_db
         File? star_junctions
-        Boolean complete_genedb = true
         Boolean check_canonical = false
         String? prefix 
 
@@ -24,7 +23,6 @@ workflow quantify_lr_rna {
             input_bai = input_bai,
             ref_annotation_db = ref_annotation_db,
             ref_fasta = ref_fasta,
-            complete_genedb = complete_genedb,
             check_canonical = check_canonical,
             prefix = prefix
     }
@@ -32,7 +30,7 @@ workflow quantify_lr_rna {
     call run_sqanti3 {
         input:
             sample_id = sample_id,
-            isoquant_gtf = run_isoquant.extended_annotation, #replace that with this run_isoquant.extended_annotation
+            isoquant_gtf = run_isoquant.extended_annotation, 
             star_junctions = star_junctions,
             ref_annotation_gtf = ref_annotation_gtf,
             ref_fasta = ref_fasta
@@ -61,9 +59,7 @@ task run_isoquant {
 
         String data_type = "pacbio_ccs"
         File ref_fasta
-        #File? ref_fasta_index #not neccessary
         File ref_annotation_db
-        Boolean complete_genedb
         File input_bam
         File input_bai
         String stranded = "forward"
@@ -72,15 +68,11 @@ task run_isoquant {
         Boolean check_canonical
         String transcript_quantification = "unique_only"
         String gene_quantification = "unique_splicing_consistent"
-        #String ?matching_strategy = "precise"
-        #String ?splice_correction_strategy = "default_pacbio"
-        #String ?model_construction_strategy = "default_pacbio"
         String ?report_novel_unspliced = "true"
         String ?report_canonical = "auto"
         String ?polya_requirement = "auto"
         String ?labels
         String? prefix
-        #Boolean debug = false
 
         String docker_image
         String docker_image_hash_or_tag
@@ -91,10 +83,6 @@ task run_isoquant {
         Int additional_disk_gb = 0
     }
 
-    String fl_data_option = if fl_data then "--fl_data" else ""
-    String prefix_option = if defined(prefix) then "--prefix ~{prefix}" else ""
-    String labels_option = if defined(labels) then "--labels ~{labels}" else ""
-    String check_canonical_option = if check_canonical then "--check_canonical" else ""
 
     Int disk_space = (
         ceil(
@@ -111,7 +99,6 @@ task run_isoquant {
         /usr/local/bin/isoquant.py \
             --reference ~{ref_fasta} \
             --genedb ~{ref_annotation_db} \
-            --complete_genedb \
             --count_exons \
             --bam ~{input_bam} \
             --data_type ~{data_type} \
