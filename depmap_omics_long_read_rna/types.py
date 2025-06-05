@@ -131,11 +131,6 @@ class OnboardingSamples(CoercedDataFrame):
     issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
 
 
-class SamplesWithMetadata(OnboardingSamples):
-    model_condition_id: Series[pd.StringDtype]
-    profile_id: Series[pd.StringDtype]
-
-
 class CopiedSampleFiles(CoercedDataFrame):
     sample_id: Series[pd.StringDtype]
     url_kind: Series[pd.StringDtype]
