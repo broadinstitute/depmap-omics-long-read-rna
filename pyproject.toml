@@ -1,41 +1,41 @@
-[tool.poetry]
+[project]
 name = "depmap-omics-long-read-rna"
 version = "0.1.0"
 description = "Depmap Omics Long Read RNA workflows and automation"
 authors = []
+requires-python = "~=3.12"
 readme = "README.md"
+dependencies = [
+    "tqdm>=4.67.1,<5",
+    "functions-framework>=3.8.2,<4",
+    "pydantic>=2.10.6,<3",
+    "numpy>=2.2.4,<3",
+    "pandas>=2.2.3,<3",
+    "pandera[strategies]>=0.22.1,<0.23",
+    "python-baseconv>=1.2.2,<2",
+    "google-cloud-logging>=3.11.4,<4",
+    "python-dotenv>=1.0.1,<2",
+    "nebelung>=2.6.0,<3",
+    "typer>=0.15.2,<0.16",
+    "google-cloud-secret-manager>=2.23.2,<3",
+    "ariadne-codegen>=0.14.0,<0.15",
+    "pd-flatten>=0.1.1,<0.2",
+    "google-cloud-storage>=3.1.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-tqdm = "^4.67.1"
-google-cloud-storage = "^2.19.0"
-functions-framework = "^3.8.2"
-pydantic = "^2.10.6"
-numpy = "^2.2.4"
-pandas = "^2.2.3"
-pandera = {extras = ["strategies"], version = "^0.22.1"}
-python-baseconv = "^1.2.2"
-google-cloud-logging = "^3.11.4"
-python-dotenv = "^1.0.1"
-nebelung = "^2.6.0"
-typer = "^0.15.2"
-google-cloud-secret-manager = "^2.23.2"
-ariadne-codegen = "^0.14.0"
-pd-flatten = "^0.1.1"
+[dependency-groups]
+dev = [
+    "ruff>=0.11.12",
+    "pyright>=1.1.396,<2",
+]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.9.10"
-pyright = "^1.1.396"
-
-
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "public-python"
 url = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/simple/"
-priority = "supplemental"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [

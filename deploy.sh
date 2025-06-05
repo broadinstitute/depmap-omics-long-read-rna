@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-pre-commit run poetry-export --all-files
+uv pip compile pyproject.toml -o requirements.txt --emit-index-url > requirements.txt
 
 gcloud functions deploy depmap-omics-long-read \
   --gen2 \
