@@ -1,10 +1,10 @@
 import base64
 import json
 import logging
+import tomllib
 
 import functions_framework
 import google.cloud.logging
-import tomllib
 from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
@@ -61,6 +61,11 @@ def run(cloud_event: CloudEvent) -> None:
         workspace_name=config["terra"]["workspace_name"],
     )
 
+    short_read_terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["short_read_workspace_namespace"],
+        workspace_name=config["terra"]["short_read_workspace_name"],
+    )
+
     gumbo_client = GumboClient(
         url=hasura_creds["url"],
         username="depmap-omics-long-read-rna",
@@ -95,7 +100,9 @@ def run(cloud_event: CloudEvent) -> None:
         )
 
         refresh_terra_samples(
-            terra_workspace=terra_workspace, gumbo_client=gumbo_client
+            terra_workspace=terra_workspace,
+            short_read_terra_workspace=short_read_terra_workspace,
+            gumbo_client=gumbo_client,
         )
 
         for workflow_name in ["quantify_lr_rna", "call_lr_rna_fusions"]:
@@ -111,7 +118,7 @@ def run(cloud_event: CloudEvent) -> None:
                 dry_run=config["dry_run"],
             )
 
+        logging.info("Done.")
+
     else:
         raise NotImplementedError(f"Invalid command: {ce_data['cmd']}")
-
-    logging.info("Done.")
