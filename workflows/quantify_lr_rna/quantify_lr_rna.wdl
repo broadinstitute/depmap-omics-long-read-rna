@@ -3,7 +3,7 @@ version 1.0
 workflow quantify_lr_rna {
     input {
         String workflow_version = "1.0" # internal semver
-        #String workflow_source_url # populated automatically with URL of this script
+        String workflow_source_url = "" # populated automatically with URL of this script
         String sample_id
         File input_bam
         File input_bai
@@ -11,9 +11,6 @@ workflow quantify_lr_rna {
         File ref_annotation_gtf
         File ref_annotation_db
         File? star_junctions
-        Boolean check_canonical = false
-        String? prefix 
-
     }
 
     call run_isoquant {
@@ -22,15 +19,13 @@ workflow quantify_lr_rna {
             input_bam = input_bam,
             input_bai = input_bai,
             ref_annotation_db = ref_annotation_db,
-            ref_fasta = ref_fasta,
-            check_canonical = check_canonical,
-            prefix = prefix
+            ref_fasta = ref_fasta
     }
 
     call run_sqanti3 {
         input:
             sample_id = sample_id,
-            isoquant_gtf = run_isoquant.extended_annotation, 
+            isoquant_gtf = run_isoquant.extended_annotation,
             star_junctions = star_junctions,
             ref_annotation_gtf = ref_annotation_gtf,
             ref_fasta = ref_fasta
@@ -56,23 +51,18 @@ workflow quantify_lr_rna {
 
 task run_isoquant {
     input {
-
-        String data_type = "pacbio_ccs"
-        File ref_fasta
-        File ref_annotation_db
+        String sample_id
         File input_bam
         File input_bai
+        File ref_annotation_db
+        File ref_fasta
+        String data_type = "pacbio_ccs"
+        String model_construction_strategy = "fl_pacbio"
         String stranded = "forward"
-        Boolean fl_data = true
-        String sample_id
-        Boolean check_canonical
         String transcript_quantification = "unique_only"
         String gene_quantification = "unique_splicing_consistent"
-        String ?report_novel_unspliced = "true"
-        String ?report_canonical = "auto"
-        String ?polya_requirement = "auto"
-        String ?labels
-        String? prefix
+        String report_novel_unspliced = "true"
+        String report_canonical = "auto"
 
         String docker_image
         String docker_image_hash_or_tag
@@ -82,7 +72,6 @@ task run_isoquant {
         Int max_retries = 1
         Int additional_disk_gb = 0
     }
-
 
     Int disk_space = (
         ceil(
@@ -97,21 +86,21 @@ task run_isoquant {
         touch "~{input_bai}" # BAI must be newer than BAM to avoid warning
 
         /usr/local/bin/isoquant.py \
-            --reference ~{ref_fasta} \
-            --genedb ~{ref_annotation_db} \
+            --bam "~{input_bam}" \
             --count_exons \
-            --bam ~{input_bam} \
-            --data_type ~{data_type} \
-            --stranded ~{stranded} \
-            --transcript_quantification ~{transcript_quantification} \
-            --model_construction_strategy fl_pacbio \
-            --gene_quantification ~{gene_quantification} \
-            --report_canonical ~{report_canonical} \
-            --report_novel_unspliced ~{report_novel_unspliced} \
+            --counts_format "both" \
+            --data_type "~{data_type}" \
+            --gene_quantification "~{gene_quantification}" \
+            --genedb "~{ref_annotation_db}" \
+            --labels "~{sample_id}" \
+            --model_construction_strategy "~{model_construction_strategy}" \
+            --prefix "~{sample_id}" \
+            --reference "~{ref_fasta}" \
+            --report_canonical "~{report_canonical}" \
+            --report_novel_unspliced "~{report_novel_unspliced}" \
+            --stranded "~{stranded}" \
             --threads ~{cpu} \
-            --labels ~{sample_id} \
-            --prefix ~{sample_id} \
-            --counts_format both
+            --transcript_quantification "~{transcript_quantification}"
 
         find isoquant_output/~{sample_id}/ -maxdepth 1 -type f -not -name '*.gz' -exec gzip {} +
     >>>
@@ -156,7 +145,7 @@ task run_sqanti3 {
         String docker_image
         String docker_image_hash_or_tag
         Int cpu = 2
-        Int mem_gb = 64
+        Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
@@ -170,10 +159,11 @@ task run_sqanti3 {
     )
 
     command <<<
-
         set -euo pipefail
 
-        zcat "~{isoquant_gtf}" | awk '{ if ($7 != ".") print }' > "~{sample_id}.unzipped.gtf"
+        zcat "~{isoquant_gtf}" \
+            | awk '{ if ($7 != ".") print }' \
+            > "~{sample_id}.unzipped.gtf"
 
         if [ -n "~{star_junctions}" ]; then
             zcat "~{star_junctions}" > junctions.txt
@@ -189,7 +179,6 @@ task run_sqanti3 {
             "~{sample_id}.unzipped.gtf" \
             "~{ref_annotation_gtf}" \
             "~{ref_fasta}"
-
     >>>
 
     output {
