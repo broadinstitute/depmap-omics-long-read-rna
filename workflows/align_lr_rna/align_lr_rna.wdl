@@ -3,7 +3,7 @@ version 1.0
 workflow align_lr_rna {
     input {
         String workflow_version = "1.0" # internal semver
-        String workflow_source_url # populated automatically with URL of this script
+        String workflow_source_url = "" # populated automatically with URL of this script
 
         String sample_id
         File input_bam
