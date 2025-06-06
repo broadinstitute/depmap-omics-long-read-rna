@@ -1,15 +1,15 @@
 {
   "deleted": false,
   "inputs": {
-    "quantify_lr_rna.input_bam": "this.aligned_cram_bam",
     "quantify_lr_rna.input_bai": "this.aligned_crai_bai",
+    "quantify_lr_rna.input_bam": "this.aligned_cram_bam",
+    "quantify_lr_rna.ref_annotation_db": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
+    "quantify_lr_rna.ref_annotation_gtf": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf\"",
+    "quantify_lr_rna.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "quantify_lr_rna.run_isoquant.docker_image": "\"quay.io/biocontainers/isoquant\"",
     "quantify_lr_rna.run_isoquant.docker_image_hash_or_tag": "\":3.6.1--hdfd78af_0\"",
     "quantify_lr_rna.run_sqanti3.docker_image": "\"us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus\"",
     "quantify_lr_rna.run_sqanti3.docker_image_hash_or_tag": "\"@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b\"",
-    "quantify_lr_rna.ref_annotation_gtf": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf\"",
-    "quantify_lr_rna.ref_annotation_db": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
-    "quantify_lr_rna.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "quantify_lr_rna.sample_id": "this.sample_id", 
     "quantify_lr_rna.star_junctions": "this.sr_star_junctions"
   },
@@ -22,20 +22,20 @@
   "namespace": "cds-pipelines",
   "name": "quantify_lr_rna",
   "outputs": {
-    "quantify_lr_rna.transcript_counts": "this.transcript_counts",
-    "quantify_lr_rna.model_counts": "this.model_counts",
-    "quantify_lr_rna.transcript_tpm": "this.transcript_tpm",
-    "quantify_lr_rna.transcript_model_tpm": "this.transcript_model_tpm",
-    "quantify_lr_rna.gene_tpm": "this.gene_tpm",
-    "quantify_lr_rna.gene_counts": "this.gene_counts",
-    "quantify_lr_rna.extended_annotation": "this.extended_annotation",
-    "quantify_lr_rna.sq_junctions": "this.sq_junctions",
-    "quantify_lr_rna.sq_class": "this.sq_class", 
     "quantify_lr_rna.exon_counts": "this.exon_counts",
+    "quantify_lr_rna.extended_annotation": "this.extended_annotation",
+    "quantify_lr_rna.gene_counts": "this.gene_counts",
+    "quantify_lr_rna.gene_tpm": "this.gene_tpm",
     "quantify_lr_rna.intron_counts": "this.intron_counts",
-    "quantify_lr_rna.sq_report_pdf": "this.sq_report_pdf",
+    "quantify_lr_rna.model_counts": "this.model_counts",
     "quantify_lr_rna.read_assignments_tsv": "this.read_assignments_tsv",
-    "quantify_lr_rna.transcript_model_reads": "this.transcript_model_reads"
+    "quantify_lr_rna.sq_class": "this.sq_class",
+    "quantify_lr_rna.sq_junctions": "this.sq_junctions",
+    "quantify_lr_rna.sq_report_pdf": "this.sq_report_pdf",
+    "quantify_lr_rna.transcript_counts": "this.transcript_counts",
+    "quantify_lr_rna.transcript_model_reads": "this.transcript_model_reads",
+    "quantify_lr_rna.transcript_model_tpm": "this.transcript_model_tpm",
+    "quantify_lr_rna.transcript_tpm": "this.transcript_tpm"
   },
   "rootEntityType": "sample"
 }
