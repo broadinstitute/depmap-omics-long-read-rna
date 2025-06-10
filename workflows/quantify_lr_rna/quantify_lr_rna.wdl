@@ -88,7 +88,6 @@ task run_isoquant {
         /usr/local/bin/isoquant.py \
             --bam "~{input_bam}" \
             --count_exons \
-            --counts_format "both" \
             --data_type "~{data_type}" \
             --gene_quantification "~{gene_quantification}" \
             --genedb "~{ref_annotation_db}" \
@@ -107,9 +106,9 @@ task run_isoquant {
 
     output {
         File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"
-        File model_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_counts.tsv.gz"
+        File model_counts = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_counts.tsv.gz"
         File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
-        File transcript_model_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_tpm.tsv.gz"
+        File transcript_model_tpm = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_tpm.tsv.gz"
         File gene_tpm = "isoquant_output/~{sample_id}/~{sample_id}.gene_tpm.tsv.gz"
         File gene_counts = "isoquant_output/~{sample_id}/~{sample_id}.gene_counts.tsv.gz"
         File extended_annotation = "isoquant_output/~{sample_id}/~{sample_id}.extended_annotation.gtf.gz"
