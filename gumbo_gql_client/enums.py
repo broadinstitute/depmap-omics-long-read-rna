@@ -54,6 +54,54 @@ class genomic_fingerprint_comparison_select_column(str, Enum):
     score = "score"
 
 
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_avg_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_corr_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_covar_samp_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_max_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_min_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_stddev_samp_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_sum_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
+class genomic_fingerprint_comparison_select_column_genomic_fingerprint_comparison_aggregate_bool_exp_var_samp_arguments_columns(
+    str, Enum
+):
+    score = "score"
+
+
 class genomic_fingerprint_comparison_update_column(str, Enum):
     created_at = "created_at"
     genomic_fingerprint_id1 = "genomic_fingerprint_id1"
@@ -266,6 +314,7 @@ class model_select_column(str, Enum):
     model_data_sharing_comments = "model_data_sharing_comments"
     model_derivation_material = "model_derivation_material"
     model_id = "model_id"
+    model_id_alias = "model_id_alias"
     model_subtype_features = "model_subtype_features"
     model_transfer = "model_transfer"
     model_transfer_comments = "model_transfer_comments"
@@ -346,6 +395,7 @@ class model_update_column(str, Enum):
     model_data_sharing_comments = "model_data_sharing_comments"
     model_derivation_material = "model_derivation_material"
     model_id = "model_id"
+    model_id_alias = "model_id_alias"
     model_subtype_features = "model_subtype_features"
     model_transfer = "model_transfer"
     model_transfer_comments = "model_transfer_comments"
@@ -388,6 +438,16 @@ class model_update_column(str, Enum):
     treatment_details = "treatment_details"
     treatment_status = "treatment_status"
     wtsi_master_cell_id = "wtsi_master_cell_id"
+
+
+class omics_mapping_select_column(str, Enum):
+    datatype = "datatype"
+    id = "id"
+    model_condition_id = "model_condition_id"
+    model_id = "model_id"
+    omics_profile_id = "omics_profile_id"
+    omics_sequencing_id = "omics_sequencing_id"
+    priority = "priority"
 
 
 class omics_profile_constraint(str, Enum):
