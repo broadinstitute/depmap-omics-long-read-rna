@@ -4,17 +4,16 @@ set -euo pipefail
 
 uv pip compile pyproject.toml -o requirements.txt --emit-index-url > requirements.txt
 
-gcloud functions deploy depmap-omics-long-read \
+gcloud functions deploy depmap-omics-long-read-rna \
   --gen2 \
-  --runtime=python312 \
-  --region=us-central1 \
+  --runtime="python313" \
+  --region="us-central1" \
   --source=. \
-  --run-service-account=dogspa-runner@depmap-omics.iam.gserviceaccount.com \
-  --entry-point=run \
-  --trigger-topic=run-depmap-omics-long-read \
-  --set-secrets=/etc/secrets:/env=projects/201811582504/secrets/dogspa-secrets/versions/latest \
+  --run-service-account="omics-pipeline-runner@depmap-omics.iam.gserviceaccount.com" \
+  --entry-point="run" \
+  --trigger-topic="run-depmap-omics-long-read-rna" \
   --timeout=540 \
-  --memory=4GB \
-  --cpu=4 \
+  --memory="4GB" \
+  --cpu=1 \
   --max-instances 1 \
   --concurrency 1

@@ -19,7 +19,7 @@ blinker==1.9.0
     # via flask
 cachetools==5.5.2
     # via google-auth
-certifi==2025.4.26
+certifi==2025.6.15
     # via
     #   httpcore
     #   httpx
@@ -39,7 +39,7 @@ click==8.1.8
     #   typer
 cloudevents==1.12.0
     # via functions-framework
-cryptography==45.0.3
+cryptography==45.0.4
     # via pyjwt
 deprecated==1.2.18
     # via pygithub
@@ -51,7 +51,7 @@ flask==3.1.1
     # via functions-framework
 functions-framework==3.8.3
     # via depmap-omics-long-read-rna (pyproject.toml)
-google-api-core==2.25.0
+google-api-core==2.25.1
     # via
     #   google-cloud-appengine-logging
     #   google-cloud-core
@@ -67,7 +67,7 @@ google-auth==2.40.3
     #   google-cloud-logging
     #   google-cloud-secret-manager
     #   google-cloud-storage
-google-cloud-appengine-logging==1.6.1
+google-cloud-appengine-logging==1.6.2
     # via google-cloud-logging
 google-cloud-audit-log==0.3.2
     # via google-cloud-logging
@@ -77,9 +77,9 @@ google-cloud-core==2.4.3
     #   google-cloud-storage
 google-cloud-logging==3.12.1
     # via depmap-omics-long-read-rna (pyproject.toml)
-google-cloud-secret-manager==2.23.3
+google-cloud-secret-manager==2.24.0
     # via depmap-omics-long-read-rna (pyproject.toml)
-google-cloud-storage==2.19.0
+google-cloud-storage==3.1.1
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   firecloud-api-cds
@@ -101,13 +101,13 @@ grpc-google-iam-v1==0.14.2
     # via
     #   google-cloud-logging
     #   google-cloud-secret-manager
-grpcio==1.72.1
+grpcio==1.73.1
     # via
     #   google-api-core
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
-grpcio-status==1.72.1
+grpcio-status==1.73.1
     # via google-api-core
 gunicorn==23.0.0
     # via functions-framework
@@ -117,7 +117,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via ariadne-codegen
-hypothesis==6.135.0
+hypothesis==6.135.17
     # via pandera
 idna==3.10
     # via
@@ -145,14 +145,14 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   typing-inspect
-nebelung==2.6.0
+nebelung==2.8.1
     # via depmap-omics-long-read-rna (pyproject.toml)
-numpy==2.2.6
+numpy==2.3.1
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   pandas
     #   pandera
-opentelemetry-api==1.34.0
+opentelemetry-api==1.34.1
     # via google-cloud-logging
 packaging==25.0
     # via
@@ -172,7 +172,7 @@ pandera==0.22.1
     #   nebelung
 pathspec==0.12.1
     # via black
-pd-flatten==0.1.1
+pd-flatten==0.1.2
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   nebelung
@@ -203,7 +203,7 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.11.5
+pydantic==2.11.7
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   ariadne-codegen
@@ -211,13 +211,13 @@ pydantic==2.11.5
     #   pandera
 pydantic-core==2.33.2
     # via pydantic
-pydot==4.0.0
+pydot==4.0.1
     # via firecloud-api-cds
-pyflakes==3.3.2
+pyflakes==3.4.0
     # via autoflake
 pygithub==2.6.1
     # via nebelung
-pygments==2.19.1
+pygments==2.19.2
     # via rich
 pyjwt==2.10.1
     # via pygithub
@@ -229,11 +229,11 @@ python-baseconv==1.2.2
     # via depmap-omics-long-read-rna (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via pandas
-python-dotenv==1.1.0
+python-dotenv==1.1.1
     # via depmap-omics-long-read-rna (pyproject.toml)
 pytz==2025.2
     # via pandas
-requests==2.32.3
+requests==2.32.4
     # via
     #   google-api-core
     #   google-cloud-storage
@@ -256,13 +256,12 @@ toml==0.10.2
     # via ariadne-codegen
 tqdm==4.67.1
     # via depmap-omics-long-read-rna (pyproject.toml)
-typeguard==4.4.3
+typeguard==4.4.4
     # via pandera
 typer==0.15.4
     # via depmap-omics-long-read-rna (pyproject.toml)
 typing-extensions==4.14.0
     # via
-    #   anyio
     #   opentelemetry-api
     #   pydantic
     #   pydantic-core
@@ -277,7 +276,7 @@ typing-inspection==0.4.1
     # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   pygithub
     #   requests
@@ -289,5 +288,5 @@ werkzeug==3.1.3
     #   functions-framework
 wrapt==1.17.2
     # via deprecated
-zipp==3.22.0
+zipp==3.23.0
     # via importlib-metadata

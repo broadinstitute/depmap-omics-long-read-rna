@@ -23,7 +23,6 @@ from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     get_secret_from_sm,
     make_workflow_from_config,
-    submit_delta_job,
 )
 
 pd.set_option("display.max_columns", 30)
@@ -84,11 +83,13 @@ def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
         terra_workspace = TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         )
     else:
         terra_workspace = TerraWorkspace(
             workspace_namespace=config["terra"]["workspace_namespace"],
             workspace_name=config["terra"]["workspace_name"],
+            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         )
 
     # need a GitHub PAT for persisting WDL in gists
@@ -112,7 +113,6 @@ def upsert_delivery_bams() -> None:
         terra_workspace=TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         ),
         dry_run=config["dry_run"],
     )
@@ -124,7 +124,6 @@ def onboard_aligned_bams(ctx: typer.Context) -> None:
         terra_workspace=TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
         ),
         gumbo_client=ctx.obj["get_gumbo_client"](),
         dry_run=config["dry_run"],
@@ -176,8 +175,7 @@ def delta_job(
     if output_col is not None:
         output_cols_set = set(output_col)
 
-    submit_delta_job(
-        terra_workspace=terra_workspace,
+    terra_workspace.submit_delta_job(
         terra_workflow=make_workflow_from_config(config, workflow_name),
         entity_type=entity_type,
         entity_set_type=entity_set_type,
@@ -187,6 +185,7 @@ def delta_job(
         resubmit_n_times=10,
         input_cols=input_cols_set,
         output_cols=output_cols_set,
+        max_n_entities=1,
     )
 
 

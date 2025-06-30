@@ -9,14 +9,13 @@ from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 from nebelung.terra_workspace import TerraWorkspace
 
-from depmap_omics_long_read_rna.types import GumboClient
+from depmap_omics_long_read_rna.types import DeltaJob, GumboClient
 from depmap_omics_long_read_rna.utils.aligned_bams import onboard_aligned_bams
 from depmap_omics_long_read_rna.utils.delivery_bams import upsert_delivery_bams
 from depmap_omics_long_read_rna.utils.metadata import refresh_terra_samples
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     make_workflow_from_config,
-    submit_delta_job,
 )
 
 
@@ -72,7 +71,7 @@ def run(cloud_event: CloudEvent) -> None:
         headers={"X-Hasura-Admin-Secret": hasura_creds["password"]},
     )
 
-    if ce_data["cmd"] == "do-all":
+    if ce_data["cmd"] == "upsert-delivery-bams":
         upsert_delivery_bams(
             gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
             gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
@@ -80,45 +79,49 @@ def run(cloud_event: CloudEvent) -> None:
             terra_workspace=terra_delivery_workspace,
             dry_run=config["onboarding"]["dry_run"],
         )
-
+    elif ce_data["cmd"] == "onboard-aligned-bams":
         onboard_aligned_bams(
             terra_workspace=terra_delivery_workspace,
             gumbo_client=gumbo_client,
             dry_run=config["onboarding"]["dry_run"],
         )
-
-        submit_delta_job(
-            terra_workspace=terra_delivery_workspace,
-            terra_workflow=make_workflow_from_config(
-                config, workflow_name="align_lr_rna"
-            ),
-            entity_type="sample",
-            entity_set_type="sample_set",
-            entity_id_col="sample_id",
-            expression="this.samples",
-            dry_run=config["dry_run"],
-        )
-
+    elif ce_data["cmd"] == "refresh-terra-samples":
         refresh_terra_samples(
             terra_workspace=terra_workspace,
             short_read_terra_workspace=short_read_terra_workspace,
             gumbo_client=gumbo_client,
         )
+    elif ce_data["cmd"] == "submit-delta-job":
+        for x in ce_data["delta_jobs"]:
+            # iterate over workflow names and their delta job submission attrs
+            dj = DeltaJob.model_validate(x)
 
-        for workflow_name in ["quantify_lr_rna", "call_lr_rna_fusions"]:
-            submit_delta_job(
-                terra_workspace=terra_workspace,
-                terra_workflow=make_workflow_from_config(
-                    config, workflow_name=workflow_name
-                ),
-                entity_type="sample",
-                entity_set_type="sample_set",
-                entity_id_col="sample_id",
-                expression="this.samples",
-                dry_run=config["dry_run"],
+            dj_terra_workspace = (
+                terra_delivery_workspace
+                if dj.workflow_name == "align_lr_rna"
+                else terra_workspace
             )
 
-        logging.info("Done.")
+            dj_terra_workspace.submit_delta_job(
+                terra_workflow=make_workflow_from_config(
+                    config, workflow_name=dj.workflow_name
+                ),
+                entity_type=dj.entity_type,
+                entity_set_type=dj.entity_set_type,
+                entity_id_col=dj.entity_id_col,
+                expression=dj.expression,
+                input_cols=dj.input_cols,
+                output_cols=dj.output_cols,
+                resubmit_n_times=dj.resubmit_n_times,
+                force_retry=dj.force_retry,
+                use_callcache=dj.use_callcache,
+                use_reference_disks=dj.use_reference_disks,
+                memory_retry_multiplier=dj.memory_retry_multiplier,
+                max_n_entities=dj.max_n_entities,
+                dry_run=dj.dry_run,
+            )
 
     else:
         raise NotImplementedError(f"Invalid command: {ce_data['cmd']}")
+
+    logging.info("Done.")

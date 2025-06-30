@@ -5,6 +5,7 @@ import pandas as pd
 import pandera as pa
 from nebelung.types import CoercedDataFrame
 from pandera.typing import Series
+from pydantic import BaseModel
 
 from gumbo_gql_client.gumbo_client import GumboClient as AriadneGumboClient
 
@@ -164,3 +165,20 @@ class NewSequencingAlignments(CoercedDataFrame):
     reference_genome: Series[pd.StringDtype]
     crc32c_hash: Series[pd.StringDtype] = pa.Field(unique=True)
     size: Series[pd.Int64Dtype] = pa.Field(unique=True)
+
+
+class DeltaJob(BaseModel):
+    workflow_name: str
+    entity_type: str
+    entity_set_type: str
+    entity_id_col: str
+    expression: str
+    input_cols: set[str] | None = None
+    output_cols: set[str] | None = None
+    resubmit_n_times: int = 0
+    force_retry: bool = False
+    use_callcache: bool = True
+    use_reference_disks: bool = False
+    memory_retry_multiplier: float = 1.5
+    max_n_entities: int | None = None
+    dry_run: bool = False

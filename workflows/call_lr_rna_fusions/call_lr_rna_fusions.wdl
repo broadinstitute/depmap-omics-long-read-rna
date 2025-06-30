@@ -2,9 +2,6 @@ version 1.0
 
 workflow call_lr_rna_fusions {
     input {
-        String workflow_version = "1.0" # internal semver
-        String workflow_source_url = "" # populated automatically with URL of this script
-
         String sample_id
         String sr_cram_or_bam
         File sr_cram_bam
