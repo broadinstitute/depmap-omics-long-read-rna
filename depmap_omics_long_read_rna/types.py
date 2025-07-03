@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 import httpx
 import pandas as pd
@@ -179,6 +179,10 @@ class DeltaJob(BaseModel):
     force_retry: bool = False
     use_callcache: bool = True
     use_reference_disks: bool = False
+    delete_intermediate_output_files: bool = False
     memory_retry_multiplier: float = 1.0
+    per_workflow_cost_cap: float | None = None
+    workflow_failure_mode: Literal["NoNewCalls", "ContinueWhilePossible"] = "NoNewCalls"
+    user_comment: str | None = None
     max_n_entities: int | None = None
     dry_run: bool = False

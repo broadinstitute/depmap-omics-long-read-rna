@@ -145,7 +145,7 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   typing-inspect
-nebelung==2.9.2
+nebelung==2.9.3
     # via depmap-omics-long-read-rna (pyproject.toml)
 numpy==2.3.1
     # via

@@ -79,46 +79,59 @@ def run(cloud_event: CloudEvent) -> None:
             terra_workspace=terra_delivery_workspace,
             dry_run=config["onboarding"]["dry_run"],
         )
+
     elif ce_data["cmd"] == "onboard-aligned-bams":
         onboard_aligned_bams(
             terra_workspace=terra_delivery_workspace,
             gumbo_client=gumbo_client,
             dry_run=config["onboarding"]["dry_run"],
         )
+
     elif ce_data["cmd"] == "refresh-terra-samples":
         refresh_terra_samples(
             terra_workspace=terra_workspace,
             short_read_terra_workspace=short_read_terra_workspace,
             gumbo_client=gumbo_client,
         )
+
     elif ce_data["cmd"] == "submit-delta-job":
+        failed_submissions = []
+
         for x in ce_data["delta_jobs"]:
             # iterate over workflow names and their delta job submission attrs
             dj = DeltaJob.model_validate(x)
 
-            dj_terra_workspace = (
-                terra_delivery_workspace
-                if dj.workflow_name == "align_lr_rna"
-                else terra_workspace
-            )
+            try:
+                terra_workspace.submit_delta_job(
+                    terra_workflow=make_workflow_from_config(
+                        config, workflow_name=dj.workflow_name
+                    ),
+                    entity_type=dj.entity_type,
+                    entity_set_type=dj.entity_set_type,
+                    entity_id_col=dj.entity_id_col,
+                    expression=dj.expression,
+                    input_cols=dj.input_cols,
+                    output_cols=dj.output_cols,
+                    resubmit_n_times=dj.resubmit_n_times,
+                    force_retry=dj.force_retry,
+                    use_callcache=dj.use_callcache,
+                    use_reference_disks=dj.use_reference_disks,
+                    delete_intermediate_output_files=dj.delete_intermediate_output_files,
+                    memory_retry_multiplier=dj.memory_retry_multiplier,
+                    per_workflow_cost_cap=dj.per_workflow_cost_cap,
+                    workflow_failure_mode=dj.workflow_failure_mode,
+                    user_comment=dj.user_comment,
+                    max_n_entities=dj.max_n_entities,
+                    dry_run=dj.dry_run,
+                )
+            except Exception as e:
+                logging.error(f"Couldn't submit delta job: {e}")
+                failed_submissions.append(dj.workflow_name)
 
-            dj_terra_workspace.submit_delta_job(
-                terra_workflow=make_workflow_from_config(
-                    config, workflow_name=dj.workflow_name
-                ),
-                entity_type=dj.entity_type,
-                entity_set_type=dj.entity_set_type,
-                entity_id_col=dj.entity_id_col,
-                expression=dj.expression,
-                input_cols=dj.input_cols,
-                output_cols=dj.output_cols,
-                resubmit_n_times=dj.resubmit_n_times,
-                force_retry=dj.force_retry,
-                use_callcache=dj.use_callcache,
-                use_reference_disks=dj.use_reference_disks,
-                memory_retry_multiplier=dj.memory_retry_multiplier,
-                max_n_entities=dj.max_n_entities,
-                dry_run=dj.dry_run,
+        if len(failed_submissions) > 0:
+            raise Exception(
+                "Couldn't submit delta jobs for workflows: "
+                + ", ".join(failed_submissions)
             )
 
     else:
