@@ -229,7 +229,7 @@ terra_workspace = TerraWorkspace("broad-firecloud-ccle", "Long_Read_Omics")
 existing_samples = terra_workspace.get_entities("sample")
 
 m = bams.merge(
-    existing_samples, on="omics_profile_id", how="left", suffixes=("_old", "")
+    existing_samples, on="omics_profile_id", how="left", suffixes=("", "_old")
 )
 
 m["ratio"] = m["delivery_bam_size"] / m["delivery_bam_size_old"]
