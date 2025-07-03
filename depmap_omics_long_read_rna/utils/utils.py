@@ -70,18 +70,6 @@ def model_to_df(
     return type_data_frame(df, pandera_schema, remove_unknown_cols)
 
 
-def df_to_model(df: pd.DataFrame, pydantic_schema: Type[BaseModel]) -> List[BaseModel]:
-    """
-    Convert a Pandas data frame to a Pydantic model.
-
-    :param df: a data frame
-    :param pydantic_schema: the Pydantic schema to cast the data frame to
-    :return: a Pydantic model
-    """
-
-    return [pydantic_schema(**x) for x in df.to_dict(orient="records")]
-
-
 def uuid_to_base62(x: str) -> str:
     """
     Treat a UUID as a hexadecimal number and convert it to base62 (digits+uppercase and
@@ -112,7 +100,9 @@ def assign_hashed_uuids(
 
     df[uuid_col_name] = (
         df[sorted(subset)]
-        .apply(lambda x: uuid.uuid3(uuid.UUID(uuid_namespace), x.to_json()), axis=1)
+        .apply(
+            lambda x: str(uuid.uuid3(uuid.UUID(uuid_namespace), x.to_json())), axis=1
+        )
         .astype("string")
     )
 

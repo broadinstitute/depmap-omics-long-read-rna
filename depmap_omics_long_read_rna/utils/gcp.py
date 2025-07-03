@@ -67,16 +67,13 @@ def list_blobs(
         )
 
     if len(blobs) == 0:
-        return TypedDataFrame[ObjectMetadata](
-            pd.DataFrame(ObjectMetadata.example(size=0))
-        )
+        return type_data_frame(pd.DataFrame([]), ObjectMetadata)
 
     df = pd.DataFrame(blobs)
+    df = df.astype({"gcs_obj_updated_at": "datetime64[ns, UTC]"})
 
     # drop time component
-    df["gcs_obj_updated_at"] = (
-        df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
-    )
+    df["gcs_obj_updated_at"] = df["gcs_obj_updated_at"].dt.date.astype("str")
 
     return type_data_frame(df, ObjectMetadata)
 
@@ -109,12 +106,10 @@ def get_objects_metadata(urls: Iterable[str]) -> TypedDataFrame[ObjectMetadata]:
 
     # batching without raising exceptions makes all columns NA if a file was missing
     df = df.dropna()
-    df = df.astype({"size": "Int64", "gcs_obj_updated_at": "datetime64[ns, UTC]"})
+    df = df.astype({"gcs_obj_updated_at": "datetime64[ns, UTC]"})
 
     # drop time component
-    df["gcs_obj_updated_at"] = (
-        df["gcs_obj_updated_at"].astype("datetime64[ns, UTC]").dt.date.astype("str")
-    )
+    df["gcs_obj_updated_at"] = df["gcs_obj_updated_at"].dt.date.astype("str")
 
     return type_data_frame(df, ObjectMetadata)
 
@@ -162,7 +157,7 @@ def copy_to_cclebams(
 
     # can't use rewrite in a batch context, so do plain iteration
     for r in tqdm(sample_files.itertuples(index=False), total=len(sample_files)):
-        url = r[sample_files.columns.get_loc("url")]
+        url = r.url
 
         try:
             # construct the source blob
@@ -170,15 +165,7 @@ def copy_to_cclebams(
 
             # construct the destination blob (named by sample ID)
             dest_file_ext = pathlib.Path(str(src_blob.name)).suffix
-            dest_obj_key = (
-                "/".join(
-                    [
-                        prefix,
-                        str(r[sample_files.columns.get_loc("sample_id")]),
-                    ]
-                )
-                + dest_file_ext
-            )
+            dest_obj_key = "/".join([prefix, str(r.sample_id)]) + dest_file_ext
             dest_blob = storage.Blob(dest_obj_key, bucket=dest_bucket)
 
             # GCS rewrite operation is instantaneous if location and storage class match
