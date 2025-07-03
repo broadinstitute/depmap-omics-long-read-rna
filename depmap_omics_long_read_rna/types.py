@@ -179,6 +179,6 @@ class DeltaJob(BaseModel):
     force_retry: bool = False
     use_callcache: bool = True
     use_reference_disks: bool = False
-    memory_retry_multiplier: float = 1.5
+    memory_retry_multiplier: float = 1.0
     max_n_entities: int | None = None
     dry_run: bool = False

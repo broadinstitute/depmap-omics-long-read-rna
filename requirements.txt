@@ -39,7 +39,7 @@ click==8.1.8
     #   typer
 cloudevents==1.12.0
     # via functions-framework
-cryptography==45.0.4
+cryptography==45.0.5
     # via pyjwt
 deprecated==1.2.18
     # via pygithub
@@ -117,7 +117,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via ariadne-codegen
-hypothesis==6.135.17
+hypothesis==6.135.24
     # via pandera
 idna==3.10
     # via
@@ -145,7 +145,7 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   typing-inspect
-nebelung==2.8.1
+nebelung==2.9.2
     # via depmap-omics-long-read-rna (pyproject.toml)
 numpy==2.3.1
     # via
