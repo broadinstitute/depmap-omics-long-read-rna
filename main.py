@@ -101,8 +101,14 @@ def run(cloud_event: CloudEvent) -> None:
             # iterate over workflow names and their delta job submission attrs
             dj = DeltaJob.model_validate(x)
 
+            dj_tw = (
+                terra_delivery_workspace
+                if dj.workflow_name == "align_lr_rna"
+                else terra_workspace
+            )
+
             try:
-                terra_workspace.submit_delta_job(
+                dj_tw.submit_delta_job(
                     terra_workflow=make_workflow_from_config(
                         config, workflow_name=dj.workflow_name
                     ),

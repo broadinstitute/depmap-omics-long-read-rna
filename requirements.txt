@@ -79,7 +79,7 @@ google-cloud-logging==3.12.1
     # via depmap-omics-long-read-rna (pyproject.toml)
 google-cloud-secret-manager==2.24.0
     # via depmap-omics-long-read-rna (pyproject.toml)
-google-cloud-storage==3.1.1
+google-cloud-storage==3.2.0
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   firecloud-api-cds
@@ -117,7 +117,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via ariadne-codegen
-hypothesis==6.135.24
+hypothesis==6.135.26
     # via pandera
 idna==3.10
     # via
@@ -145,7 +145,7 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   typing-inspect
-nebelung==2.9.3
+nebelung==2.9.4
     # via depmap-omics-long-read-rna (pyproject.toml)
 numpy==2.3.1
     # via
@@ -160,7 +160,7 @@ packaging==25.0
     #   deprecation
     #   gunicorn
     #   pandera
-pandas==2.3.0
+pandas==2.3.1
     # via
     #   depmap-omics-long-read-rna (pyproject.toml)
     #   nebelung
@@ -260,7 +260,7 @@ typeguard==4.4.4
     # via pandera
 typer==0.15.4
     # via depmap-omics-long-read-rna (pyproject.toml)
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   opentelemetry-api
     #   pydantic
