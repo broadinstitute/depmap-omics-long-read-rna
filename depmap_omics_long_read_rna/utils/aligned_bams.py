@@ -1,5 +1,4 @@
 import logging
-from functools import partial
 
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import type_data_frame

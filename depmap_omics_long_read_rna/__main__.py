@@ -9,16 +9,10 @@ import pandas as pd
 import typer
 from nebelung.terra_workspace import TerraWorkspace
 
+import depmap_omics_long_read_rna.utils.aligned_bams as aligned_bams
+import depmap_omics_long_read_rna.utils.delivery_bams as delivery_bams
+import depmap_omics_long_read_rna.utils.metadata as metadata
 from depmap_omics_long_read_rna.types import GumboClient
-from depmap_omics_long_read_rna.utils.aligned_bams import (
-    onboard_aligned_bams as do_onboard_aligned_bams,
-)
-from depmap_omics_long_read_rna.utils.delivery_bams import (
-    upsert_delivery_bams as do_upsert_delivery_bams,
-)
-from depmap_omics_long_read_rna.utils.metadata import (
-    refresh_terra_samples as do_refresh_terra_samples,
-)
 from depmap_omics_long_read_rna.utils.utils import (
     get_hasura_creds,
     get_secret_from_sm,
@@ -106,7 +100,7 @@ def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
 
 @app.command()
 def upsert_delivery_bams() -> None:
-    do_upsert_delivery_bams(
+    delivery_bams.upsert_delivery_bams(
         gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
         gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
         uuid_namespace=config["uuid_namespace"],
@@ -120,7 +114,7 @@ def upsert_delivery_bams() -> None:
 
 @app.command()
 def onboard_aligned_bams(ctx: typer.Context) -> None:
-    do_onboard_aligned_bams(
+    aligned_bams.onboard_aligned_bams(
         terra_workspace=TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],
             workspace_name=config["terra"]["delivery_workspace_name"],
@@ -132,7 +126,7 @@ def onboard_aligned_bams(ctx: typer.Context) -> None:
 
 @app.command()
 def refresh_terra_samples(ctx: typer.Context) -> None:
-    do_refresh_terra_samples(
+    metadata.refresh_terra_samples(
         terra_workspace=TerraWorkspace(
             workspace_namespace=config["terra"]["workspace_namespace"],
             workspace_name=config["terra"]["workspace_name"],
