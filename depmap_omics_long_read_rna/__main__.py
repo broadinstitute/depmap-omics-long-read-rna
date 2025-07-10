@@ -73,18 +73,11 @@ def main(
 
 @app.command()
 def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
-    if workflow_name == "align_lr_rna":
-        terra_workspace = TerraWorkspace(
-            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
-            workspace_name=config["terra"]["delivery_workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
-        )
-    else:
-        terra_workspace = TerraWorkspace(
-            workspace_namespace=config["terra"]["workspace_namespace"],
-            workspace_name=config["terra"]["workspace_name"],
-            owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
-        )
+    terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["workspace_namespace"],
+        workspace_name=config["terra"]["workspace_name"],
+        owners=json.loads(os.environ["FIRECLOUD_OWNERS"]),
+    )
 
     # need a GitHub PAT for persisting WDL in gists
     github_pat = get_secret_from_sm(
@@ -116,8 +109,8 @@ def upsert_delivery_bams() -> None:
 def onboard_aligned_bams(ctx: typer.Context) -> None:
     aligned_bams.onboard_aligned_bams(
         terra_workspace=TerraWorkspace(
-            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
-            workspace_name=config["terra"]["delivery_workspace_name"],
+            workspace_namespace=config["terra"]["workspace_namespace"],
+            workspace_name=config["terra"]["workspace_name"],
         ),
         gumbo_client=ctx.obj["get_gumbo_client"](),
         dry_run=config["dry_run"],
@@ -149,16 +142,10 @@ def delta_job(
     input_col: Annotated[list[str] | None, typer.Option()] = None,
     output_col: Annotated[list[str] | None, typer.Option()] = None,
 ) -> None:
-    if workflow_name == "align_lr_rna":
-        terra_workspace = TerraWorkspace(
-            workspace_namespace=config["terra"]["delivery_workspace_namespace"],
-            workspace_name=config["terra"]["delivery_workspace_name"],
-        )
-    else:
-        terra_workspace = TerraWorkspace(
-            workspace_namespace=config["terra"]["workspace_namespace"],
-            workspace_name=config["terra"]["workspace_name"],
-        )
+    terra_workspace = TerraWorkspace(
+        workspace_namespace=config["terra"]["workspace_namespace"],
+        workspace_name=config["terra"]["workspace_name"],
+    )
 
     input_cols_set = None
     output_cols_set = None
