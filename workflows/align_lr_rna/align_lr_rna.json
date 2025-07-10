@@ -17,8 +17,8 @@
   "namespace": "cds-pipelines",
   "name": "align_lr_rna",
   "outputs": {
-    "align_lr_rna.aligned_bam": "this.aligned_bam",
-    "align_lr_rna.aligned_bai": "this.aligned_bai"
+    "align_lr_rna.aligned_bam": "this.aligned_cram_bam",
+    "align_lr_rna.aligned_bai": "this.aligned_crai_bai"
   },
   "rootEntityType": "sample"
 }

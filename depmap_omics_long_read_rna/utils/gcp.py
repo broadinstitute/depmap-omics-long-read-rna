@@ -139,7 +139,7 @@ def copy_to_cclebams(
     # collect all CRAM/BAM/CRAI/BAI files to copy
     sample_files = samples.melt(
         id_vars="sample_id",
-        value_vars=["aligned_bai", "aligned_bam"],
+        value_vars=["aligned_crai_bai", "aligned_cram_bam"],
         var_name="url_kind",
         value_name="url",
     ).dropna()

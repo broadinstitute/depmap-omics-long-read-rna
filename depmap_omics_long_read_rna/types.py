@@ -111,25 +111,13 @@ class DeliveryBams(CoercedDataFrame):
     delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     delivery_bam_updated_at: Series[pd.StringDtype]
-    aligned_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    aligned_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
+    aligned_cram_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
+    aligned_crai_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
 class SamplesWithCDSIDs(DeliveryBams):
     cds_id: Series[pd.StringDtype] = pa.Field(unique=True)
-
-
-class OnboardingSamples(CoercedDataFrame):
-    sequencing_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    delivery_bam: Series[pd.StringDtype] = pa.Field(unique=True)
-    delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
-    delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
-    delivery_bam_updated_at: Series[pd.StringDtype]
-    aligned_bam: Series[pd.StringDtype] = pa.Field(unique=True)
-    aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
-    model_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    issue: Series  # storing sets in this column, so it's a generic Pandas object dtype
 
 
 class CopiedSampleFiles(CoercedDataFrame):
@@ -148,8 +136,8 @@ class ExistingAlignments(CoercedDataFrame):
 
 class AlignedSamples(CoercedDataFrame):
     sample_id: Series[pd.StringDtype] = pa.Field(unique=True)
-    aligned_bam: Series[pd.StringDtype] = pa.Field(unique=True)
-    aligned_bai: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_cram_bam: Series[pd.StringDtype] = pa.Field(unique=True)
+    aligned_crai_bai: Series[pd.StringDtype] = pa.Field(unique=True)
 
 
 class AlignedSamplesWithObjectMetadata(AlignedSamples):

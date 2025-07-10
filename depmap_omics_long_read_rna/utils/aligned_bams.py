@@ -31,7 +31,9 @@ def onboard_aligned_bams(
 
     # get the alignment files from Terra
     samples = terra_workspace.get_entities("sample")
-    samples = samples.loc[:, ["sample_id", "aligned_bam", "aligned_bai"]].dropna()
+    samples = samples.loc[
+        :, ["sample_id", "aligned_cram_bam", "aligned_crai_bai"]
+    ].dropna()
 
     # get sequencing alignment records for long read omics_sequencings from Gumbo
     models = model_to_df(
@@ -71,17 +73,17 @@ def onboard_aligned_bams(
         return
 
     # get GCS blob metadata for the BAMs
-    objects_metadata = get_objects_metadata(samples["aligned_bam"])
+    objects_metadata = get_objects_metadata(samples["aligned_cram_bam"])
 
     samples = type_data_frame(
         samples.merge(
-            objects_metadata, how="left", left_on="aligned_bam", right_on="url"
+            objects_metadata, how="left", left_on="aligned_cram_bam", right_on="url"
         ).drop(columns=["url", "gcs_obj_updated_at"]),
         AlignedSamplesWithObjectMetadata,
     )
 
     # confirm again using file size that these BAMs don't already exist as Gumbo records
-    assert ~bool(samples["size"].isin(existing_alignments["size"]).any())
+    assert not bool(samples["size"].isin(existing_alignments["size"]).any())
 
     # copy BAMs and BAIs to our bucket
     sample_files = copy_to_cclebams(
@@ -115,7 +117,7 @@ def update_sample_file_urls(
 
     samples_updated = samples.copy()
 
-    for c in ["aligned_bai", "aligned_bam"]:
+    for c in ["aligned_crai_bai", "aligned_cram_bam"]:
         sample_file_urls = sample_files.loc[sample_files["copied"], ["url", "new_url"]]
         samples_updated = samples_updated.merge(
             sample_file_urls, how="left", left_on=c, right_on="url"
@@ -143,8 +145,8 @@ def persist_sequencing_alignments(
         columns={
             "sample_id": "omics_sequencing_id",
             "crc32c": "crc32c_hash",
-            "aligned_bam": "url",
-            "aligned_bai": "index_url",
+            "aligned_cram_bam": "url",
+            "aligned_crai_bai": "index_url",
         }
     )
 
