@@ -1,7 +1,7 @@
 {
   "deleted": false,
   "inputs": {
-    "call_lr_rna_fusions.ctat_lr_fusion.docker_image": "\"trinityctat/ctat_lr_fusion\"",
+    "call_lr_rna_fusions.ctat_lr_fusion.docker_image": "\"us-central1-docker.pkg.dev/depmap-omics/terra-images/ctat_lr_fusion\"",
     "call_lr_rna_fusions.ctat_lr_fusion.docker_image_hash_or_tag": "\"@sha256:f0a059f46fdb11d2d8cea44190e7d1e5c1e3d4736989b9c917d461ccf12b8827\"",
     "call_lr_rna_fusions.genome_lib_tar_with_star_idx": "\"gs://mdl-ctat-genome-libs/__genome_libs_StarFv1.10/GRCh38_gencode_v22_CTAT_lib_Mar012021.for_mm2fusion.withSTARidx.tar\"",
     "call_lr_rna_fusions.input_bam": "this.aligned_cram_bam",
@@ -11,8 +11,8 @@
     "call_lr_rna_fusions.sr_cram_or_bam": "this.sr_file_format",
     "call_lr_rna_fusions.sr_cram_bam": "this.sr_cram_bam",
     "call_lr_rna_fusions.sr_crai_bai": "this.sr_crai_bai",
-    "call_lr_rna_fusions.sr_sam_to_fastq.docker_image": "\"us-docker.pkg.dev/depmap-omics/public/samtools_seqtk\"",
-    "call_lr_rna_fusions.sr_sam_to_fastq.docker_image_hash_or_tag": "\"@sha256:cfe52d39bfe67067bfd9414019814482d3f66afac9f2e127582b5b8c3cdf177c\""
+    "call_lr_rna_fusions.sr_sam_to_fastq.docker_image": "\"us-central1-docker.pkg.dev/depmap-omics/terra-images/samtools_seqtk\"",
+    "call_lr_rna_fusions.sr_sam_to_fastq.docker_image_hash_or_tag": "\":production\""
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {

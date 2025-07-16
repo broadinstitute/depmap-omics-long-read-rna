@@ -3,7 +3,7 @@
   "inputs": {
     "align_lr_rna.input_bam": "this.delivery_bam",
     "align_lr_rna.junc_bed": "\"gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed\"",
-    "align_lr_rna.minimap2.docker_image": "\"us-docker.pkg.dev/depmap-omics/public/minimap2_lr\"",
+    "align_lr_rna.minimap2.docker_image": "\"us-central1-docker.pkg.dev/depmap-omics/terra-images/minimap2_lr\"",
     "align_lr_rna.minimap2.docker_image_hash_or_tag": "\":production\"",
     "align_lr_rna.ref_fasta": "\"gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa\"",
     "align_lr_rna.sample_id": "this.sample_id"
