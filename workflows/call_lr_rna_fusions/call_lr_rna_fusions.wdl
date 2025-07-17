@@ -176,7 +176,7 @@ task ctat_lr_fusion {
         set -euo pipefail
 
         # untar the genome lib
-        tar xvf "~{genome_lib_tar}"
+        tar xf "~{genome_lib_tar}"
         rm "~{genome_lib_tar}"
 
         # ctat-LR-fusion

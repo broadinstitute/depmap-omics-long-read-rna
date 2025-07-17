@@ -57,7 +57,6 @@ task minimap2 {
         minimap2 \
             -y \
             -ax splice:hq \
-            --eqx \
             -uf ${juncbed_arg} \
             -t ~{cpu} \
             "~{ref_fasta}" \
