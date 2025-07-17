@@ -5,7 +5,7 @@
     "quantify_lr_rna.input_bam": "this.aligned_cram_bam",
     "quantify_lr_rna.ref_annotation_db": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.db\"",
     "quantify_lr_rna.ref_annotation_gtf": "\"gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf\"",
-    "quantify_lr_rna.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
+    "quantify_lr_rna.ref_fasta": "\"gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa\"",
     "quantify_lr_rna.run_isoquant.docker_image": "\"us-central1-docker.pkg.dev/depmap-omics/terra-images/isoquant\"",
     "quantify_lr_rna.run_isoquant.docker_image_hash_or_tag": "\":3.7.0--hdfd78af_0\"",
     "quantify_lr_rna.run_sqanti3.docker_image": "\"us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus\"",
