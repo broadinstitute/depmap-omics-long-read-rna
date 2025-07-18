@@ -142,7 +142,7 @@ task run_sqanti3 {
         String docker_image
         String docker_image_hash_or_tag
         Int cpu = 2
-        Int mem_gb = 8
+        Int mem_gb = 16
         Int preemptible = 2
         Int max_retries = 1
         Int additional_disk_gb = 0
