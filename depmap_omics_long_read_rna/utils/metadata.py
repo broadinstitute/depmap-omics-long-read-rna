@@ -42,7 +42,7 @@ def refresh_terra_samples(
     # join short read data
     samples = join_sr_data(samples, alignments, short_read_terra_workspace)
 
-    terra_workspace.upload_entities(df=samples)
+    terra_workspace.upload_entities(df=samples, delete_empty=False)
 
 
 def explode_and_expand_models(

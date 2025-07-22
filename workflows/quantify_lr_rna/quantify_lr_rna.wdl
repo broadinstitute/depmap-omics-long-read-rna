@@ -163,7 +163,11 @@ task run_sqanti3 {
             > "~{sample_id}.unzipped.gtf"
 
         if [ -n "~{star_junctions}" ]; then
-            zcat "~{star_junctions}" > junctions.txt
+            if [[ "~{star_junctions}" == *.gz ]]; then
+                zcat "~{star_junctions}" > junctions.txt
+            else
+                ln -sf "~{star_junctions}" junctions.txt
+            fi
             coverage_opt="--coverage junctions.txt"
         else
             coverage_opt=""
