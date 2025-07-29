@@ -47,8 +47,8 @@ workflow call_lr_rna_fusions {
         File fusion_report_abridged = ctat_lr_fusion.fusion_report_abridged
         File prelim_fusion_report = ctat_lr_fusion.prelim_fusion_report
         File prelim_fusion_report_abridged = ctat_lr_fusion.prelim_fusion_report_abridged
-        File fusion_report_html = ctat_lr_fusion.fusion_report_html
-        File igv_tar = ctat_lr_fusion.igv_tar
+        File? fusion_report_html = ctat_lr_fusion.fusion_report_html
+        File? igv_tar = ctat_lr_fusion.igv_tar
     }
 }
 
@@ -149,6 +149,7 @@ task ctat_lr_fusion {
         Int min_novel_junction_support
         String? fi_extra_params
         Boolean no_ctat_mm2 = false
+        Boolean vis = true
 
         String docker_image
         String docker_image_hash_or_tag
@@ -171,6 +172,7 @@ task ctat_lr_fusion {
     Int bam_sort_ram_gb = ceil(mem_gb * 0.85)
 
     String no_ctat_mm2_flag = if (no_ctat_mm2) then "--no_ctat_mm2" else ""
+    String vis_flag = if (vis) then "--vis" else ""
 
     command <<<
         set -euo pipefail
@@ -189,10 +191,10 @@ task ctat_lr_fusion {
             --min_per_id ~{min_per_id} \
             --CPU ~{cpu} \
             --STAR_xtra_params '--limitBAMsortRAM ~{bam_sort_ram_gb}000000000' \
-            --vis \
             ~{"--left_fq " + sr_fastq1} \
             ~{"--right_fq " + sr_fastq2 } \
             ~{no_ctat_mm2_flag} \
+            ~{vis_flag} \
             ~{"--FI_extra_params " + fi_extra_params } \
             -o out
 
@@ -204,28 +206,31 @@ task ctat_lr_fusion {
             "~{sample_id}.ctat-LR-fusion.fusion_predictions.tsv"
         mv out/ctat-LR-fusion.fusion_predictions.abridged.tsv \
             "~{sample_id}.ctat-LR-fusion.fusion_predictions.abridged.tsv"
-        mv out/ctat-LR-fusion.fusion_inspector_web.html \
-            "~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa \
-            "~{sample_id}.ctat-LR-fusion.igv.genome.fa"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa.fai \
-            "~{sample_id}.ctat-LR-fusion.igv.genome.fa.fai"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.gtf \
-            "~{sample_id}.ctat-LR-fusion.igv.annot.gtf"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.annot.bed \
-            "~{sample_id}.ctat-LR-fusion.igv.annot.bed"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam \
-            "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam.bai \
-            "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam.bai"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.pfam.bed \
-            "~{sample_id}.ctat-LR-fusion.igv.pfam.bed"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.seqsimilar.bed \
-            "~{sample_id}.ctat-LR-fusion.igv.seqsimilar.bed"
-        mv out/fusion_intermediates_dir/IGV_prep/igv.LR.breakoint.roi.bed \
-            "~{sample_id}.ctat-LR-fusion.igv.LR.breakoint.roi.bed"
 
-        tar -zchf ~{sample_id}.ctat-LR-fusion.igv.tar.gz ~{sample_id}.ctat-LR-fusion.igv.*
+        if [ "~{vis}" = "true" ]; then
+            mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa \
+                "~{sample_id}.ctat-LR-fusion.igv.genome.fa"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.genome.fa.fai \
+                "~{sample_id}.ctat-LR-fusion.igv.genome.fa.fai"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.annot.gtf \
+                "~{sample_id}.ctat-LR-fusion.igv.annot.gtf"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.annot.bed \
+                "~{sample_id}.ctat-LR-fusion.igv.annot.bed"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam \
+                "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.LR.sorted.bam.bai \
+                "~{sample_id}.ctat-LR-fusion.igv.LR.sorted.bam.bai"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.pfam.bed \
+                "~{sample_id}.ctat-LR-fusion.igv.pfam.bed"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.seqsimilar.bed \
+                "~{sample_id}.ctat-LR-fusion.igv.seqsimilar.bed"
+            mv out/fusion_intermediates_dir/IGV_prep/igv.LR.breakoint.roi.bed \
+                "~{sample_id}.ctat-LR-fusion.igv.LR.breakoint.roi.bed"
+            mv out/ctat-LR-fusion.fusion_inspector_web.html \
+                "~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html"
+
+            tar -zchf ~{sample_id}.ctat-LR-fusion.igv.tar.gz ~{sample_id}.ctat-LR-fusion.igv.*
+        fi
     >>>
 
     output {
@@ -233,8 +238,8 @@ task ctat_lr_fusion {
         File fusion_report_abridged = "~{sample_id}.ctat-LR-fusion.fusion_predictions.abridged.tsv"
         File prelim_fusion_report = "~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.tsv"
         File prelim_fusion_report_abridged = "~{sample_id}.ctat-LR-fusion.fusion_predictions.preliminary.abridged.tsv"
-        File fusion_report_html = "~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html"
-        File igv_tar = "~{sample_id}.ctat-LR-fusion.igv.tar.gz"
+        File? fusion_report_html = "~{sample_id}.ctat-LR-fusion.fusion_inspector_web.html"
+        File? igv_tar = "~{sample_id}.ctat-LR-fusion.igv.tar.gz"
     }
 
     runtime {
