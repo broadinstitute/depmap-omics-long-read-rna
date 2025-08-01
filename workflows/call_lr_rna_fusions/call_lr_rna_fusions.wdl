@@ -28,7 +28,7 @@ workflow call_lr_rna_fusions {
                 sample_id = select_first([sr_sample_id]),
                 cram_or_bam = select_first([sr_cram_or_bam]),
                 cram_bam = select_first([sr_cram_bam]),
-                crai_bai = select_first([sr_crai_bai]),
+                crai_bai = sr_crai_bai,
                 ref_fasta = ref_fasta,
                 ref_fasta_index = ref_fasta_index
         }
@@ -94,7 +94,7 @@ workflow call_lr_rna_fusions {
 task sam_to_fastq {
     input {
         String sample_id
-        String? cram_or_bam
+        String cram_or_bam
         File cram_bam
         File? crai_bai
         File? ref_fasta
