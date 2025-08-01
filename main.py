@@ -96,12 +96,18 @@ def run(cloud_event: CloudEvent) -> None:
 
     elif ce_data["cmd"] == "submit-delta-job":
         failed_submissions = []
+        entities = {}  # only get each entity type once while iterating over jobs
 
         for x in ce_data["delta_jobs"]:
             # iterate over workflow names and their delta job submission attrs
             dj = DeltaJob.model_validate(x)
 
             try:
+                if dj.entity_type not in entities:
+                    entities[dj.entity_type] = terra_workspace.get_entities(
+                        dj.entity_type
+                    )
+
                 terra_workspace.submit_delta_job(
                     terra_workflow=make_workflow_from_config(
                         config, workflow_name=dj.workflow_name
@@ -110,6 +116,7 @@ def run(cloud_event: CloudEvent) -> None:
                     entity_set_type=dj.entity_set_type,
                     entity_id_col=dj.entity_id_col,
                     expression=dj.expression,
+                    entities=entities[dj.entity_type],
                     input_cols=dj.input_cols,
                     output_cols=dj.output_cols,
                     resubmit_n_times=dj.resubmit_n_times,
