@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import type_data_frame
@@ -52,6 +54,9 @@ def refresh_terra_samples(
     )
 
     terra_workspace.upload_entities(df=samples, delete_empty=False)
+
+    # check if workflows need to be rerun because matched SR data has changed
+    rerun_on_sr_change(terra_workspace)
 
 
 def explode_and_expand_models(
@@ -291,3 +296,104 @@ def choose_matched_short_read_sample(
     )
 
     return type_data_frame(samples, LongReadTerraSamples, remove_unknown_cols=True)
+
+
+def rerun_on_sr_change(terra_workspace: TerraWorkspace) -> None:
+    """
+    Clear workflow outputs when matched short read input files have changed in order to
+    trigger workflow reruns.
+
+    :param terra_workspace: the Terra workspace
+    """
+
+    terra_samples = terra_workspace.get_entities("sample")
+
+    # check if we've run any fusion calling already
+    if set(terra_samples.columns).issuperset(
+        {"fusion_sr_cram_bam_used", "fusion_report", "sr_cram_bam"}
+    ):
+        # replace pd.NA with empty strings for comparisons
+        terra_samples["fusion_sr_cram_bam_used"] = terra_samples[
+            "fusion_sr_cram_bam_used"
+        ].fillna("")
+        terra_samples["sr_cram_bam"] = terra_samples["sr_cram_bam"].fillna("")
+
+        # blank out these columns if SR CRAM/BAM used previously is not what would be
+        # used now
+        fusion_output_cols = [
+            "fusion_report",
+            "fusion_report_abridged",
+            "fusion_report_html",
+            "fusion_igv_tar",
+            "fusion_prelim_report",
+            "fusion_prelim_report_abridged",
+            "fusion_sr_cram_bam_used",
+            "fusion_used_sr_evidence",
+        ]
+
+        # compare the current SR CRAM/BAM with the one stored during the previous fusion
+        # calling runs
+        rerun_fusions = terra_samples.loc[
+            terra_samples["fusion_report"].notna()
+            & terra_samples["fusion_sr_cram_bam_used"].ne(terra_samples["sr_cram_bam"]),
+            ["sample_id", *fusion_output_cols],
+        ]
+
+        if len(rerun_fusions) > 0:
+            logging.info(
+                f"Blanking fusion output columns for {len(rerun_fusions)} samples "
+                "due to changed short read inputs"
+            )
+            rerun_fusions.loc[:, fusion_output_cols] = pd.NA
+            terra_workspace.upload_entities(df=rerun_fusions, delete_empty=True)
+
+    # check if we've run any quantification already
+    if set(terra_samples.columns).issuperset(
+        {"quantify_sr_star_junctions_used", "gene_counts", "sr_cram_bam"}
+    ):
+        # replace pd.NA with empty strings for comparisons
+        terra_samples["quantify_sr_star_junctions_used"] = terra_samples[
+            "quantify_sr_star_junctions_used"
+        ].fillna("")
+        terra_samples["sr_star_junctions"] = terra_samples["sr_star_junctions"].fillna(
+            ""
+        )
+
+        # blank out these columns if SR STAR junctions used previously is not what would
+        # be used now
+        quantify_output_cols = [
+            "exon_counts",
+            "extended_annotation",
+            "gene_counts",
+            "gene_tpm",
+            "intron_counts",
+            "model_counts",
+            "read_assignments_tsv",
+            "sq_class",
+            "sq_junctions",
+            "sq_report_pdf",
+            "quantify_sr_star_junctions_used",
+            "transcript_counts",
+            "transcript_model_reads",
+            "transcript_model_tpm",
+            "transcript_tpm",
+            "quantify_used_sr_evidence",
+        ]
+
+        # compare the current SR STAR junctions with the one stored during the previous
+        # quantification runs
+        rerun_quantify = terra_samples.loc[
+            terra_samples["gene_counts"].notna()
+            & terra_samples["quantify_sr_star_junctions_used"].ne(
+                terra_samples["sr_star_junctions"]
+            ),
+            ["sample_id", *quantify_output_cols],
+        ]
+
+        if len(rerun_quantify) > 0:
+            logging.info(
+                f"Blanking quantification output columns for {len(rerun_quantify)} "
+                "samples due to changed short read inputs"
+            )
+            rerun_quantify.loc[:, quantify_output_cols] = pd.NA
+            terra_workspace.upload_entities(df=rerun_quantify, delete_empty=True)
