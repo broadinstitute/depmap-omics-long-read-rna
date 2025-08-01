@@ -42,6 +42,15 @@ def refresh_terra_samples(
     # join short read data
     samples = join_sr_data(samples, alignments, short_read_terra_workspace)
 
+    # delete obsolete samples (e.g. ones that have been blacklisted since the last sync)
+    terra_samples = terra_workspace.get_entities("sample")
+    terra_workspace.delete_entities(
+        entity_type="sample",
+        entity_ids=set(terra_samples["sample_id"]).difference(
+            set(samples["sample_id"])
+        ),
+    )
+
     terra_workspace.upload_entities(df=samples, delete_empty=False)
 
 
@@ -167,10 +176,7 @@ def get_sr_terra_samples(
     sr_terra_samples = short_read_terra_workspace.get_entities("sample")
 
     sr_terra_samples = (
-        sr_terra_samples.loc[
-            :,
-            ["sample_id", "star_junctions"],
-        ]
+        sr_terra_samples.loc[:, ["sample_id", "star_junctions"]]
         .rename(columns={"star_junctions": "sr_star_junctions"})
         .astype("string")
     )
