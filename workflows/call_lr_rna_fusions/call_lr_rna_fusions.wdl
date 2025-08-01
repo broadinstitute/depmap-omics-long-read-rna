@@ -3,13 +3,18 @@ version 1.0
 workflow call_lr_rna_fusions {
     input {
         String sample_id
-        String sr_cram_or_bam
-        File sr_cram_bam
-        File? sr_crai_bai
-        File? ref_fasta
-        File? ref_fasta_index
         File input_bam
-        File genome_lib_tar_with_star_idx
+
+        # optional matched short read inputs
+        String? sr_sample_id
+        String? sr_cram_or_bam
+        File? sr_cram_bam
+        File? sr_crai_bai
+        File? ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
+        File? ref_fasta_index = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa.fai"
+
+        # STAR inputs
+        File genome_lib_tar_with_star_idx = "gs://mdl-ctat-genome-libs/__genome_libs_StarFv1.10/GRCh38_gencode_v22_CTAT_lib_Mar012021.for_mm2fusion.withSTARidx.tar"
         Int min_per_id = 70
         Int min_j = 1
         Int min_sum_js = 1
@@ -17,24 +22,38 @@ workflow call_lr_rna_fusions {
         String? fi_extra_params
     }
 
-    call sam_to_fastq as sr_sam_to_fastq {
-        input:
-            sample_id = sample_id,
-            cram_or_bam = sr_cram_or_bam,
-            cram_bam = sr_cram_bam,
-            crai_bai = sr_crai_bai,
-            ref_fasta = ref_fasta,
-            ref_fasta_index = ref_fasta_index
+    if (defined(sr_cram_or_bam)) {
+        call sam_to_fastq as sr_sam_to_fastq {
+            input:
+                sample_id = select_first([sr_sample_id]),
+                cram_or_bam = select_first([sr_cram_or_bam]),
+                cram_bam = select_first([sr_cram_bam]),
+                crai_bai = select_first([sr_crai_bai]),
+                ref_fasta = ref_fasta,
+                ref_fasta_index = ref_fasta_index
+        }
+
+        call ctat_lr_fusion as ctat_lr_fusion_with_sr {
+            input:
+                sample_id = sample_id,
+                input_bam = input_bam,
+                genome_lib_tar = genome_lib_tar_with_star_idx,
+                sr_fastq1 = sr_sam_to_fastq.fastq1,
+                sr_fastq2 = sr_sam_to_fastq.fastq2,
+                sr_cram_bam_size_gb = size(sr_cram_bam, "GiB"),
+                min_per_id = min_per_id,
+                min_j = min_j,
+                min_sum_js = min_sum_js,
+                min_novel_junction_support = min_novel_junction_support,
+                fi_extra_params = fi_extra_params
+        }
     }
 
-    call ctat_lr_fusion {
+    call ctat_lr_fusion as ctat_lr_fusion_without_sr {
         input:
             sample_id = sample_id,
             input_bam = input_bam,
             genome_lib_tar = genome_lib_tar_with_star_idx,
-            sr_fastq1 = sr_sam_to_fastq.fastq1,
-            sr_fastq2 = sr_sam_to_fastq.fastq2,
-            sr_cram_bam_size_gb = size(sr_cram_bam, "GiB"),
             min_per_id = min_per_id,
             min_j = min_j,
             min_sum_js = min_sum_js,
@@ -43,27 +62,47 @@ workflow call_lr_rna_fusions {
     }
 
     output {
-        File fusion_report = ctat_lr_fusion.fusion_report
-        File fusion_report_abridged = ctat_lr_fusion.fusion_report_abridged
-        File prelim_fusion_report = ctat_lr_fusion.prelim_fusion_report
-        File prelim_fusion_report_abridged = ctat_lr_fusion.prelim_fusion_report_abridged
-        File? fusion_report_html = ctat_lr_fusion.fusion_report_html
-        File? igv_tar = ctat_lr_fusion.igv_tar
+        File fusion_report = select_first([
+            ctat_lr_fusion_with_sr.fusion_report,
+            ctat_lr_fusion_without_sr.fusion_report
+        ])
+        File fusion_report_abridged = select_first([
+            ctat_lr_fusion_with_sr.fusion_report_abridged,
+            ctat_lr_fusion_without_sr.fusion_report_abridged
+        ])
+        File prelim_fusion_report = select_first([
+            ctat_lr_fusion_with_sr.prelim_fusion_report,
+            ctat_lr_fusion_without_sr.prelim_fusion_report
+        ])
+        File prelim_fusion_report_abridged = select_first([
+            ctat_lr_fusion_with_sr.prelim_fusion_report_abridged,
+            ctat_lr_fusion_without_sr.prelim_fusion_report_abridged
+        ])
+        File? fusion_report_html = select_first([
+            ctat_lr_fusion_with_sr.fusion_report_html,
+            ctat_lr_fusion_without_sr.fusion_report_html
+        ])
+        File? igv_tar = select_first([
+            ctat_lr_fusion_with_sr.igv_tar,
+            ctat_lr_fusion_without_sr.igv_tar
+        ])
+        Boolean used_sr_evidence = defined(sr_cram_bam)
+        String? sr_cram_bam_used = sr_cram_bam
     }
 }
 
 task sam_to_fastq {
     input {
         String sample_id
+        String? cram_or_bam
         File cram_bam
         File? crai_bai
-        String cram_or_bam
         File? ref_fasta
         File? ref_fasta_index
         Int max_n_reads = 50000000
 
-        String docker_image
-        String docker_image_hash_or_tag
+        String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/samtools_seqtk"
+        String docker_image_hash_or_tag = ":production"
         Int cpu = 4
         Int mem_gb = 8
         Int preemptible = 2
@@ -151,8 +190,8 @@ task ctat_lr_fusion {
         Boolean no_ctat_mm2 = false
         Boolean vis = true
 
-        String docker_image
-        String docker_image_hash_or_tag
+        String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/ctat_lr_fusion"
+        String docker_image_hash_or_tag = ":1.1.0"
         Int cpu = 16
         Int mem_gb = 64
         Int preemptible = 1

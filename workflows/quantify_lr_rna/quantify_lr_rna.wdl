@@ -5,10 +5,10 @@ workflow quantify_lr_rna {
         String sample_id
         File input_bam
         File input_bai
-        File ref_fasta
-        File ref_annotation_gtf
-        File ref_annotation_db
-        File? star_junctions
+        File? sr_star_junctions
+        File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
+        File ref_annotation_gtf = "gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf"
+        File ref_annotation_db = "gs://ccleparams/gencode.v38.primary_assembly.annotation.db"
     }
 
     call run_isoquant {
@@ -24,7 +24,7 @@ workflow quantify_lr_rna {
         input:
             sample_id = sample_id,
             isoquant_gtf = run_isoquant.extended_annotation,
-            star_junctions = star_junctions,
+            sr_star_junctions = sr_star_junctions,
             ref_annotation_gtf = ref_annotation_gtf,
             ref_fasta = ref_fasta
     }
@@ -44,6 +44,8 @@ workflow quantify_lr_rna {
         File sq_junctions = run_sqanti3.sq_junctions
         File sq_class = run_sqanti3.sq_class
         File sq_report_pdf = run_sqanti3.sq_report_pdf
+        Boolean used_sr_evidence = defined(sr_star_junctions)
+        String? sr_star_junctions_used = sr_star_junctions
     }
 }
 
@@ -62,8 +64,8 @@ task run_isoquant {
         String report_novel_unspliced = "true"
         String report_canonical = "auto"
 
-        String docker_image
-        String docker_image_hash_or_tag
+        String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/isoquant"
+        String docker_image_hash_or_tag = ":3.7.0--hdfd78af_0"
         Int cpu = 8
         Int mem_gb = 32
         Int preemptible = 1
@@ -114,7 +116,6 @@ task run_isoquant {
         File exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"
         File intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"
         File transcript_model_reads= "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_reads.tsv.gz"
-
     }
 
     runtime {
@@ -135,12 +136,12 @@ task run_sqanti3 {
     input {
         String sample_id
         File isoquant_gtf
-        File? star_junctions
+        File? sr_star_junctions
         File ref_annotation_gtf
         File ref_fasta
 
-        String docker_image
-        String docker_image_hash_or_tag
+        String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"
+        String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b"
         Int cpu = 2
         Int mem_gb = 16
         Int preemptible = 2
@@ -150,7 +151,7 @@ task run_sqanti3 {
 
     Int disk_space = (
         ceil(
-            size(isoquant_gtf, "GiB") * 3 + size(star_junctions, "GiB") * 3
+            size(isoquant_gtf, "GiB") * 3 + size(sr_star_junctions, "GiB") * 3
             + size(ref_annotation_gtf, "GiB") + size(ref_fasta, "GiB")
         ) + 20 + additional_disk_gb
     )
@@ -162,11 +163,11 @@ task run_sqanti3 {
             | awk '{ if ($7 != ".") print }' \
             > "~{sample_id}.unzipped.gtf"
 
-        if [ -n "~{star_junctions}" ]; then
-            if [[ "~{star_junctions}" == *.gz ]]; then
-                zcat "~{star_junctions}" > junctions.txt
+        if [ -n "~{sr_star_junctions}" ]; then
+            if [[ "~{sr_star_junctions}" == *.gz ]]; then
+                zcat "~{sr_star_junctions}" > junctions.txt
             else
-                ln -sf "~{star_junctions}" junctions.txt
+                ln -sf "~{sr_star_junctions}" junctions.txt
             fi
             coverage_opt="--coverage junctions.txt"
         else

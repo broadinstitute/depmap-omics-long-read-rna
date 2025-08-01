@@ -4,13 +4,13 @@ workflow align_lr_rna {
     input {
         String sample_id
         File input_bam
-        File? junc_bed
-        File ref_fasta
+        File? junc_bed = "gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed"
+        File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
     }
 
     call minimap2 {
         input:
-            output_basename = sample_id,
+            sample_id = sample_id,
             input_bam = input_bam,
             junc_bed = junc_bed,
             ref_fasta = ref_fasta
@@ -24,13 +24,13 @@ workflow align_lr_rna {
 
 task minimap2 {
     input {
-        String output_basename
+        String sample_id
         File input_bam
         File? junc_bed
         File ref_fasta
 
-        String docker_image
-        String docker_image_hash_or_tag
+        String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/minimap2_lr"
+        String docker_image_hash_or_tag = ":production"
         Int cpu = 4
         Int mem_gb = 32
         Int preemptible = 1
@@ -52,7 +52,7 @@ task minimap2 {
         samtools fastq \
             -@ ~{cpu} \
             "~{input_bam}" \
-            > temp.fastq
+            > temp.fastq && rm "~{input_bam}"
 
         minimap2 \
             -y \
@@ -61,24 +61,24 @@ task minimap2 {
             -t ~{cpu} \
             "~{ref_fasta}" \
             temp.fastq \
-            > temp.sam
+            > temp.sam && rm temp.fastq
 
         samtools sort \
             -@ ~{cpu} \
             temp.sam \
-            > "~{output_basename}.bam"
+            > "~{sample_id}.bam" && rm temp.sam
 
         samtools index \
             -b \
             -@ ~{index_threads} \
-            "~{output_basename}.bam"
+            "~{sample_id}.bam"
 
-        mv "~{output_basename}.bam.bai" "~{output_basename}.bai"
+        mv "~{sample_id}.bam.bai" "~{sample_id}.bai"
     >>>
 
     output {
-        File aligned_bam = "~{output_basename}.bam"
-        File aligned_bai = "~{output_basename}.bai"
+        File aligned_bam = "~{sample_id}.bam"
+        File aligned_bai = "~{sample_id}.bai"
     }
 
     runtime {
