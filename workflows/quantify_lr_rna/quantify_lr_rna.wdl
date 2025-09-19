@@ -9,6 +9,15 @@ workflow quantify_lr_rna {
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
         File ref_annotation_gtf = "gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf"
         File ref_annotation_db = "gs://ccleparams/gencode.v38.primary_assembly.annotation.db"
+
+        # isoquant options
+        String data_type
+        String model_construction_strategy
+        String stranded
+        String transcript_quantification
+        String gene_quantification
+        String report_novel_unspliced
+        String report_canonical
     }
 
     call run_isoquant {
@@ -17,7 +26,14 @@ workflow quantify_lr_rna {
             input_bam = input_bam,
             input_bai = input_bai,
             ref_annotation_db = ref_annotation_db,
-            ref_fasta = ref_fasta
+            ref_fasta = ref_fasta,
+            data_type = data_type,
+            model_construction_strategy = model_construction_strategy,
+            stranded = stranded,
+            transcript_quantification = transcript_quantification,
+            gene_quantification = gene_quantification,
+            report_novel_unspliced = report_novel_unspliced,
+            report_canonical = report_canonical
     }
 
     call run_sqanti3 {
@@ -56,13 +72,13 @@ task run_isoquant {
         File input_bai
         File ref_annotation_db
         File ref_fasta
-        String data_type = "pacbio_ccs"
-        String model_construction_strategy = "fl_pacbio"
-        String stranded = "forward"
-        String transcript_quantification = "unique_only"
-        String gene_quantification = "unique_splicing_consistent"
-        String report_novel_unspliced = "true"
-        String report_canonical = "auto"
+        String data_type
+        String model_construction_strategy
+        String stranded
+        String transcript_quantification
+        String gene_quantification
+        String report_novel_unspliced
+        String report_canonical
 
         String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/isoquant"
         String docker_image_hash_or_tag = ":3.7.0--hdfd78af_0"

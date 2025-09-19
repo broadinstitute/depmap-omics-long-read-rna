@@ -134,5 +134,8 @@ def make_workflow_from_config(
         method_config_json_path=Path(
             config["terra"][workflow_name]["method_config_json_path"]
         ).resolve(),
+        workflow_inputs_json_path=Path(
+            config["terra"][workflow_name]["workflow_inputs_json_path"]
+        ).resolve(),
         **kwargs,
     )

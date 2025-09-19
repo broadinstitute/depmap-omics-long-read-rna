@@ -3,7 +3,7 @@ name = "depmap-omics-long-read-rna"
 version = "0.1.0"
 description = "Depmap Omics Long Read RNA workflows and automation"
 authors = []
-requires-python = "~=3.12"
+requires-python = ">=3.12.0, <4"
 readme = "README.md"
 dependencies = [
     "tqdm>=4.67.1,<5",
@@ -15,12 +15,12 @@ dependencies = [
     "python-baseconv>=1.2.2,<2",
     "google-cloud-logging>=3.11.4,<4",
     "python-dotenv>=1.0.1,<2",
-    "nebelung>=2.9.6,<3",
     "typer>=0.15.2,<0.16",
     "google-cloud-secret-manager>=2.23.2,<3",
     "ariadne-codegen>=0.14.0,<0.15",
     "pd-flatten>=0.1.1,<0.2",
     "google-cloud-storage>=3.1.0",
+    "nebelung>=2.10.2",
 ]
 
 [dependency-groups]

@@ -25,6 +25,7 @@ method_config_name = "align_lr_rna"
 method_synopsis = "Align long read uBAM"
 workflow_wdl_path = "./workflows/align_lr_rna/align_lr_rna.wdl"
 method_config_json_path = "./workflows/align_lr_rna/align_lr_rna.json"
+workflow_inputs_json_path = "./workflows/align_lr_rna/align_lr_rna_inputs.json"
 
 [terra.quantify_lr_rna]
 method_namespace = "cds-pipelines"
@@ -34,6 +35,7 @@ method_config_name = "quantify_lr_rna"
 method_synopsis = "Quantify long reads"
 workflow_wdl_path = "./workflows/quantify_lr_rna/quantify_lr_rna.wdl"
 method_config_json_path = "./workflows/quantify_lr_rna/quantify_lr_rna.json"
+workflow_inputs_json_path = "./workflows/quantify_lr_rna/quantify_lr_rna_inputs.json"
 
 [terra.call_lr_rna_fusions]
 method_namespace = "cds-pipelines"
@@ -43,3 +45,4 @@ method_config_name = "call_lr_rna_fusions"
 method_synopsis = "Call long read fusions"
 workflow_wdl_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl"
 method_config_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.json"
+workflow_inputs_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions_inputs.json"

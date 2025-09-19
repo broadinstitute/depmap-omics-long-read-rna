@@ -5,7 +5,7 @@ workflows:
     readMePath: /workflows/align_lr_rna/README.md
     primaryDescriptorPath: /workflows/align_lr_rna/align_lr_rna.wdl
     testParameterFiles:
-      - /workflows/align_lr_rna/align_lr_rna.json
+      - /workflows/align_lr_rna/align_lr_rna_inputs.json
     filters:
       branches:
         - main
@@ -16,7 +16,7 @@ workflows:
     readMePath: /workflows/call_lr_rna_fusions/README.md
     primaryDescriptorPath: /workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl
     testParameterFiles:
-      - /workflows/call_lr_rna_fusions/call_lr_rna_fusions.json
+      - /workflows/call_lr_rna_fusions/call_lr_rna_fusions_inputs.json
     filters:
       branches:
         - main
@@ -27,7 +27,7 @@ workflows:
     readMePath: /workflows/quantify_lr_rna/README.md
     primaryDescriptorPath: /workflows/quantify_lr_rna/quantify_lr_rna.wdl
     testParameterFiles:
-      - /workflows/quantify_lr_rna/quantify_lr_rna.json
+      - /workflows/quantify_lr_rna/quantify_lr_rna_inputs.json
     filters:
       branches:
         - main

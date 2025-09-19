@@ -4,6 +4,7 @@ workflow call_lr_rna_fusions {
     input {
         String sample_id
         File input_bam
+        Int? max_n_reads
 
         # optional matched short read inputs
         String? sr_sample_id
@@ -30,7 +31,8 @@ workflow call_lr_rna_fusions {
                 cram_bam = select_first([sr_cram_bam]),
                 crai_bai = sr_crai_bai,
                 ref_fasta = ref_fasta,
-                ref_fasta_index = ref_fasta_index
+                ref_fasta_index = ref_fasta_index,
+                max_n_reads = max_n_reads
         }
 
         call ctat_lr_fusion as ctat_lr_fusion_with_sr {
@@ -99,7 +101,7 @@ task sam_to_fastq {
         File? crai_bai
         File? ref_fasta
         File? ref_fasta_index
-        Int max_n_reads = 50000000
+        Int? max_n_reads
 
         String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/samtools_seqtk"
         String docker_image_hash_or_tag = ":production"
@@ -136,22 +138,24 @@ task sam_to_fastq {
                 "~{cram_bam}"
         fi
 
-        N_READS=$(awk 'END {print NR/4}' "~{sample_id}.1.fastq")
+        if [[ -n "${max_n_reads:-}" ]]; then
+            N_READS=$(awk 'END {print NR/4}' "~{sample_id}.1.fastq")
 
-        if (( $(echo "$N_READS > ~{max_n_reads}" | bc -l) )); then
-            echo "Downsampling $N_READS reads to ~{max_n_reads}"
+            if (( $(echo "$N_READS > ~{max_n_reads}" | bc -l) )); then
+                echo "Downsampling $N_READS reads to ~{max_n_reads}"
 
-            seqtk sample -2 -s100 "~{sample_id}.1.fastq" ~{max_n_reads} \
-                > "~{sample_id}.1.less.fastq" \
-                && rm "~{sample_id}.1.fastq" \
-                && mv "~{sample_id}.1.less.fastq" "~{sample_id}.1.fastq"
+                seqtk sample -2 -s100 "~{sample_id}.1.fastq" ~{max_n_reads} \
+                    > "~{sample_id}.1.less.fastq" \
+                    && rm "~{sample_id}.1.fastq" \
+                    && mv "~{sample_id}.1.less.fastq" "~{sample_id}.1.fastq"
 
-            seqtk sample -2 -s100 "~{sample_id}.2.fastq" ~{max_n_reads} \
-                > "~{sample_id}.2.less.fastq" \
-                && rm "~{sample_id}.2.fastq" \
-                && mv "~{sample_id}.2.less.fastq" "~{sample_id}.2.fastq"
-        else
-            echo "$N_READS <= ~{max_n_reads} reads (no downsampling)"
+                seqtk sample -2 -s100 "~{sample_id}.2.fastq" ~{max_n_reads} \
+                    > "~{sample_id}.2.less.fastq" \
+                    && rm "~{sample_id}.2.fastq" \
+                    && mv "~{sample_id}.2.less.fastq" "~{sample_id}.2.fastq"
+            else
+                echo "$N_READS <= ~{max_n_reads} reads (no downsampling)"
+            fi
         fi
     >>>
 
