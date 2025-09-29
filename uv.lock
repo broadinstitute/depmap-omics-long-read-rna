@@ -341,7 +341,7 @@ requires-dist = [
     { name = "google-cloud-logging", specifier = ">=3.11.4,<4" },
     { name = "google-cloud-secret-manager", specifier = ">=2.23.2,<3" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
-    { name = "nebelung", specifier = ">=2.11.0" },
+    { name = "nebelung", specifier = ">=2.12.0" },
     { name = "numpy", specifier = ">=2.2.4,<3" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
     { name = "pandera", extras = ["strategies"], specifier = ">=0.22.1,<0.23" },
@@ -850,7 +850,7 @@ wheels = [
 
 [[package]]
 name = "nebelung"
-version = "2.11.0"
+version = "2.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "firecloud-api-cds" },
@@ -860,9 +860,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pygithub" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/ca/9d2c4b7fe2d7184a060b9db656f7027466f5f946c11949be720749cf7bba/nebelung-2.11.0.tar.gz", hash = "sha256:57fc8cdc07e2ef48fe8378a18fa326bf8d5ad624189f46fed71e97e1e7813298", size = 19937, upload-time = "2025-09-26T18:59:12.227Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/97/57a71856495295d200954791291a0afc715d2ecd117142b8391796b9dba5/nebelung-2.12.0.tar.gz", hash = "sha256:4cc0b9ccbd46f196311866567fc9ba3eee8632cb9cd24a2baccce59862339ea8", size = 19959, upload-time = "2025-09-29T18:10:41.261Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/3e/dd4c9311f3d43da4a74abee5c90107d703379a8e57dc94f24889fb43b763/nebelung-2.11.0-py3-none-any.whl", hash = "sha256:820dc8e325cdabb5d13ee8725da2456d54ee997d0419aea64f4962d1d2a5e2f9", size = 18878, upload-time = "2025-09-26T18:59:11.007Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/17/501b3a034cdff864d07a637eb87f9218c9b213e8150ba1888a5712ddb7f7/nebelung-2.12.0-py3-none-any.whl", hash = "sha256:ab9a09e02880d6e936ec93933b856fe9109656e74506d0f57e96c9ce1089408b", size = 18903, upload-time = "2025-09-29T18:10:40.373Z" },
 ]
 
 [[package]]
