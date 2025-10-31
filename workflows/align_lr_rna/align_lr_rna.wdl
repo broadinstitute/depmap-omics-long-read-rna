@@ -5,7 +5,8 @@ workflow align_lr_rna {
         String sample_id
         File input_bam
         File? junc_bed = "gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed"
-        File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
+        # File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
+        File ref_fasta = "gs://ccleparams/GIAB_hg38_patched_ref/GRCh38_GIABv3_no_alt_analysis_set_maskedGRC_decoys_MAP2K3_KMT2C_KCNJ18.fasta"
     }
 
     call minimap2 {
