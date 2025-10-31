@@ -10,6 +10,7 @@ workflows:
       branches:
         - main
         - develop
+        - giab-dev
     publish: True
   - subclass: WDL
     name: call_lr_rna_fusions
