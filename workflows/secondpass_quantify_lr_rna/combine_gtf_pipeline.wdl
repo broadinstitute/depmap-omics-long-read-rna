@@ -142,9 +142,6 @@ task RunGffcompare {
   
     gffcompare -r ~{ref_gtf} -X -p ~{prefix} -V -S -o gffcomp_out ~{sep=' ' gtf_list}
 
-    # Fix 1: Read the tracking file TWICE.
-    # First pass (FNR==NR) builds the map from '=' lines.
-    # Second pass (FNR != NR) applies the map to all lines.
     awk -F'\t' '
       FNR==NR && $4 == "=" {
         split($3,a,"|"); new_id=a[2];
@@ -160,7 +157,7 @@ task RunGffcompare {
     ' OFS='\t' gffcomp_out.tracking gffcomp_out.tracking > gffcomp_out.newtracking
 
     awk -F'\t' '
-  # --- Pass 1: build map from tracking file ---
+
   FNR==NR {
     if ($4=="=") {
       split($3,a,"|"); new_id=a[2];
@@ -171,9 +168,6 @@ task RunGffcompare {
     next; # skip printing tracking lines
   }
 
-  # --- Pass 2: process GTF ---
-
-# --- Pass 2: process GTF ---
 FNR!=NR {
     line=$0
     while (match(line, /transcript_id "[^"]+"/)) {
