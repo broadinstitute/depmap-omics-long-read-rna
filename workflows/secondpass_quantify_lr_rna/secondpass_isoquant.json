@@ -1,0 +1,29 @@
+{
+  "deleted": false,
+  "inputs": { 
+    "PostProcessingPipeline.sample_id": "this.sample_id",
+    "PostProcessingPipeline.transcript_counts": "this.transcript_counts",
+    "PostProcessingPipeline.output_basename": "this.output_basename",
+    "PostProcessingPipeline.input_bam": "this.aligned_cram_bam",
+    "PostProcessingPipeline.input_bai": "this.aligned_crai_bai",
+    "PostProcessingPipeline.ref_annotation_db": "this.ref_annotation_db",
+    "PostProcessingPipeline.star_junctions": "this.star_junctions"
+  },
+
+  "methodConfigVersion": 1,
+  "methodRepoMethod": {
+    "methodNamespace": "cds-pipelines",
+    "methodName": "PostProcessingPipeline",
+    "methodVersion": 1
+  },
+  "namespace": "cds-pipelines",
+  "name": "PostProcessingPipeline",
+  "outputs": {
+    "PostProcessingPipeline.secondpass_transcript_counts": "this.secondpass_transcript_counts",
+    "PostProcessingPipeline.secondpass_transcript_tpm": "this.secondpass_transcript_tpm",
+    "PostProcessingPipeline.secondpass_read_assignments_tsv": "this.secondpass_read_assignments_tsv",
+    "PostProcessingPipeline.secondpass_exon_counts": "this.secondpass_exon_counts",
+    "PostProcessingPipeline.secondpass_intron_counts": "this.secondpass_intron_counts"
+  },
+  "rootEntityType": "sample"
+}
