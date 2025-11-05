@@ -1,0 +1,26 @@
+{
+  "deleted": false,  
+  "inputs": {
+    "LongreadPipeline.sample_ids": "this.samples.sample_id",
+    "LongreadPipeline.sample_gtfs": "this.samples.extended_annotation",
+    "LongreadPipeline.sample_id": "this.sample_set_id",
+    "LongreadPipeline.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
+    "LongreadPipeline.referenceGenome": "workspace.referenceData_hg38_ref_fasta",
+    "LongreadPipeline.model_counts": "this.samples.model_counts"
+  },
+  "methodConfigVersion": 1,
+  "methodRepoMethod": {
+    "methodNamespace": "cds-pipelines",
+    "methodName": "LongreadPipeline",
+    "methodVersion": 1
+  },
+  "namespace": "cds-pipelines",
+  "name": "LongreadPipeline",
+  "outputs": {
+    "LongreadPipeline.combined_sorted_gtf": "this.combined_sorted_gtf",
+    "LongreadPipeline.sq_class": "this.sq_class",
+    "LongreadPipeline.transcriptome_fasta": "this.transcriptome_fasta",
+    "LongreadPipeline.updated_tracking_sq_filtered": "this.updated_tracking_sq_filtered"
+  },
+  "rootEntityType": "sample"
+}
