@@ -1,0 +1,10 @@
+{
+    "LongreadPipeline.gffcompare_docker_image": "quay.io/biocontainers/gffcompare:0.12.9--h9948957_0", 
+    "LongreadPipeline.sqanti_docker_image": "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus",
+    "LongreadPipeline.sqanti_docker_image_hash_or_tag": "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b",
+    "LongreadPipeline.gencode_gtf": "gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf", #this may change if running pipeline after novel transcripts from one set have already been aggregated
+    "LongreadPipeline.process_gtf_docker_image": "quay.io/biocontainers/gawk:5.3.1",
+    "LongreadPipeline.process_tracking_gffread_docker_image": "docker.io/hannharris/salmon-with-pandas@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+}
+
+
