@@ -4,7 +4,6 @@
     "LongreadPipeline.sample_ids": "this.samples.sample_id",
     "LongreadPipeline.sample_gtfs": "this.samples.extended_annotation",
     "LongreadPipeline.sample_id": "this.sample_set_id",
-    "LongreadPipeline.ref_fasta": "workspace.referenceData_hg38_ref_fasta",
     "LongreadPipeline.referenceGenome": "workspace.referenceData_hg38_ref_fasta",
     "LongreadPipeline.model_counts": "this.samples.model_counts"
   },
