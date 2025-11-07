@@ -63,7 +63,8 @@ workflow LongreadPipeline {
       gencode_gtf = gencode_gtf,
       squanti_classification = run_sqanti3.sq_class,  # Uses SQANTI classification from step 2
       updated_tracking = process_tracking_file.updated_tracking,  # Uses processed tracking file
-      docker_image = process_tracking_gffread_docker_image
+      docker_image = process_tracking_gffread_docker_image,
+      prefix = prefix
   }
 
   call process_gtf {
