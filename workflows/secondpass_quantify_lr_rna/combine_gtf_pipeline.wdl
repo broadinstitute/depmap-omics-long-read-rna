@@ -6,7 +6,6 @@ workflow LongreadPipeline {
     Array[File] sample_gtfs           # List of GTF files from IsoQuant first pass
     String gffcompare_docker_image    # Docker image for gffcompare
     String sample_id                  # Sample identifier for SQANTI3 output
-    File ref_fasta                    # Reference genome FASTA
     String sqanti_docker_image        # SQANTI3 docker image name
     String sqanti_docker_image_hash_or_tag  # SQANTI3 docker image tag or hash
     File referenceGenome              # Reference genome FASTA (may be same as ref_fasta)
@@ -43,7 +42,7 @@ workflow LongreadPipeline {
       sample_id = sample_id,
       isoquant_gtf = RunGffcompare.combined_gtf,  # Uses the combined GTF from step 1
       ref_annotation_gtf = gencode_gtf,
-      ref_fasta = ref_fasta,
+      ref_fasta = referenceGenome,
       docker_image = sqanti_docker_image,
       docker_image_hash_or_tag = sqanti_docker_image_hash_or_tag
   }
