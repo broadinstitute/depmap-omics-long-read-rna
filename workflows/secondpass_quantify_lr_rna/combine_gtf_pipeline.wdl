@@ -230,9 +230,6 @@ task run_sqanti3 {
 
     awk '{ if ($7 != ".") print }' ~{isoquant_gtf} > "~{sample_id}.unzipped.gtf"
 
-    # Run SQANTI3 quality control
-    # --report both: Generate both HTML and PDF reports
-    # --output: Prefix for output files
     python /usr/local/src/SQANTI3-5.3.6/sqanti3_qc.py \
       --report both \
       --output ~{sample_id} \
@@ -308,7 +305,6 @@ task gffread {
 
     sq_filtered = sq_filtered[sq_filtered['isoform'].isin(merged_sq['isoform_tcons'])]
     sq_filtered = sq_filtered[sq_filtered['RTS_stage'] == False]  # Filter for RTS_stage
-    #sq_filtered = sq_filtered[sq_filtered['perc_A_downstream_TTS'] < 60]  # Filter for specific gene
     sq_filtered = sq_filtered[sq_filtered['isoform'].isin(updated_tracking_nodups['transcript_id'])]
 
     sq_filtered_previouslyfound = sq[
@@ -330,12 +326,6 @@ task gffread {
 
     # Extract transcript_id from attributes column
     gtf['transcript_id'] = gtf[8].str.extract(r'transcript_id "([^"]+)"')
-
-    #extract num samples from attributes column + filter based on > sample (remove)
-    #gtf['num_samples'] = gtf[8].str.extract(r'num_samples "([^"]+)"')
-    #gtf_num_samples = gtf.dropna(subset=['num_samples'])
-    #gtf_num_samples = gtf_num_samples[gtf_num_samples['num_samples'].astype(int) > 1]
-    #sq_filtered = sq_filtered[sq_filtered['isoform'].isin(gtf_num_samples['transcript_id'])]
 
     # Filter GTF
     gtf_filtered = gtf[gtf['transcript_id'].isin(sq_filtered['isoform'])].copy()
