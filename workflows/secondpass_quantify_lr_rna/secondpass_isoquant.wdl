@@ -29,7 +29,7 @@ workflow PostProcessingPipeline {
 
   call GTFtoDB {
     input:
-      gtf_file = filter_gtf_per_sample.filtered_gtf,  # Uses filtered GTF from step 4
+      gtf_file = filter_gtf_per_sample.filtered_gtf,  
       output_basename = output_basename, 
       docker_image = GTFtoDB_docker
   }
@@ -39,7 +39,7 @@ workflow PostProcessingPipeline {
       sample_id = sample_id,
       input_bam = input_bam,
       input_bai = input_bai,
-      ref_annotation_db = GTFtoDB.db_file,  # Uses database from step 5
+      ref_annotation_db = GTFtoDB.db_file,  
       ref_fasta = ref_fasta,
       docker_image = isoquant_docker_image,
       docker_image_hash_or_tag = isoquant_docker_image_hash_or_tag
@@ -143,11 +143,6 @@ task GTFtoDB {
     import gffutils
 
     # Create a database from the GTF file
-    # force=True: Overwrite existing database
-    # keep_order=False: Don't preserve order of features
-    # merge_strategy="merge": Merge duplicate features
-    # disable_infer_transcripts/genes=True: Don't infer transcript/gene features
-    # id_spec: Specify which attributes to use as IDs
     db = gffutils.create_db(
         "~{gtf_file}",
         dbfn="~{output_basename}.db",
@@ -180,23 +175,22 @@ task run_isoquant {
     File ref_annotation_db          # Reference annotation database (from GTFtoDB)
     File ref_fasta                  # Reference genome FASTA
     
-    # IsoQuant parameters
-    String data_type = "pacbio_ccs"  # Type of long-read data
-    String model_construction_strategy = "fl_pacbio"  # Strategy for model construction
-    String stranded = "forward"      # Strandedness of the library
-    String transcript_quantification = "unique_only"  # Method for transcript quantification
-    String gene_quantification = "unique_splicing_consistent"  # Method for gene quantification
-    String report_novel_unspliced = "true"  # Whether to report novel unspliced transcripts
-    String report_canonical = "auto"  # How to handle canonical splice sites
+    String data_type = "pacbio_ccs"  
+    String model_construction_strategy = "fl_pacbio"  
+    String stranded = "forward"     
+    String transcript_quantification = "unique_only"  
+    String gene_quantification = "unique_splicing_consistent"  
+    String report_novel_unspliced = "true"  
+    String report_canonical = "auto"  
 
     # Runtime parameters
-    String docker_image              # IsoQuant docker image name
-    String docker_image_hash_or_tag  # IsoQuant docker image tag or hash
-    Int cpu = 8                      # CPU cores to use
-    Int mem_gb = 32                  # Memory in GB
-    Int preemptible = 1              # Number of preemptible attempts
-    Int max_retries = 1              # Maximum number of retries
-    Int additional_disk_gb = 0       # Additional disk space in GB
+    String docker_image              
+    String docker_image_hash_or_tag  
+    Int cpu = 8                      
+    Int mem_gb = 32                  
+    Int preemptible = 1              
+    Int max_retries = 1              
+    Int additional_disk_gb = 0       
   }
 
   # Calculate required disk space based on input file sizes
@@ -234,11 +228,11 @@ task run_isoquant {
   >>>
 
   output {
-    File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"  # Transcript counts
-    File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"        # Transcript TPM values
-    File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"  # Read assignments
-    File? exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"             # Exon counts (if available)
-    File? intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"         # Intron counts (if available)
+    File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"  
+    File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"        
+    File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"  
+    File? exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"             
+    File? intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"         
   }
 
   runtime {
