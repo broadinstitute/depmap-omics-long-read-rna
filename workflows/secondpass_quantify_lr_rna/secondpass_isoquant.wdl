@@ -58,8 +58,8 @@ task filter_gtf_per_sample {
         Int preemptible = 1              
         Int max_retries = 1              
         Int additional_disk_gb = 0     
-        String docker_image = "docker.io/hannharris/salmon-with-pandas"
-        String docker_image_hash_or_tag = "@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk"
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e"
     }
 
     Int disk_space = (
@@ -132,8 +132,8 @@ task GTFtoDB {
     input {
         File gtf_file              # Filtered GTF file from previous step
         String output_basename     # Base name for output database
-        String docker_image = "quay.io/biocontainers/gffutils" 
-        String docker_image_hash_or_tag = ":0.13--pyh7cba7a3_0"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e"
         Int cpu = 1                      
         Int mem_gb = 16                 
         Int preemptible = 1              

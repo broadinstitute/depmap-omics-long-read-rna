@@ -76,8 +76,8 @@ task FilterIsoQuant {
     input {
         File raw_gtf          # Raw GTF file from IsoQuant
         String sample_id      # Sample identifier
-        String docker_image  = "quay.io/biocontainers/gffcompare" 
-        String docker_image_hash_or_tag = ":0.12.9--h9948957_0"
+        String docker_image  = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gffcompare" 
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":0.12.9--h9948957_0"
         Int cpu = 1                   
         Int mem_gb = 1                
         Int preemptible = 2           
@@ -133,8 +133,8 @@ task RunGffcompare {
     input {
         File ref_gtf                # Reference GTF file
         Array[File] gtf_list        # List of filtered GTF files to compare
-        String docker_image = "quay.io/biocontainers/gffcompare"      # Docker image for gffcompare 
-        String docker_image_hash_or_tag = ":0.12.9--h9948957_0"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gffcompare"      # Docker image for gffcompare 
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":0.12.9--h9948957_0"
         String prefix
         Int cpu = 2                  
         Int mem_gb = 64               
@@ -144,7 +144,6 @@ task RunGffcompare {
   }
     Int disk_space = 20 + additional_disk_gb
          
-
     command <<<
 
         echo "Running gffcompare with the following GTFs:"
@@ -280,8 +279,8 @@ task gffread {
         Int preemptible = 2 
         Int max_retries = 1
         Int additional_disk_gb = 20
-        String docker_image = "docker.io/hannharris/salmon-with-pandas"
-        String docker_image_hash_or_tag = "@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"docker.io/hannharris/salmon-with-pandas"
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #"@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
   }
     Int disk_space = (
         ceil(
@@ -405,8 +404,8 @@ task process_gtf {
         Int preemptible = 2 
         Int max_retries = 1
         Int additional_disk_gb = 0
-        String docker_image = "quay.io/biocontainers/gawk"
-        String docker_image_hash_or_tag = ":5.3.1"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gawk"
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":5.3.1"
   }
 
     Int disk_space = (
@@ -486,8 +485,8 @@ task process_tracking_file {
         Int preemptible = 2 
         Int additional_disk_gb = 0
         Int max_retries = 1
-        String docker_image = "docker.io/hannharris/salmon-with-pandas"
-        String docker_image_hash_or_tag = "@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"docker.io/hannharris/salmon-with-pandas"
+        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #"@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
   }
     
     Int disk_space = (

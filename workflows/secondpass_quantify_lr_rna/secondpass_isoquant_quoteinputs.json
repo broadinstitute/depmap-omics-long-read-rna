@@ -1,9 +1,5 @@
 { 
     "PostProcessingPipeline.all_sample_gtf": "gs://fc-secure-e9081dd6-3252-442d-9048-7a65fb7696bc/submissions/5336736a-634c-4bf8-92c0-a1f1d550e0eb/LongreadPipeline/ae4173a4-c272-4f2f-b4c7-7739767f051a/call-process_gtf/updated.gtf",
     "PostProcessingPipeline.tracking_file": "gs://fc-secure-e9081dd6-3252-442d-9048-7a65fb7696bc/submissions/5336736a-634c-4bf8-92c0-a1f1d550e0eb/LongreadPipeline/ae4173a4-c272-4f2f-b4c7-7739767f051a/call-gffread/updated_tracking_sq_filtered.tsv",
-    "PostProcessingPipeline.ref_fasta": "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa",
-    "PostProcessingPipeline.isoquant_docker_image": "quay.io/biocontainers/isoquant",
-    "PostProcessingPipeline.isoquant_docker_image_hash_or_tag": "3.7.0--hdfd78af_0",
-    "PostProcessingPipeline.filter_gtf_per_sample_docker": "docker.io/hannharris/salmon-with-pandas@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3",
-    "PostProcessingPipeline.GTFtoDB_docker": "quay.io/biocontainers/gffutils:0.13--pyh7cba7a3_0"
+    "PostProcessingPipeline.ref_fasta": "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
 }
