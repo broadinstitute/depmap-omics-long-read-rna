@@ -4,7 +4,7 @@ workflow align_lr_rna {
     input {
         String sample_id
         File input_bam
-        File? junc_bed = "gs://ccleparams/long-read/gencode.v38.primary_assembly.annotation.bed"
+        File? junc_bed = "gs://ccleparams/long-read/gencode/v38/gencode.v38.primary_assembly.annotation.junc.bed"
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
     }
 

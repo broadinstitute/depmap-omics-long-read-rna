@@ -7,8 +7,8 @@ workflow quantify_lr_rna {
         File input_bai
         File? sr_star_junctions
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
-        File ref_annotation_gtf = "gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf"
-        File ref_annotation_db = "gs://ccleparams/gencode.v38.primary_assembly.annotation.db"
+        File ref_annotation_gtf = "gs://ccleparams/long-read/gencode/v38/gencode.v38.primary_assembly.annotation.gtf"
+        File ref_annotation_db = "gs://ccleparams/long-read/gencode/v38/gencode.v38.primary_assembly.annotation.db"
 
         # isoquant options
         String data_type
