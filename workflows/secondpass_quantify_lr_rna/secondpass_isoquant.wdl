@@ -9,7 +9,7 @@ workflow PostProcessingPipeline {
         String output_basename = "new_annotation"  
         File input_bam                  
         File input_bai                  
-        File ref_fasta                  
+        File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"               
         File? ref_annotation_db          
     }
 
@@ -21,7 +21,7 @@ workflow PostProcessingPipeline {
             transcript_counts = transcript_counts,
     }
 
-    call GTFtoDB {
+    call gtf_to_db {
         input:
             gtf_file = filter_gtf_per_sample.filtered_gtf,  
             output_basename = output_basename, 
@@ -32,7 +32,7 @@ workflow PostProcessingPipeline {
             sample_id = sample_id,
             input_bam = input_bam,
             input_bai = input_bai,
-            ref_annotation_db = GTFtoDB.db_file,  
+            ref_annotation_db = gtf_to_db.db_file,  
             ref_fasta = ref_fasta,
     }
 
@@ -57,9 +57,9 @@ task filter_gtf_per_sample {
         Int mem_gb = 8                
         Int preemptible = 1              
         Int max_retries = 1              
-        Int additional_disk_gb = 0     
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk"
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e"
+        Int additional_disk_gb = 0    
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c"  
     }
 
     Int disk_space = (
@@ -108,14 +108,14 @@ task filter_gtf_per_sample {
 
             # Write filtered GTF
     final_gtf.drop(columns=['transcript_id']).drop(columns=['gene_id']).to_csv(
-        "filtered_sample.gtf", sep='\\t',
+        "~{sample_id}_filtered_sample.gtf", sep='\\t',
         index=False, header=False, quoting=3
         )
     EOF
     >>>
 
     output {
-        File filtered_gtf = "filtered_sample.gtf"  # Sample-specific filtered GTF
+        File filtered_gtf = "~{sample_id}_filtered_sample.gtf"  # Sample-specific filtered GTF
     }
 
     runtime {
@@ -128,12 +128,12 @@ task filter_gtf_per_sample {
     }
 }
 
-task GTFtoDB {
+task gtf_to_db {
     input {
         File gtf_file              # Filtered GTF file from previous step
         String output_basename     # Base name for output database
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" 
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
         Int cpu = 1                      
         Int mem_gb = 16                 
         Int preemptible = 1              
@@ -142,7 +142,7 @@ task GTFtoDB {
   }
     
     Int disk_space = (
-        50 + additional_disk_gb
+        ceil(size(gtf_file, "GiB")) +  50 + additional_disk_gb
     )
 
     command <<<
@@ -196,8 +196,9 @@ task run_isoquant {
         String report_canonical = "auto"  
 
         # Runtime parameters
-        String docker_image = "quay.io/biocontainers/isoquant"             
+        String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/isoquant"
         String docker_image_hash_or_tag = ":3.7.0--hdfd78af_0"
+
         Int cpu = 8                      
         Int mem_gb = 32                  
         Int preemptible = 1              

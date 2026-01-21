@@ -5,7 +5,7 @@ workflow LongreadPipeline {
         Array[String] sample_ids          # List of sample identifiers
         Array[File] sample_gtfs           # List of GTF files from IsoQuant first pass
         String sample_id                  # Sample identifier for SQANTI3 output
-        File referenceGenome              # Reference genome FASTA (may be same as ref_fasta)
+        File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"              # Reference genome FASTA (may be same as ref_fasta)
         File gencode_gtf                  # GENCODE annotation GTF
         Array[File] model_counts # counts values for transcript models
         String prefix #for gffcompare
@@ -14,7 +14,7 @@ workflow LongreadPipeline {
     Array[Pair[String, File]] zip_arrays = zip(sample_ids, sample_gtfs)
 
     scatter(pair in zip_arrays) {
-        call FilterIsoQuant {
+        call filter_isoquant {
             input:
                 raw_gtf = pair.right,
                 sample_id = pair.left,    
@@ -22,24 +22,26 @@ workflow LongreadPipeline {
     }
 
   # Run gffcompare once on all filtered GTFs
-    call RunGffcompare {
+    call run_gffcompare {
         input:
+            sample_id = sample_id,
             ref_gtf = gencode_gtf,
-            gtf_list = FilterIsoQuant.filtered_gtf,
+            gtf_list = filter_isoquant.filtered_gtf,
             prefix = prefix 
   }
 
     call run_sqanti3 {
         input:
             sample_id = sample_id,
-            isoquant_gtf = RunGffcompare.combined_gtf,  # Uses the combined GTF from step 1
+            isoquant_gtf = run_gffcompare.combined_gtf,  # Uses the combined GTF from step 1
             ref_annotation_gtf = gencode_gtf,
-            ref_fasta = referenceGenome,
+            ref_fasta = ref_fasta,
   }
 
     call process_tracking_file {
         input:
-            tracking_file = RunGffcompare.tracking_file,  # Uses tracking file from step 1
+            sample_id = sample_id,
+            tracking_file = run_gffcompare.tracking_file,  # Uses tracking file from step 1
             sample_ids = sample_ids,
             model_counts = model_counts,
   }
@@ -47,8 +49,8 @@ workflow LongreadPipeline {
     call gffread {
         input:
             sample_id = sample_id,
-            referenceGenome = referenceGenome,
-            referenceAnnotation_full = RunGffcompare.combined_gtf,
+            ref_fasta = ref_fasta,
+            reference_annotation_full = run_gffcompare.combined_gtf,
             gencode_gtf = gencode_gtf,
             squanti_classification = run_sqanti3.sq_class,  # Uses SQANTI classification from step 2
             updated_tracking = process_tracking_file.updated_tracking,  # Uses processed tracking file
@@ -59,25 +61,26 @@ workflow LongreadPipeline {
         input:
             filtered_gtf = gffread.filtered_gtf,  # Uses filtered GTF from gffread
             sample_id = sample_id,
-            referenceGenome = referenceGenome,
-            referenceAnnotation_full = RunGffcompare.combined_gtf,
+            ref_fasta = ref_fasta,
+            reference_annotation_full = run_gffcompare.combined_gtf,
             gencode_gtf = gencode_gtf,
   }
 
     output {
         File sq_class = run_sqanti3.sq_class
+        File sq_junctions = run_sqanti3.sq_junctions
         File transcriptome_fasta = gffread.transcriptome_fasta
         File combined_sorted_gtf = process_gtf.sorted_gtf
         File updated_tracking_sq_filtered = gffread.updated_tracking_sq_filtered
   }
 }
 
-task FilterIsoQuant {
+task filter_isoquant {
     input {
         File raw_gtf          # Raw GTF file from IsoQuant
         String sample_id      # Sample identifier
-        String docker_image  = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gffcompare" 
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":0.12.9--h9948957_0"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
         Int cpu = 1                   
         Int mem_gb = 1                
         Int preemptible = 2           
@@ -111,10 +114,12 @@ task FilterIsoQuant {
             touch filtered.gtf
         fi
         fi
+
+        mv filtered.gtf ~{sample_id}_filtered.gtf
     >>>
 
     output {
-        File filtered_gtf = "filtered.gtf"  # GTF file containing only IsoQuant entries
+        File filtered_gtf = "~{sample_id}_filtered.gtf"  # GTF file containing only IsoQuant entries
   }
 
     runtime {
@@ -129,20 +134,22 @@ task FilterIsoQuant {
 }
 
 
-task RunGffcompare {
+task run_gffcompare {
     input {
         File ref_gtf                # Reference GTF file
         Array[File] gtf_list        # List of filtered GTF files to compare
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gffcompare"      # Docker image for gffcompare 
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":0.12.9--h9948957_0"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
         String prefix
+        String sample_id
         Int cpu = 2                  
         Int mem_gb = 64               
         Int preemptible = 2           
         Int max_retries = 1           
         Int additional_disk_gb = 0    
   }
-    Int disk_space = 20 + additional_disk_gb
+    Int disk_space = ceil(
+        size(ref_gtf, "GiB")) + 20 + additional_disk_gb
          
     command <<<
 
@@ -193,13 +200,16 @@ task RunGffcompare {
     }
     ' gffcomp_out.tracking gffcomp_out.combined.gtf > renamed.gtf
 
+    mv renamed.gtf ~{sample_id}_renamed.gtf
+    mv gffcomp_out.newtracking ~{sample_id}_gffcomp_out.newtracking
+    mv gffcomp_out.stats ~{sample_id}_gffcomp_out.stats
 
     >>>
 
     output {
-        File combined_gtf = "renamed.gtf"  # Combined GTF from all samples
-        File tracking_file = "gffcomp_out.newtracking"     # Tracking file showing transcript relationships
-        File stats_file = "gffcomp_out.stats"           # Statistics about the comparison
+        File combined_gtf = "~{sample_id}_renamed.gtf"  # Combined GTF from all samples
+        File tracking_file = "~{sample_id}_gffcomp_out.newtracking"     # Tracking file showing transcript relationships
+        File stats_file = "~{sample_id}_gffcomp_out.stats"           # Statistics about the comparison
     }
 
     runtime {
@@ -247,7 +257,8 @@ task run_sqanti3 {
     >>>
 
     output {
-        File sq_class = "~{sample_id}_classification.txt"           
+        File sq_class = "~{sample_id}_classification.txt" 
+        File sq_junctions = "~{sample_id}_junctions.txt"          
     }
 
     runtime {
@@ -268,9 +279,9 @@ task run_sqanti3 {
 task gffread {
     input {
         String sample_id
-        File referenceGenome
+        File ref_fasta
         File gencode_gtf
-        File referenceAnnotation_full
+        File reference_annotation_full
         File squanti_classification
         File updated_tracking
         String prefix 
@@ -279,8 +290,8 @@ task gffread {
         Int preemptible = 2 
         Int max_retries = 1
         Int additional_disk_gb = 20
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"docker.io/hannharris/salmon-with-pandas"
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #"@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
   }
     Int disk_space = (
         ceil(
@@ -290,10 +301,10 @@ task gffread {
         set -euo pipefail
 
         # Step 1: Filter out features without a strand (column 7 = '.')
-        if file ~{referenceAnnotation_full} | grep -q 'gzip compressed'; then
-            zcat ~{referenceAnnotation_full} | awk '{ if ($7 != ".") print }' > annotation_filtered.gtf
+        if file ~{reference_annotation_full} | grep -q 'gzip compressed'; then
+            zcat ~{reference_annotation_full} | awk '{ if ($7 != ".") print }' > annotation_filtered.gtf
         else
-            awk '{ if ($7 != ".") print }' ~{referenceAnnotation_full} > annotation_filtered.gtf
+            awk '{ if ($7 != ".") print }' ~{reference_annotation_full} > annotation_filtered.gtf
         fi
 
             python3 <<EOF
@@ -333,7 +344,7 @@ task gffread {
     updated_tracking = updated_tracking[updated_tracking['transcript_id'].isin(sq_filtered_tracking['isoform'])]
             
 
-    updated_tracking.to_csv("updated_tracking_sq_filtered.tsv", sep='\t', index=False)
+    updated_tracking.to_csv("~{sample_id}_updated_tracking_sq_filtered.tsv", sep='\t', index=False)
 
             # Load GTF
     gtf = pd.read_csv("annotation_filtered.gtf", sep="\\t", comment='#', header=None)
@@ -370,16 +381,17 @@ task gffread {
 
         cp combined.gtf sorted.gtf
         # Step 3: Restrict to contigs present in the reference genome
-        grep '^>' ~{referenceGenome} | cut -d ' ' -f1 | sed 's/^>//' > contigs.txt
-        awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt sorted.gtf > filtered.gtf
+        grep '^>' ~{ref_fasta} | cut -d ' ' -f1 | sed 's/^>//' > contigs.txt
+        awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt sorted.gtf > ~{sample_id}_filtered.gtf
 
-        gffread filtered.gtf -g ~{referenceGenome} -w ~{sample_id}_transcriptome.fa
+        gffread  ~{sample_id}_filtered.gtf -g ~{ref_fasta} -w ~{sample_id}_transcriptome.fa
+
     >>>
 
     output {
         File transcriptome_fasta = "~{sample_id}_transcriptome.fa"
-        File filtered_gtf = "filtered.gtf"
-        File updated_tracking_sq_filtered = "updated_tracking_sq_filtered.tsv"
+        File filtered_gtf = "~{sample_id}_filtered.gtf"
+        File updated_tracking_sq_filtered = "~{sample_id}_updated_tracking_sq_filtered.tsv"
     }
 
     runtime {
@@ -395,17 +407,17 @@ task gffread {
 task process_gtf {
     input {
         String sample_id
-        File referenceGenome
+        File ref_fasta
         File gencode_gtf
-        File referenceAnnotation_full
+        File reference_annotation_full
         File filtered_gtf
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2 
         Int max_retries = 1
         Int additional_disk_gb = 0
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"quay.io/biocontainers/gawk"
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #":5.3.1"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
   }
 
     Int disk_space = (
@@ -454,11 +466,11 @@ task process_gtf {
 
         print;
         }
-        ' ~{filtered_gtf} > updated.gtf
+        ' ~{filtered_gtf} > ~{sample_id}_updated.gtf
   >>>
 
     output {
-        File sorted_gtf = "updated.gtf"
+        File sorted_gtf = "~{sample_id}_updated.gtf"
   }
 
     runtime {
@@ -480,13 +492,14 @@ task process_tracking_file {
         File tracking_file
         Array[String] sample_ids
         Array[File] model_counts
+        String sample_id
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2 
         Int additional_disk_gb = 0
         Int max_retries = 1
-        String docker_image = "hannharris/python-pandas-gffcompare-gffutils-gawk" #"docker.io/hannharris/salmon-with-pandas"
-        String docker_image_hash_or_tag = "@sha256:8441e620c7e65856892a12fca4f737b09a80292e0701ec79ecd96f576411ae4e" #"@sha256:29adeea24ffb7d396e06c0bd7fd3c7ad258d65bd8fb9188f59e2c536023446f3"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
+        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
   }
     
     Int disk_space = (
@@ -528,19 +541,19 @@ task process_tracking_file {
         # Process all samples, not just the first one                                                                    
         for sample in sample_ids:                                                                                        
             if sample not in sample_to_tpm:                                                                              
-                # No TPM file for this sample, skip                                                                      
-                print(f"Warning: No TPM file found for sample {sample}")                                                 
+                # No count file for this sample, skip                                                                      
+                print(f"Warning: No count file found for sample {sample}")                                                 
                 continue                                                                                                 
                                                                                                                         
             model_counts_path = sample_to_tpm[sample]                                                                    
             print(f"Processing sample {sample} with TPM file {model_counts_path}")                                       
                                                                                                                         
             model_counts = pd.read_csv(model_counts_path, sep='\t', comment='#', header=None, compression='gzip')        
-            model_counts = model_counts.rename(columns={0: 'id1', 1: 'tpm'})                                             
+            model_counts = model_counts.rename(columns={0: 'id1', 1: 'count'})                                             
                                                                                                                         
             tracking_m_mask = tracking_m[tracking_m['sample'] == sample]                                                 
             tracking_m_mask = tracking_m_mask.merge(model_counts, on='id1', how='left')                                  
-            tracking_m_mask = tracking_m_mask[tracking_m_mask['tpm'] >= 5]                                               
+            tracking_m_mask = tracking_m_mask[tracking_m_mask['count'] >= 5]                                               
             tracking_m_mask['sample'] = sample                                                                           
             updated_tracking = pd.concat([updated_tracking, tracking_m_mask], ignore_index=True)                         
                                                                                                                         
@@ -549,13 +562,13 @@ task process_tracking_file {
         for sample, count in sample_counts.items():                                                                      
             print(f"{sample}: {count} transcripts")                                                                       
                                                                                                                         
-        updated_tracking.to_csv("updated_tracking.tsv", sep='\t', index=False) 
+        updated_tracking.to_csv("~{sample_id}_updated_tracking.tsv", sep='\t', index=False) 
     
         EOF
         >>>
 
-    output {
-        File updated_tracking = "updated_tracking.tsv"
+    output { 
+        File updated_tracking = "~{sample_id}_updated_tracking.tsv"
     }
 
     runtime {

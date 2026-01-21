@@ -44,7 +44,3 @@ RUN gffcompare --version && \
     python3 --version && \
     python3 -c "import pandas; print('pandas version:', pandas.__version__)" && \
     python3 -c "import gffutils; print('gffutils version:', gffutils.__version__)"
-
-WORKDIR /usr/local/src
-
-CMD ["bash"]
