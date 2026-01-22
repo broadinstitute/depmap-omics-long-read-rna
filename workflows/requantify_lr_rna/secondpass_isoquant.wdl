@@ -59,7 +59,7 @@ task filter_gtf_per_sample {
         Int max_retries = 1              
         Int additional_disk_gb = 0    
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
-        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c"  
+        String docker_image_hash_or_tag = ":production"
     }
 
     Int disk_space = (
@@ -133,7 +133,7 @@ task gtf_to_db {
         File gtf_file              # Filtered GTF file from previous step
         String output_basename     # Base name for output database
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk" 
-        String docker_image_hash_or_tag = "@sha256:88838e9c4e2be6d1d379641029d3d6aca7ca7c7d53330e1cdcd8c4fa918eba5c" 
+        String docker_image_hash_or_tag = ":production"
         Int cpu = 1                      
         Int mem_gb = 16                 
         Int preemptible = 1              

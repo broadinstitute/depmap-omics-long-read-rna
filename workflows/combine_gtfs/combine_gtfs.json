@@ -1,0 +1,24 @@
+{
+  "deleted": false,  
+  "inputs": {
+    "combine_gtfs.model_counts": "this.samples.model_counts",
+    "combine_gtfs.sample_gtfs": "this.samples.extended_annotation",
+    "combine_gtfs.sample_ids": "this.samples.sample_id",
+    "combine_gtfs.sample_set_id": "this.sample_set_id"
+  },
+  "methodConfigVersion": 1,
+  "methodRepoMethod": {
+    "methodNamespace": "cds-pipelines",
+    "methodName": "combine_gtfs",
+    "methodVersion": 1
+  },
+  "namespace": "cds-pipelines",
+  "name": "combine_gtfs",
+  "outputs": {
+    "combine_gtfs.combined_sorted_gtf": "this.combined_sorted_gtf",
+    "combine_gtfs.sq_class": "this.sq_class",
+    "combine_gtfs.transcriptome_fasta": "this.transcriptome_fasta",
+    "combine_gtfs.updated_tracking_sq_filtered": "this.updated_tracking_sq_filtered"
+  },
+  "rootEntityType": "sample"
+}

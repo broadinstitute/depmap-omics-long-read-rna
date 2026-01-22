@@ -15,7 +15,7 @@ delivery_workspace_name = "Long_Read_Omics"
 short_read_workspace_namespace = "broad-firecloud-ccle"
 short_read_workspace_name = "depmap-omics-rna"
 workspace_namespace = "broad-firecloud-ccle"
-workspace_name = "depmap-omics-long-read-rna"
+workspace_name = "depmap-omics-long-read-rna-dev"
 
 [terra.align_lr_rna]
 method_namespace = "cds-pipelines"
@@ -46,3 +46,13 @@ method_synopsis = "Call long read fusions"
 workflow_wdl_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl"
 method_config_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.json"
 workflow_inputs_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions_inputs.json"
+
+[terra.combine_gtfs]
+method_namespace = "cds-pipelines"
+method_name = "combine_gtfs"
+method_config_namespace = "cds-pipelines"
+method_config_name = "combine_gtfs"
+method_synopsis = "Combine GTFs"
+workflow_wdl_path = "./workflows/combine_gtfs/combine_gtfs.wdl"
+method_config_json_path = "./workflows/combine_gtfs/combine_gtfs.json"
+workflow_inputs_json_path = "./workflows/combine_gtfs/combine_gtfs_inputs.json"
