@@ -140,7 +140,7 @@ task sam_to_fastq {
                 "~{cram_bam}"
         fi
 
-        if [[ -n "${max_n_reads:-}" ]]; then
+        if [[ "~{max_n_reads}" != "" ]]; then
             echo "Checking if downsmapling is needed"
             N_READS=$(awk 'END {print NR/4}' "~{sample_id}.1.fastq")
 

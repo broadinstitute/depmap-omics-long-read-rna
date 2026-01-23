@@ -286,27 +286,22 @@ def choose_matched_short_read_sample(
         sr_choices["sr_cram_bam"].str.rsplit(".", n=1).str.get(1).str.upper()
     )
 
-    # need to identify the ref sequence for each short read sample
+    # need to identify the ref sequence for each short read sample (since we might be
+    # converting it from CRAM to FASTQ in the `call_lr_rna_fusions` workflow)
     sr_choices[["sr_ref_fasta", "sr_ref_fasta_index"]] = pd.NA
 
     # hg19 in Gumbo is just the standard hg19 ref
     sr_choices.loc[
         sr_choices["sr_reference_genome"].eq("hg19"),
         ["sr_ref_fasta", "sr_ref_fasta_index"],
-    ] = [
-        sr_ref_urls["hg19"]["ref_fasta"],
-        sr_ref_urls["hg19"]["ref_fasta_index"],
-    ]
+    ] = [sr_ref_urls["hg19"]["ref_fasta"], sr_ref_urls["hg19"]["ref_fasta_index"]]
 
     # hg38 for CRAMs delivered by GP use the DRAGEN hg38 ref
     sr_choices.loc[
         sr_choices["sr_reference_genome"].eq("hg38")
         & sr_choices["sr_sequencing_alignment_source"].eq("GP"),
         ["sr_ref_fasta", "sr_ref_fasta_index"],
-    ] = [
-        sr_ref_urls["hg38_gp"]["ref_fasta"],
-        sr_ref_urls["hg38_gp"]["ref_fasta_index"],
-    ]
+    ] = [sr_ref_urls["hg38_gp"]["ref_fasta"], sr_ref_urls["hg38_gp"]["ref_fasta_index"]]
 
     # hg38 for CDS analysis ready BAMs (no longer saved) use the standard hg38 ref
     sr_choices.loc[
