@@ -6,8 +6,12 @@ workflow combine_gtfs {
         Array[String] sample_ids
         Array[File] extended_annotation
         Array[File] model_counts
+
+        # initial run should be standard Gencode GTF, but subsequent runs on just new
+        # samples should use the `combined_sorted_gtf` output of the previous run
         File gencode_gtf
-        String prefix
+
+        String prefix = "TCONS" # mostly for internal consistency between tasks
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
     }
 
@@ -83,7 +87,7 @@ task filter_isoquant {
         Int cpu = 1
         Int mem_gb = 2
         Int preemptible = 2
-        Int max_retries = 1
+        Int max_retries = 0
         Int additional_disk_gb = 0
     }
 
@@ -139,10 +143,10 @@ task run_gffcompare {
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
-        Int cpu = 2
+        Int cpu = 8
         Int mem_gb = 64
-        Int preemptible = 2
-        Int max_retries = 1
+        Int preemptible = 1
+        Int max_retries = 0
         Int additional_disk_gb = 0
     }
 
@@ -230,7 +234,7 @@ task run_sqanti3 {
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2
-        Int max_retries = 1
+        Int max_retries = 0
         Int additional_disk_gb = 0
     }
 
@@ -293,7 +297,7 @@ task gffread {
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2
-        Int max_retries = 1
+        Int max_retries = 0
         Int additional_disk_gb = 20
    }
 
@@ -430,7 +434,7 @@ task process_tracking_file {
         Int mem_gb = 8
         Int preemptible = 2
         Int additional_disk_gb = 0
-        Int max_retries = 1
+        Int max_retries = 0
     }
 
     Int disk_space = (
@@ -525,7 +529,7 @@ task process_gtf {
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2
-        Int max_retries = 1
+        Int max_retries = 0
         Int additional_disk_gb = 0
    }
 
