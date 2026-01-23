@@ -44,15 +44,6 @@ def refresh_terra_samples(
     # join short read data
     samples = join_sr_data(samples, alignments, short_read_terra_workspace)
 
-    # delete obsolete samples (e.g. ones that have been blacklisted since the last sync)
-    terra_samples = terra_workspace.get_entities("sample")
-    terra_workspace.delete_entities(
-        entity_type="sample",
-        entity_ids=set(terra_samples["sample_id"]).difference(
-            set(samples["sample_id"])
-        ),
-    )
-
     terra_workspace.upload_entities(df=samples, delete_empty=False)
 
     # check if workflows need to be rerun because matched SR data has changed
