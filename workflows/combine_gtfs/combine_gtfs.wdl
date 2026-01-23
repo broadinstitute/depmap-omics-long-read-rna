@@ -1,17 +1,30 @@
 version 1.0
 
 workflow combine_gtfs {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        sample_ids: "array of the sample IDs in this sample set"
+        extended_annotation: "array of extended_annotation output files from quantify_lr_rna"
+        model_counts: "array of model_counts output files from quantify_lr_rna"
+        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
+        prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        combined_sorted_gtf: "TODO"
+        sq_class: "TODO"
+        transcriptome_fasta: "TODO"
+        updated_tracking_sq_filtered: "TODO"
+    }
+
     input {
         String sample_set_id
         Array[String] sample_ids
         Array[File] extended_annotation
         Array[File] model_counts
-
-        # initial run should be standard Gencode GTF, but subsequent runs on just new
-        # samples should use the `combined_sorted_gtf` output of the previous run
         File gencode_gtf
-
-        String prefix = "TCONS" # mostly for internal consistency between tasks
+        String prefix = "TCONS"
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
     }
 
@@ -21,7 +34,7 @@ workflow combine_gtfs {
         call filter_isoquant {
             input:
                 sample_id = pair.left,
-                raw_gtf = pair.right
+                extended_annotation = pair.right
         }
     }
 
@@ -29,22 +42,22 @@ workflow combine_gtfs {
         input:
             sample_set_id = sample_set_id,
             gtf_list = filter_isoquant.filtered_gtf,
-            ref_gtf = gencode_gtf,
+            gencode_gtf = gencode_gtf,
             prefix = prefix
     }
 
     call run_sqanti3 {
         input:
             sample_set_id = sample_set_id,
-            isoquant_gtf = run_gffcompare.combined_gtf,  # Uses the combined GTF from step 1
-            ref_annotation_gtf = gencode_gtf,
+            isoquant_gtf = run_gffcompare.combined_gtf,
+            gencode_gtf = gencode_gtf,
             ref_fasta = ref_fasta
     }
 
     call process_tracking_file {
         input:
             sample_set_id = sample_set_id,
-            tracking_file = run_gffcompare.tracking_file,  # Uses tracking file from step 1
+            tracking_file = run_gffcompare.tracking_file,
             sample_ids = sample_ids,
             model_counts = model_counts
    }
@@ -52,19 +65,18 @@ workflow combine_gtfs {
     call gffread {
         input:
             sample_set_id = sample_set_id,
-            reference_annotation_full = run_gffcompare.combined_gtf,
+            combined_gtf = run_gffcompare.combined_gtf,
             gencode_gtf = gencode_gtf,
-            squanti_classification = run_sqanti3.sq_class,  # Uses SQANTI classification from step 2
-            updated_tracking = process_tracking_file.updated_tracking,  # Uses processed tracking file
-            ref_fasta = ref_fasta,
-            prefix = prefix
+            squanti_classification = run_sqanti3.sq_class,
+            updated_tracking = process_tracking_file.updated_tracking,
+            prefix = prefix,
+            ref_fasta = ref_fasta
    }
 
     call process_gtf {
         input:
             sample_set_id = sample_set_id,
-            filtered_gtf = gffread.filtered_gtf,  # Uses filtered GTF from gffread
-            reference_annotation_full = run_gffcompare.combined_gtf,
+            filtered_gtf = gffread.filtered_gtf,
             gencode_gtf = gencode_gtf,
             ref_fasta = ref_fasta
    }
@@ -78,9 +90,18 @@ workflow combine_gtfs {
 }
 
 task filter_isoquant {
+    parameter_meta {
+        # inputs
+        sample_id: "identifier for this sample"
+        extended_annotation: "quantify_lr_rna.extended_annotation output file for this sample"
+
+        # outputs
+        filtered_gtf: "GTF file containing only IsoQuant entries"
+    }
+
     input {
         String sample_id
-        File raw_gtf
+        File extended_annotation
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
@@ -91,25 +112,25 @@ task filter_isoquant {
         Int additional_disk_gb = 0
     }
 
-    Int disk_space = ceil(size(raw_gtf, "GiB")) + 20 + additional_disk_gb
+    Int disk_space = ceil(size(extended_annotation, "GiB")) + 20 + additional_disk_gb
 
     command <<<
         set -euo pipefail
 
         # Decompress GTF file if needed
-        if [[ "~{raw_gtf}" == *.gz ]]; then
-            gunzip -c "~{raw_gtf}" > raw.gtf
+        if [[ "~{extended_annotation}" == *.gz ]]; then
+            gunzip -c "~{extended_annotation}" > extended_annotation.gtf
         else
-            cp "~{raw_gtf}" raw.gtf
+            cp "~{extended_annotation}" extended_annotation.gtf
         fi
 
         # Error handling for decompression issues
-        if [[ ! -f raw.gtf ]]; then
-            echo "ERROR: raw.gtf not found after decompression." >&2
+        if [[ ! -f extended_annotation.gtf ]]; then
+            echo "ERROR: extended_annotation.gtf not found after decompression." >&2
             touch filtered.gtf
         else
             # Filter for lines where the source column (column 2) is "IsoQuant"
-                awk '$2 == "IsoQuant"' raw.gtf > filtered.gtf
+                awk '$2 == "IsoQuant"' extended_annotation.gtf > filtered.gtf
             if [[ ! -s filtered.gtf ]]; then
                 echo "WARNING: No IsoQuant entries found for ~{sample_id}" >&2
                 touch filtered.gtf
@@ -120,7 +141,7 @@ task filter_isoquant {
     >>>
 
     output {
-        File filtered_gtf = "~{sample_id}_filtered.gtf"  # GTF file containing only IsoQuant entries
+        File filtered_gtf = "~{sample_id}_filtered.gtf"
     }
 
     runtime {
@@ -139,10 +160,23 @@ task filter_isoquant {
 
 
 task run_gffcompare {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        gtf_list: "array of the filtered GTFs from filter_isoquant"
+        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
+        prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
+
+        # outputs
+        combined_gtf: "combined GTF from all samples"
+        tracking_file: "tracking file showing transcript relationships"
+        stats: "statistics about the comparison"
+    }
+
     input {
         String sample_set_id
         Array[File] gtf_list
-        File ref_gtf
+        File gencode_gtf
         String prefix
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
@@ -155,13 +189,13 @@ task run_gffcompare {
     }
 
     Int disk_space = (
-        ceil(size(gtf_list, "GiB") + size(ref_gtf, "GiB")) + 20 + additional_disk_gb
+        ceil(size(gtf_list, "GiB") + size(gencode_gtf, "GiB")) + 20 + additional_disk_gb
     )
 
     command <<<
         echo "Running gffcompare with the following GTFs:"
 
-        gffcompare -r ~{ref_gtf} -X -p ~{prefix} -V -S -o gffcomp_out ~{sep=' ' gtf_list}
+        gffcompare -r "~{gencode_gtf}" -X -p "~{prefix}" -V -S -o gffcomp_out ~{sep=' ' gtf_list}
 
         awk -F'\t' '
             FNR==NR && $4 == "=" {
@@ -213,7 +247,7 @@ task run_gffcompare {
     output {
         File combined_gtf = "~{sample_set_id}_renamed.gtf"  # Combined GTF from all samples
         File tracking_file = "~{sample_set_id}_gffcomp_out.newtracking"     # Tracking file showing transcript relationships
-        File stats_file = "~{sample_set_id}_gffcomp_out.stats"           # Statistics about the comparison
+        File stats = "~{sample_set_id}_gffcomp_out.stats"           # Statistics about the comparison
     }
 
     runtime {
@@ -231,14 +265,26 @@ task run_gffcompare {
 }
 
 task run_sqanti3 {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        isoquant_gtf: "combined GTF from run_gffcompare"
+        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        sq_class: "TODO"
+        sq_junctions: "TODO"
+    }
+
     input {
         String sample_set_id
         File isoquant_gtf
-        File ref_annotation_gtf
+        File gencode_gtf
         File ref_fasta
 
-        String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"          # SQANTI3 docker image name
-        String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b" # SQANTI3 docker image tag or hash
+        String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"
+        String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b"
         Int cpu = 2
         Int mem_gb = 8
         Int preemptible = 2
@@ -249,7 +295,7 @@ task run_sqanti3 {
     Int disk_space = (
         ceil(
             size(isoquant_gtf, "GiB")
-            + size(ref_annotation_gtf, "GiB")
+            + size(gencode_gtf, "GiB")
             + size(ref_fasta, "GiB")
         )
         + 20 + additional_disk_gb
@@ -265,7 +311,7 @@ task run_sqanti3 {
             --report both \
             --output "~{sample_set_id}" \
             "~{sample_set_id}.in.gtf" \
-            "~{ref_annotation_gtf}" \
+            "~{gencode_gtf}" \
             "~{ref_fasta}"
     >>>
 
@@ -289,6 +335,17 @@ task run_sqanti3 {
 }
 
 task process_tracking_file {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        tracking_file: "output tracking_file from run_gffcompare"
+        sample_ids: "array of the sample IDs in this sample set"
+        model_counts: "array of model_counts output files from quantify_lr_rna"
+
+        # outputs
+        updated_tracking: "TODO"
+    }
+
     input {
         String sample_set_id
         File tracking_file
@@ -388,14 +445,30 @@ task process_tracking_file {
 }
 
 task gffread {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
+        combined_gtf: "Combined GTF from run_gffcompare"
+        squanti_classification: "sq_class file from run_sqanti3"
+        updated_tracking: "updated_tracking file from process_tracking_file"
+        prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        transcriptome_fasta: "TODO"
+        filtered_gtf: "TODO"
+        updated_tracking_sq_filtered: "TODO"
+    }
+
     input {
         String sample_set_id
         File gencode_gtf
-        File reference_annotation_full
+        File combined_gtf
         File squanti_classification
         File updated_tracking
-        File ref_fasta
         String prefix
+        File ref_fasta
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
@@ -409,7 +482,7 @@ task gffread {
     Int disk_space = (
         ceil(
             size(gencode_gtf, "GiB")
-            + size(reference_annotation_full, "GiB")
+            + size(combined_gtf, "GiB")
             + size(squanti_classification, "GiB")
             + size(updated_tracking, "GiB")
             + size(ref_fasta, "GiB")
@@ -421,10 +494,10 @@ task gffread {
         set -euo pipefail
 
         # Step 1: Filter out features without a strand (column 7 = '.')
-        if file "~{reference_annotation_full}" | grep -q 'gzip compressed'; then
-            zcat "~{reference_annotation_full}" | awk '{ if ($7 != ".") print }' > annotation_filtered.gtf
+        if file "~{combined_gtf}" | grep -q 'gzip compressed'; then
+            zcat "~{combined_gtf}" | awk '{ if ($7 != ".") print }' > annotation_filtered.gtf
         else
-            awk '{ if ($7 != ".") print }' "~{reference_annotation_full}" > annotation_filtered.gtf
+            awk '{ if ($7 != ".") print }' "~{combined_gtf}" > annotation_filtered.gtf
         fi
 
         python3 <<EOF
@@ -531,10 +604,20 @@ task gffread {
 }
 
 task process_gtf {
+    parameter_meta {
+        # inputs
+        sample_set_id: "identifier for this set of samples"
+        filtered_gtf: "filtered_gtf file from gffread"
+        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        sorted_gtf: "TODO"
+    }
+
     input {
         String sample_set_id
         File filtered_gtf
-        File reference_annotation_full
         File gencode_gtf
         File ref_fasta
 
@@ -551,14 +634,13 @@ task process_gtf {
         ceil(
             size(gencode_gtf, "GiB")
             + size(filtered_gtf, "GiB")
-            + size(reference_annotation_full, "GiB")
             + size(gencode_gtf, "GiB")
     )  + 20 + additional_disk_gb)
 
     command <<<
         set -euo pipefail
 
-        grep -E 'HAVANA|ENSEMBL' ~{filtered_gtf} | \
+        grep -E 'HAVANA|ENSEMBL' "~{filtered_gtf}" | \
             awk -F '\t' '
             {
                 match($9, /gene_id "([^"]+)"/, gid);
