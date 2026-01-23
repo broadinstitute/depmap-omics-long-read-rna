@@ -15,7 +15,7 @@ delivery_workspace_name = "Long_Read_Omics"
 short_read_workspace_namespace = "broad-firecloud-ccle"
 short_read_workspace_name = "depmap-omics-rna"
 workspace_namespace = "broad-firecloud-ccle"
-workspace_name = "depmap-omics-long-read-rna-dev"
+workspace_name = "depmap-omics-long-read-rna"
 
 [terra.align_lr_rna]
 method_namespace = "cds-pipelines"
@@ -56,3 +56,15 @@ method_synopsis = "Combine GTFs"
 workflow_wdl_path = "./workflows/combine_gtfs/combine_gtfs.wdl"
 method_config_json_path = "./workflows/combine_gtfs/combine_gtfs.json"
 workflow_inputs_json_path = "./workflows/combine_gtfs/combine_gtfs_inputs.json"
+
+[sr_ref.hg19]
+ref_fasta = "gs://ccleparams/reference/hg19/Homo_sapiens_assembly19.fasta"
+ref_fasta_index = "gs://ccleparams/reference/hg19/Homo_sapiens_assembly19.fasta.fai"
+
+[sr_ref.hg38_gp]
+ref_fasta = "gs://ccleparams/hg38.DRAGEN_GP_CRAM.fa"
+ref_fasta_index = "gs://ccleparams/hg38.DRAGEN_GP_CRAM.fa.fai"
+
+[sr_ref.hg38_cds]
+ref_fasta = "gs://ccleparams/hg38ref/Homo_sapiens_assembly38.fasta"
+ref_fasta_index = "gs://ccleparams/hg38ref/Homo_sapiens_assembly38.fasta.fai"

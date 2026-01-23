@@ -11,8 +11,8 @@ workflow call_lr_rna_fusions {
         String? sr_cram_or_bam
         File? sr_cram_bam
         File? sr_crai_bai
-        File? ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
-        File? ref_fasta_index = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa.fai"
+        File? sr_ref_fasta
+        File? sr_ref_fasta_index
 
         # STAR inputs
         File genome_lib_tar_with_star_idx = "gs://mdl-ctat-genome-libs/__genome_libs_StarFv1.10/GRCh38_gencode_v22_CTAT_lib_Mar012021.for_mm2fusion.withSTARidx.tar"
@@ -30,8 +30,8 @@ workflow call_lr_rna_fusions {
                 cram_or_bam = select_first([sr_cram_or_bam]),
                 cram_bam = select_first([sr_cram_bam]),
                 crai_bai = sr_crai_bai,
-                ref_fasta = ref_fasta,
-                ref_fasta_index = ref_fasta_index,
+                ref_fasta = sr_ref_fasta,
+                ref_fasta_index = sr_ref_fasta_index,
                 max_n_reads = max_n_reads
         }
 
@@ -124,6 +124,7 @@ task sam_to_fastq {
 
         if [[ "~{cram_or_bam}" == "CRAM" ]];
         then
+            echo "Converting CRAM to FASTQ"
             samtools fastq \
                 -@ ~{n_threads} \
                 --reference "~{ref_fasta}" \
@@ -131,6 +132,7 @@ task sam_to_fastq {
                 -2 "~{sample_id}.2.fastq" \
                 "~{cram_bam}"
         else
+            echo "Converting BAM to FASTQ"
             samtools fastq \
                 -@ ~{n_threads} \
                 -1 "~{sample_id}.1.fastq" \
@@ -139,6 +141,7 @@ task sam_to_fastq {
         fi
 
         if [[ -n "${max_n_reads:-}" ]]; then
+            echo "Checking if downsmapling is needed"
             N_READS=$(awk 'END {print NR/4}' "~{sample_id}.1.fastq")
 
             if (( $(echo "$N_READS > ~{max_n_reads}" | bc -l) )); then

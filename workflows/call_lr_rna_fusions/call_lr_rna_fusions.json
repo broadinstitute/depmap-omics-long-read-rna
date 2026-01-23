@@ -6,7 +6,9 @@
     "call_lr_rna_fusions.sr_sample_id": "this.sr_omics_sequencing_id",
     "call_lr_rna_fusions.sr_crai_bai": "this.sr_crai_bai",
     "call_lr_rna_fusions.sr_cram_bam": "this.sr_cram_bam",
-    "call_lr_rna_fusions.sr_cram_or_bam": "this.sr_file_format"
+    "call_lr_rna_fusions.sr_cram_or_bam": "this.sr_file_format",
+    "call_lr_rna_fusions.sr_ref_fasta": "this.sr_ref_fasta",
+    "call_lr_rna_fusions.sr_ref_fasta_index": "this.sr_ref_fasta_index"
   },
   "methodConfigVersion": 1,
   "methodRepoMethod": {
