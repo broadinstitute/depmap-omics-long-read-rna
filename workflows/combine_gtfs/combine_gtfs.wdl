@@ -91,7 +91,7 @@ task filter_isoquant {
         Int additional_disk_gb = 0
     }
 
-    Int disk_space = ceil(size(raw_gtf, "GiB")) + 10 + additional_disk_gb
+    Int disk_space = ceil(size(raw_gtf, "GiB")) + 20 + additional_disk_gb
 
     command <<<
         set -euo pipefail
@@ -131,6 +131,10 @@ task filter_isoquant {
         maxRetries: max_retries
         cpu: cpu
     }
+
+    meta {
+        allowNestedInputs: true
+    }
 }
 
 
@@ -151,7 +155,7 @@ task run_gffcompare {
     }
 
     Int disk_space = (
-        ceil(size(gtf_list, "GiB") + size(ref_gtf, "GiB")) + 10 + additional_disk_gb
+        ceil(size(gtf_list, "GiB") + size(ref_gtf, "GiB")) + 20 + additional_disk_gb
     )
 
     command <<<
@@ -220,6 +224,10 @@ task run_gffcompare {
         maxRetries: max_retries
         cpu: cpu
     }
+
+    meta {
+        allowNestedInputs: true
+    }
 }
 
 task run_sqanti3 {
@@ -238,27 +246,25 @@ task run_sqanti3 {
         Int additional_disk_gb = 0
     }
 
-  # Calculate required disk space based on input file sizes
     Int disk_space = (
         ceil(
             size(isoquant_gtf, "GiB")
             + size(ref_annotation_gtf, "GiB")
             + size(ref_fasta, "GiB")
         )
-        + 10 + additional_disk_gb
+        + 20 + additional_disk_gb
     )
 
     command <<<
         set -euo pipefail
 
-        zcat "~{isoquant_gtf}" \
-            | awk '{ if ($7 != ".") print }' \
-            > "~{sample_set_id}.unzipped.gtf"
+        awk '{ if ($7 != ".") print }' "~{isoquant_gtf}" \
+            > "~{sample_set_id}.in.gtf"
 
         python /usr/local/src/SQANTI3-5.3.6/sqanti3_qc.py \
             --report both \
             --output "~{sample_set_id}" \
-            "~{sample_set_id}.unzipped.gtf" \
+            "~{sample_set_id}.in.gtf" \
             "~{ref_annotation_gtf}" \
             "~{ref_fasta}"
     >>>
@@ -266,6 +272,105 @@ task run_sqanti3 {
     output {
         File sq_class = "~{sample_set_id}_classification.txt"
         File sq_junctions = "~{sample_set_id}_junctions.txt"
+    }
+
+    runtime {
+        docker: "~{docker_image}~{docker_image_hash_or_tag}"
+        memory: mem_gb + " GiB"
+        disks: "local-disk " + disk_space + " SSD"
+        preemptible: preemptible
+        maxRetries: max_retries
+        cpu: cpu
+    }
+
+    meta {
+        allowNestedInputs: true
+    }
+}
+
+task process_tracking_file {
+    input {
+        String sample_set_id
+        File tracking_file
+        Array[String] sample_ids
+        Array[File] model_counts
+
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
+        String docker_image_hash_or_tag = ":production"
+        Int cpu = 2
+        Int mem_gb = 8
+        Int preemptible = 2
+        Int additional_disk_gb = 0
+        Int max_retries = 0
+    }
+
+    Int disk_space = (
+        ceil(size(tracking_file, "GiB") * 3 + size(model_counts, "GiB"))
+        + 20 + additional_disk_gb
+    )
+
+    command <<<
+        set -euo pipefail
+
+        python3 <<EOF
+        import pandas as pd
+
+        tracking = pd.read_csv("~{tracking_file}", sep='\t', header=None)
+
+        sample_cols = "~{sep=',' sample_ids}".split(',')
+
+        fixed_cols = ['transcript_id', 'loc', 'gene_id', 'val']
+        all_cols = fixed_cols + sample_cols
+        tracking.columns = all_cols
+
+        tracking_m = tracking.melt(id_vars=fixed_cols, var_name='sample', value_name='id')
+        tracking_m = tracking_m[tracking_m['id'] != "-"]
+        tracking_m['id1'] = tracking_m['id'].str.split('|').str[1]
+
+        updated_tracking = pd.DataFrame()
+
+        sample_ids = "~{sep=',' sample_ids}".split(',')
+
+        def extract_sample_id(path):
+            filename = path.split('/')[-1]
+            #take the part before '.discovered_transcript_tpm.tsv.gz'
+            sample_id = filename.split(".")[0]
+            return sample_id
+
+        transcript_model_tpms = "~{sep=',' model_counts}".split(',')
+
+        sample_to_tpm = {extract_sample_id(path): path for path in transcript_model_tpms}
+
+        # Process all samples, not just the first one
+        for sample in sample_ids:
+            if sample not in sample_to_tpm:
+                # No count file for this sample, skip
+                print(f"Warning: No count file found for sample {sample}")
+                continue
+
+            model_counts_path = sample_to_tpm[sample]
+            print(f"Processing sample {sample} with TPM file {model_counts_path}")
+
+            model_counts = pd.read_csv(model_counts_path, sep='\t', comment='#', header=None, compression='gzip')
+            model_counts = model_counts.rename(columns={0: 'id1', 1: 'count'})
+
+            tracking_m_mask = tracking_m[tracking_m['sample'] == sample]
+            tracking_m_mask = tracking_m_mask.merge(model_counts, on='id1', how='left')
+            tracking_m_mask = tracking_m_mask[tracking_m_mask['count'] >= 5]
+            tracking_m_mask['sample'] = sample
+            updated_tracking = pd.concat([updated_tracking, tracking_m_mask], ignore_index=True)
+
+        sample_counts = updated_tracking['sample'].value_counts()
+        print("Transcript counts per sample:")
+        for sample, count in sample_counts.items():
+            print(f"{sample}: {count} transcripts")
+
+        updated_tracking.to_csv("~{sample_set_id}_updated_tracking.tsv", sep='\t', index=False)
+        EOF
+    >>>
+
+    output {
+        File updated_tracking = "~{sample_set_id}_updated_tracking.tsv"
     }
 
     runtime {
@@ -298,7 +403,7 @@ task gffread {
         Int mem_gb = 8
         Int preemptible = 2
         Int max_retries = 0
-        Int additional_disk_gb = 20
+        Int additional_disk_gb = 0
    }
 
     Int disk_space = (
@@ -309,7 +414,7 @@ task gffread {
             + size(updated_tracking, "GiB")
             + size(ref_fasta, "GiB")
         )
-        + 10 + additional_disk_gb
+        + 20 + additional_disk_gb
     )
 
     command <<<
@@ -322,75 +427,75 @@ task gffread {
             awk '{ if ($7 != ".") print }' "~{reference_annotation_full}" > annotation_filtered.gtf
         fi
 
-            python3 <<EOF
-    import pandas as pd
+        python3 <<EOF
+        import pandas as pd
 
-    updated_tracking = pd.read_csv("~{updated_tracking}", sep="\\t")
-    updated_tracking_nodups = updated_tracking[['transcript_id']].drop_duplicates()
-    updated_tracking_nodups['transcript_id'] = updated_tracking_nodups['transcript_id'].str.split('|').str[0]
+        updated_tracking = pd.read_csv("~{updated_tracking}", sep="\\t")
+        updated_tracking_nodups = updated_tracking[['transcript_id']].drop_duplicates()
+        updated_tracking_nodups['transcript_id'] = updated_tracking_nodups['transcript_id'].str.split('|').str[0]
 
-            # Load classification
-    sq = pd.read_csv("~{squanti_classification}", sep="\\t")
-    sq_annotated = sq[sq['isoform'].str.startswith('ENST')]
+        # Load classification
+        sq = pd.read_csv("~{squanti_classification}", sep="\\t")
+        sq_annotated = sq[sq['isoform'].str.startswith('ENST')]
 
-            # Filter TCONS + novel_*_catalog + coding
-    sq_filtered = sq[
-        sq['isoform'].str.startswith("~{prefix}") &
-        sq['structural_category'].isin(['novel_not_in_catalog', 'novel_in_catalog']) &
-        (sq['coding'] == 'coding')
-    ]
-    sq_annotated_sm = sq_annotated[['ORF_seq', 'isoform']]
-    merged_sq = sq_filtered.merge(sq_annotated_sm, on='ORF_seq', how='left', suffixes=('_tcons', '_enst'), indicator=True)
-    merged_sq = merged_sq[merged_sq['_merge'] == 'left_only'] #orf in novel and not in annotated
+        # Filter TCONS + novel_*_catalog + coding
+        sq_filtered = sq[
+            sq['isoform'].str.startswith("~{prefix}") &
+            sq['structural_category'].isin(['novel_not_in_catalog', 'novel_in_catalog']) &
+            (sq['coding'] == 'coding')
+        ]
+        sq_annotated_sm = sq_annotated[['ORF_seq', 'isoform']]
+        merged_sq = sq_filtered.merge(sq_annotated_sm, on='ORF_seq', how='left', suffixes=('_tcons', '_enst'), indicator=True)
+        merged_sq = merged_sq[merged_sq['_merge'] == 'left_only'] #orf in novel and not in annotated
 
-    sq_filtered = sq_filtered[sq_filtered['isoform'].isin(merged_sq['isoform_tcons'])]
-    sq_filtered = sq_filtered[sq_filtered['RTS_stage'] == False]  # Filter for RTS_stage
-    sq_filtered = sq_filtered[sq_filtered['isoform'].isin(updated_tracking_nodups['transcript_id'])]
+        sq_filtered = sq_filtered[sq_filtered['isoform'].isin(merged_sq['isoform_tcons'])]
+        sq_filtered = sq_filtered[sq_filtered['RTS_stage'] == False]  # Filter for RTS_stage
+        sq_filtered = sq_filtered[sq_filtered['isoform'].isin(updated_tracking_nodups['transcript_id'])]
 
-    sq_filtered_previouslyfound = sq[
-        sq['structural_category'].isin(['full-splice_match']) &
-        ~((sq['associated_transcript'].str.startswith('ENST')) | (sq['associated_transcript'] == "novel")) &
-        (sq['coding'] == 'coding')
-    ]
+        sq_filtered_previouslyfound = sq[
+            sq['structural_category'].isin(['full-splice_match']) &
+            ~((sq['associated_transcript'].str.startswith('ENST')) | (sq['associated_transcript'] == "novel")) &
+            (sq['coding'] == 'coding')
+        ]
 
-    sq_filtered_tracking = pd.concat([sq_filtered, sq_filtered_previouslyfound])
+        sq_filtered_tracking = pd.concat([sq_filtered, sq_filtered_previouslyfound])
 
-    updated_tracking['transcript_id'] = updated_tracking['transcript_id'].str.split('|').str[0]
-    updated_tracking = updated_tracking[updated_tracking['transcript_id'].isin(sq_filtered_tracking['isoform'])]
+        updated_tracking['transcript_id'] = updated_tracking['transcript_id'].str.split('|').str[0]
+        updated_tracking = updated_tracking[updated_tracking['transcript_id'].isin(sq_filtered_tracking['isoform'])]
 
 
-    updated_tracking.to_csv("~{sample_set_id}_updated_tracking_sq_filtered.tsv", sep='\t', index=False)
+        updated_tracking.to_csv("~{sample_set_id}_updated_tracking_sq_filtered.tsv", sep='\t', index=False)
 
-            # Load GTF
-    gtf = pd.read_csv("annotation_filtered.gtf", sep="\\t", comment='#', header=None)
+        # Load GTF
+        gtf = pd.read_csv("annotation_filtered.gtf", sep="\\t", comment='#', header=None)
 
-            # Extract transcript_id from attributes column
-    gtf['transcript_id'] = gtf[8].str.extract(r'transcript_id "([^"]+)"')
+        # Extract transcript_id from attributes column
+        gtf['transcript_id'] = gtf[8].str.extract(r'transcript_id "([^"]+)"')
 
-            # Filter GTF
-    gtf_filtered = gtf[gtf['transcript_id'].isin(sq_filtered['isoform'])].copy()
-    gtf_filtered.drop(columns=['transcript_id'], inplace=True)
+        # Filter GTF
+        gtf_filtered = gtf[gtf['transcript_id'].isin(sq_filtered['isoform'])].copy()
+        gtf_filtered.drop(columns=['transcript_id'], inplace=True)
 
-            # Write output
-    gtf_filtered.to_csv(
-        "filtered1.gtf", sep='\\t',
-        index=False, header=False, quoting=3
-    )
+        # Write output
+        gtf_filtered.to_csv(
+            "filtered1.gtf", sep='\\t',
+            index=False, header=False, quoting=3
+        )
 
         # Add GTF header
-    header = """##gff-version 3
-    ##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)
-    ##provider: GENCODE
-    ##contact: gencode-help@ebi.ac.uk
-    ##format: gtf
-    ##date: 2021-03-12"""
+        header = """##gff-version 3
+        ##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)
+        ##provider: GENCODE
+        ##contact: gencode-help@ebi.ac.uk
+        ##format: gtf
+        ##date: 2021-03-12"""
 
-    with open("filtered1.gtf", "r") as f:
-        lines = f.readlines()
-    with open("filtered1.gtf", "w") as f:
-        f.write(header + "\\n")
-        f.writelines(lines)
-    EOF
+        with open("filtered1.gtf", "r") as f:
+            lines = f.readlines()
+        with open("filtered1.gtf", "w") as f:
+            f.write(header + "\\n")
+            f.writelines(lines)
+        EOF
 
         cat filtered1.gtf "~{gencode_gtf}" > combined.gtf
 
@@ -419,100 +524,9 @@ task gffread {
         maxRetries: max_retries
         cpu: cpu
     }
-}
 
-task process_tracking_file {
-    input {
-        String sample_set_id
-        File tracking_file
-        Array[String] sample_ids
-        Array[File] model_counts
-
-        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
-        String docker_image_hash_or_tag = ":production"
-        Int cpu = 2
-        Int mem_gb = 8
-        Int preemptible = 2
-        Int additional_disk_gb = 0
-        Int max_retries = 0
-    }
-
-    Int disk_space = (
-        ceil(size(tracking_file, "GiB") * 3 + size(model_counts, "GiB"))
-        + 10 + additional_disk_gb
-    )
-
-    command <<<
-        set -euo pipefail
-
-        python3 <<EOF
-import pandas as pd
-
-tracking = pd.read_csv("~{tracking_file}", sep='\t', header=None)
-
-sample_cols = "~{sep=',' sample_ids}".split(',')
-
-fixed_cols = ['transcript_id', 'loc', 'gene_id', 'val']
-all_cols = fixed_cols + sample_cols
-tracking.columns = all_cols
-
-tracking_m = tracking.melt(id_vars=fixed_cols, var_name='sample', value_name='id')
-tracking_m = tracking_m[tracking_m['id'] != "-"]
-tracking_m['id1'] = tracking_m['id'].str.split('|').str[1]
-
-updated_tracking = pd.DataFrame()
-
-sample_ids = "~{sep=',' sample_ids}".split(',')
-
-def extract_sample_id(path):
-    filename = path.split('/')[-1]
-    #take the part before '.discovered_transcript_tpm.tsv.gz'
-    sample_id = filename.split(".")[0]
-    return sample_id
-
-transcript_model_tpms = "~{sep=',' model_counts}".split(',')
-
-sample_to_tpm = {extract_sample_id(path): path for path in transcript_model_tpms}
-
-# Process all samples, not just the first one
-for sample in sample_ids:
-    if sample not in sample_to_tpm:
-        # No count file for this sample, skip
-        print(f"Warning: No count file found for sample {sample}")
-        continue
-
-    model_counts_path = sample_to_tpm[sample]
-    print(f"Processing sample {sample} with TPM file {model_counts_path}")
-
-    model_counts = pd.read_csv(model_counts_path, sep='\t', comment='#', header=None, compression='gzip')
-    model_counts = model_counts.rename(columns={0: 'id1', 1: 'count'})
-
-    tracking_m_mask = tracking_m[tracking_m['sample'] == sample]
-    tracking_m_mask = tracking_m_mask.merge(model_counts, on='id1', how='left')
-    tracking_m_mask = tracking_m_mask[tracking_m_mask['count'] >= 5]
-    tracking_m_mask['sample'] = sample
-    updated_tracking = pd.concat([updated_tracking, tracking_m_mask], ignore_index=True)
-
-sample_counts = updated_tracking['sample'].value_counts()
-print("Transcript counts per sample:")
-for sample, count in sample_counts.items():
-    print(f"{sample}: {count} transcripts")
-
-updated_tracking.to_csv("~{sample_set_id}_updated_tracking.tsv", sep='\t', index=False)
-        EOF
-    >>>
-
-    output {
-        File updated_tracking = "~{sample_set_id}_updated_tracking.tsv"
-    }
-
-    runtime {
-        docker: "~{docker_image}~{docker_image_hash_or_tag}"
-        memory: mem_gb + " GiB"
-        disks: "local-disk " + disk_space + " SSD"
-        preemptible: preemptible
-        maxRetries: max_retries
-        cpu: cpu
+    meta {
+        allowNestedInputs: true
     }
 }
 
@@ -539,7 +553,7 @@ task process_gtf {
             + size(filtered_gtf, "GiB")
             + size(reference_annotation_full, "GiB")
             + size(gencode_gtf, "GiB")
-    )  + 10 + additional_disk_gb)
+    )  + 20 + additional_disk_gb)
 
     command <<<
         set -euo pipefail
@@ -598,5 +612,9 @@ task process_gtf {
         preemptible: preemptible
         maxRetries: max_retries
         cpu: cpu
+    }
+
+    meta {
+        allowNestedInputs: true
     }
 }
