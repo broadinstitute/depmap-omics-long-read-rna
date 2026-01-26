@@ -1,6 +1,31 @@
 version 1.0
 
 workflow requantify_lr_rna {
+    parameter_meta {
+        # inputs
+        sample_id: "ID of this sample"
+        input_bam: "aligned BAM file"
+        input_bai: "index of BAM file"
+        transcript_counts: "transcript counts from first-pass of IsoQuant"
+        combined_sorted_gtf: "combined+sorted GTF from `combin_gtfs`"
+        updated_tracking_sq_filtered: "TODO"
+        data_type: "IsoQuant option"
+        model_construction_strategy: "IsoQuant option"
+        stranded: "IsoQuant option"
+        transcript_quantification: "IsoQuant option"
+        gene_quantification: "IsoQuant option"
+        report_novel_unspliced: "IsoQuant option"
+        report_canonical: "IsoQuant option"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        requantified_transcript_counts: "TODO"
+        requantified_transcript_tpm: "TODO"
+        requantified_read_assignments_tsv: "TODO"
+        requantified_exon_counts: "TODO"
+        requantified_intron_counts: "TODO"
+    }
+
     input {
         # per-sample inputs
         String sample_id
@@ -34,7 +59,7 @@ workflow requantify_lr_rna {
 
     call gtf_to_db {
         input:
-            gtf_file = filter_gtf_per_sample.filtered_gtf
+            gtf = filter_gtf_per_sample.filtered_gtf
     }
 
     call run_isoquant {
@@ -42,7 +67,7 @@ workflow requantify_lr_rna {
             sample_id = sample_id,
             input_bam = input_bam,
             input_bai = input_bai,
-            ref_annotation_db = gtf_to_db.db_file,
+            ref_annotation_db = gtf_to_db.db,
             ref_fasta = ref_fasta,
             data_type = data_type,
             model_construction_strategy = model_construction_strategy,
@@ -62,8 +87,18 @@ workflow requantify_lr_rna {
     }
 }
 
-
 task filter_gtf_per_sample {
+    parameter_meta {
+        # inputs
+        sample_id: "ID of this sample"
+        transcript_counts: "transcript counts from first-pass of IsoQuant"
+        combined_sorted_gtf: "combined+sorted GTF from `combin_gtfs`"
+        updated_tracking_sq_filtered: "TODO"
+
+        # outputs
+        filtered_gtf: "TODO"
+    }
+
     input {
         String sample_id
         File transcript_counts
@@ -135,7 +170,7 @@ task filter_gtf_per_sample {
     >>>
 
     output {
-        File filtered_gtf = "~{sample_id}_filtered_sample.gtf"  # Sample-specific filtered GTF
+        File filtered_gtf = "~{sample_id}_filtered_sample.gtf"
     }
 
     runtime {
@@ -153,8 +188,16 @@ task filter_gtf_per_sample {
 }
 
 task gtf_to_db {
+    parameter_meta {
+        # inputs
+        gft: "GTF convert to SQLite"
+
+        # outputs
+        db: "SQLite version of the input GTF"
+    }
+
     input {
-        File gtf_file              # Filtered GTF file from previous step
+        File gtf
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
@@ -165,10 +208,10 @@ task gtf_to_db {
         Int additional_disk_gb = 0
    }
 
-    String db_name = basename(gtf_file, ".gtf")
+    String db_name = basename(gtf, ".gtf")
 
     Int disk_space = (
-        ceil(size(gtf_file, "GiB")) * 3 + 20 + additional_disk_gb
+        ceil(size(gtf, "GiB")) * 3 + 20 + additional_disk_gb
     )
 
     command <<<
@@ -179,7 +222,7 @@ task gtf_to_db {
 
         # Create a database from the GTF file
         db = gffutils.create_db(
-            "~{gtf_file}",
+            "~{gtf}",
             dbfn="~{db_name}.db",
             force=True,
             keep_order=False,
@@ -192,7 +235,7 @@ task gtf_to_db {
     >>>
 
     output {
-        File db_file = "~{db_name}.db"  # SQLite database of GTF features
+        File db = "~{db_name}.db"
     }
 
     runtime {
@@ -210,12 +253,34 @@ task gtf_to_db {
 }
 
 task run_isoquant {
+    parameter_meta {
+        # inputs
+        sample_id: "ID of this sample"
+        input_bam: "aligned BAM file"
+        input_bai: "Iindex of BAM file"
+        ref_annotation_db: "reference annotation database from gtf_to_db"
+        data_type: "IsoQuant option"
+        model_construction_strategy: "IsoQuant option"
+        stranded: "IsoQuant option"
+        transcript_quantification: "IsoQuant option"
+        gene_quantification: "IsoQuant option"
+        report_novel_unspliced: "IsoQuant option"
+        report_canonical: "IsoQuant option"
+        ref_fasta: "reference sequence FASTA"
+
+        # outputs
+        read_assignments_tsv: "TODO"
+        transcript_counts: "TODO"
+        transcript_tpm: "TODO"
+        exon_counts: "TODO"
+        intron_counts: "TODO"
+    }
+
     input {
-        String sample_id                # Sample identifier
-        File input_bam                  # Input BAM file
-        File input_bai                  # BAM index file
-        File ref_annotation_db          # Reference annotation database (from GTFtoDB)
-        File ref_fasta                  # Reference genome FASTA
+        String sample_id
+        File input_bam
+        File input_bai
+        File ref_annotation_db
         String data_type
         String model_construction_strategy
         String stranded
@@ -223,6 +288,7 @@ task run_isoquant {
         String gene_quantification
         String report_novel_unspliced
         String report_canonical
+        File ref_fasta
 
         String docker_image = "us-central1-docker.pkg.dev/depmap-omics/terra-images/isoquant"
         String docker_image_hash_or_tag = ":3.7.0--hdfd78af_0"
