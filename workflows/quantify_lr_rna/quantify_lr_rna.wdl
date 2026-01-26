@@ -99,8 +99,10 @@ task run_isoquant {
     command <<<
         set -euo pipefail
 
-        touch "~{input_bai}" # BAI must be newer than BAM to avoid warning
+        # Ensure BAI is newer than BAM to avoid warnings
+        touch "~{input_bai}"
 
+        # Run IsoQuant with custom annotation database
         /usr/local/bin/isoquant.py \
             --bam "~{input_bam}" \
             --count_exons \
@@ -117,21 +119,22 @@ task run_isoquant {
             --threads ~{cpu} \
             --transcript_quantification "~{transcript_quantification}"
 
+        echo "Compressing output TSVS"
         find isoquant_output/~{sample_id}/ -maxdepth 1 -type f -not -name '*.gz' -exec gzip {} +
     >>>
 
     output {
-        File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"
-        File model_counts = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_counts.tsv.gz"
-        File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
-        File transcript_model_tpm = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_tpm.tsv.gz"
-        File gene_tpm = "isoquant_output/~{sample_id}/~{sample_id}.gene_tpm.tsv.gz"
-        File gene_counts = "isoquant_output/~{sample_id}/~{sample_id}.gene_counts.tsv.gz"
-        File extended_annotation = "isoquant_output/~{sample_id}/~{sample_id}.extended_annotation.gtf.gz"
-        File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"
         File exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"
+        File extended_annotation = "isoquant_output/~{sample_id}/~{sample_id}.extended_annotation.gtf.gz"
+        File gene_counts = "isoquant_output/~{sample_id}/~{sample_id}.gene_counts.tsv.gz"
+        File gene_tpm = "isoquant_output/~{sample_id}/~{sample_id}.gene_tpm.tsv.gz"
         File intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"
+        File model_counts = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_counts.tsv.gz"
+        File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"
+        File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"
         File transcript_model_reads= "isoquant_output/~{sample_id}/~{sample_id}.transcript_model_reads.tsv.gz"
+        File transcript_model_tpm = "isoquant_output/~{sample_id}/~{sample_id}.discovered_transcript_tpm.tsv.gz"
+        File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
     }
 
     runtime {

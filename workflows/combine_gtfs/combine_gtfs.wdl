@@ -286,7 +286,7 @@ task run_sqanti3 {
         String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"
         String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b"
         Int cpu = 2
-        Int mem_gb = 8
+        Int mem_gb = 16
         Int preemptible = 2
         Int max_retries = 0
         Int additional_disk_gb = 0

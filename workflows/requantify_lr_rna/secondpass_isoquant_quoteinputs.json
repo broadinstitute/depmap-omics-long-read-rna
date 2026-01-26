@@ -1,5 +1,0 @@
-{ 
-    "PostProcessingPipeline.all_sample_gtf": "gs://fc-secure-e9081dd6-3252-442d-9048-7a65fb7696bc/submissions/5336736a-634c-4bf8-92c0-a1f1d550e0eb/LongreadPipeline/ae4173a4-c272-4f2f-b4c7-7739767f051a/call-process_gtf/updated.gtf",
-    "PostProcessingPipeline.tracking_file": "gs://fc-secure-e9081dd6-3252-442d-9048-7a65fb7696bc/submissions/5336736a-634c-4bf8-92c0-a1f1d550e0eb/LongreadPipeline/ae4173a4-c272-4f2f-b4c7-7739767f051a/call-gffread/updated_tracking_sq_filtered.tsv",
-    "PostProcessingPipeline.ref_fasta": "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
-}
