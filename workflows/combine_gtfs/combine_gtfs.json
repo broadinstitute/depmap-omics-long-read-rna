@@ -1,7 +1,7 @@
 {
   "deleted": false,  
   "inputs": {
-    "combine_gtfs.model_counts": "this.samples.model_counts",
+    "combine_gtfs.discovered_transcript_counts": "this.samples.discovered_transcript_counts",
     "combine_gtfs.extended_annotation": "this.samples.extended_annotation",
     "combine_gtfs.sample_ids": "this.samples.sample_id",
     "combine_gtfs.sample_set_id": "this.sample_set_id"

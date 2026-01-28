@@ -7,8 +7,8 @@ workflow requantify_lr_rna {
         input_bam: "aligned BAM file"
         input_bai: "index of BAM file"
         transcript_counts: "transcript counts from first-pass of IsoQuant"
-        combined_sorted_gtf: "combined+sorted GTF from `combin_gtfs`"
-        updated_tracking_sq_filtered: "TODO"
+        combined_sorted_gtf: "combined+sorted GTF from latest run of `combine_gtfs`"
+        updated_tracking_sq_filtered: "TODO from latest run of `combine_gtfs`"
         data_type: "IsoQuant option"
         model_construction_strategy: "IsoQuant option"
         stranded: "IsoQuant option"
@@ -19,11 +19,11 @@ workflow requantify_lr_rna {
         ref_fasta: "reference sequence FASTA"
 
         # outputs
-        requantified_transcript_counts: "TODO"
-        requantified_transcript_tpm: "TODO"
-        requantified_read_assignments_tsv: "TODO"
         requantified_exon_counts: "TODO"
         requantified_intron_counts: "TODO"
+        requantified_read_assignments: "TODO"
+        requantified_transcript_counts: "TODO"
+        requantified_transcript_tpm: "TODO"
     }
 
     input {
@@ -79,11 +79,11 @@ workflow requantify_lr_rna {
     }
 
     output {
-        File requantified_transcript_counts = run_isoquant.transcript_counts
-        File requantified_transcript_tpm = run_isoquant.transcript_tpm
-        File requantified_read_assignments_tsv = run_isoquant.read_assignments_tsv
         File requantified_exon_counts = run_isoquant.exon_counts
         File requantified_intron_counts = run_isoquant.intron_counts
+        File requantified_read_assignments = run_isoquant.read_assignments
+        File requantified_transcript_counts = run_isoquant.transcript_counts
+        File requantified_transcript_tpm = run_isoquant.transcript_tpm
     }
 }
 
@@ -269,11 +269,11 @@ task run_isoquant {
         ref_fasta: "reference sequence FASTA"
 
         # outputs
-        read_assignments_tsv: "TODO"
-        transcript_counts: "TODO"
-        transcript_tpm: "TODO"
         exon_counts: "TODO"
         intron_counts: "TODO"
+        read_assignments: "TODO"
+        transcript_counts: "TODO"
+        transcript_tpm: "TODO"
     }
 
     input {
@@ -334,11 +334,11 @@ task run_isoquant {
     >>>
 
     output {
-        File read_assignments_tsv = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"
-        File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"
-        File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
         File exon_counts = "isoquant_output/~{sample_id}/~{sample_id}.exon_counts.tsv.gz"
         File intron_counts = "isoquant_output/~{sample_id}/~{sample_id}.intron_counts.tsv.gz"
+        File read_assignments = "isoquant_output/~{sample_id}/~{sample_id}.read_assignments.tsv.gz"
+        File transcript_counts = "isoquant_output/~{sample_id}/~{sample_id}.transcript_counts.tsv.gz"
+        File transcript_tpm = "isoquant_output/~{sample_id}/~{sample_id}.transcript_tpm.tsv.gz"
     }
 
     runtime {

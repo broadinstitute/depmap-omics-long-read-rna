@@ -40,15 +40,14 @@ def process_tracking_file(
     sample_ids_list: Annotated[
         Path, typer.Option("path to text file containing list of sample IDs")
     ],
-    transcript_counts_file_list: Annotated[
+    discovered_transcript_counts_file_list: Annotated[
         Path,
         typer.Option(
-            "path to text file containing list paths to samples' transcript count files"
+            "path to text file containing paths to samples' "
+            "discovered_transcript_counts files (from quantify_lr_rna workflow)"
         ),
     ],
-    min_count: Annotated[
-        int, typer.Option("min value of count to filter transcript counts")
-    ],
+    min_count: Annotated[int, typer.Option("min value to use to filter counts")],
 ) -> None:
     import pandas as pd
 
@@ -83,11 +82,11 @@ def process_tracking_file(
     tracking["id1"] = tracking["id"].str.split("|").str.get(1)
 
     # read file containing list of transcript count files
-    logging.info(f"Reading {transcript_counts_file_list}")
-    with open(transcript_counts_file_list, "r") as f:
-        transcript_counts = f.read().splitlines()
+    logging.info(f"Reading {discovered_transcript_counts_file_list}")
+    with open(discovered_transcript_counts_file_list, "r") as f:
+        discovered_transcript_counts = f.read().splitlines()
 
-    transcript_counts = [x.strip() for x in transcript_counts]
+    discovered_transcript_counts = [x.strip() for x in discovered_transcript_counts]
 
     def extract_sample_id(path: str) -> str:
         """
@@ -103,7 +102,9 @@ def process_tracking_file(
         return m[0]
 
     # make mapping from sample ID to transcript count file
-    sample_to_tpm_file = {extract_sample_id(path): path for path in transcript_counts}
+    sample_to_tpm_file = {
+        extract_sample_id(path): path for path in discovered_transcript_counts
+    }
 
     assert len(set(sample_to_tpm_file.keys()).symmetric_difference(sample_ids)) == 0, (
         "Provided sample IDs and transcript count files don't match"

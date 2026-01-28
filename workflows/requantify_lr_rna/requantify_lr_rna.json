@@ -17,11 +17,11 @@
   "namespace": "cds-pipelines",
   "name": "requantify_lr_rna",
   "outputs": {
-    "requantify_lr_rna.secondpass_exon_counts": "this.secondpass_exon_counts",
-    "requantify_lr_rna.secondpass_intron_counts": "this.secondpass_intron_counts",
-    "requantify_lr_rna.secondpass_read_assignments_tsv": "this.secondpass_read_assignments_tsv",
-    "requantify_lr_rna.secondpass_transcript_counts": "this.secondpass_transcript_counts",
-    "requantify_lr_rna.secondpass_transcript_tpm": "this.secondpass_transcript_tpm"
+    "requantify_lr_rna.requantified_exon_counts": "this.requantified_exon_counts",
+    "requantify_lr_rna.requantified_intron_counts": "this.requantified_intron_counts",
+    "requantify_lr_rna.requantified_read_assignments": "this.requantified_read_assignments",
+    "requantify_lr_rna.requantified_transcript_counts": "this.requantified_transcript_counts",
+    "requantify_lr_rna.requantified_transcript_tpm": "this.requantified_transcript_tpm"
   },
   "rootEntityType": "sample"
 }

@@ -6,7 +6,7 @@ workflow combine_gtfs {
         sample_set_id: "identifier for this set of samples"
         sample_ids: "array of the sample IDs in this sample set"
         extended_annotation: "array of extended_annotation output files from quantify_lr_rna"
-        model_counts: "array of model_counts output files from quantify_lr_rna"
+        discovered_transcript_counts: "array of discovered_transcript_counts output files from quantify_lr_rna"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
         ref_fasta: "reference sequence FASTA"
@@ -22,7 +22,7 @@ workflow combine_gtfs {
         String sample_set_id
         Array[String] sample_ids
         Array[File] extended_annotation
-        Array[File] model_counts
+        Array[File] discovered_transcript_counts
         File gencode_gtf
         String prefix = "TCONS"
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
@@ -59,7 +59,7 @@ workflow combine_gtfs {
             sample_set_id = sample_set_id,
             tracking_file = run_gffcompare.tracking_file,
             sample_ids = sample_ids,
-            model_counts = model_counts
+            discovered_transcript_counts = discovered_transcript_counts
    }
 
     call gffread {
@@ -209,7 +209,7 @@ task run_gffcompare {
                 if(prefix in map) $1=map[prefix]"|"rest;
                 print $0
             }
-        ' OFS='\t' gffcomp_out.tracking gffcomp_out.tracking > gffcomp_out.newtracking
+        ' OFS='\t' gffcomp_out.tracking gffcomp_out.tracking > gffcomp_out.newtracking.tsv
 
         awk -F'\t' '
             FNR==NR {
@@ -240,14 +240,14 @@ task run_gffcompare {
         ' gffcomp_out.tracking gffcomp_out.combined.gtf > renamed.gtf
 
         mv renamed.gtf "~{sample_set_id}_renamed.gtf"
-        mv gffcomp_out.newtracking "~{sample_set_id}_gffcomp_out.newtracking"
+        mv gffcomp_out.newtracking.tsv "~{sample_set_id}_gffcomp_out.newtracking.tsv"
         mv gffcomp_out.stats "~{sample_set_id}_gffcomp_out.stats"
     >>>
 
     output {
-        File combined_gtf = "~{sample_set_id}_renamed.gtf"  # Combined GTF from all samples
-        File tracking_file = "~{sample_set_id}_gffcomp_out.newtracking"     # Tracking file showing transcript relationships
-        File stats = "~{sample_set_id}_gffcomp_out.stats"           # Statistics about the comparison
+        File combined_gtf = "~{sample_set_id}_renamed.gtf"
+        File tracking_file = "~{sample_set_id}_gffcomp_out.newtracking.tsv"
+        File stats = "~{sample_set_id}_gffcomp_out.stats"
     }
 
     runtime {
@@ -286,7 +286,7 @@ task run_sqanti3 {
         String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"
         String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b"
         Int cpu = 2
-        Int mem_gb = 16
+        Int mem_gb = 64
         Int preemptible = 2
         Int max_retries = 0
         Int additional_disk_gb = 0
@@ -340,7 +340,7 @@ task process_tracking_file {
         sample_set_id: "identifier for this set of samples"
         tracking_file: "output tracking_file from run_gffcompare"
         sample_ids: "array of the sample IDs in this sample set"
-        model_counts: "array of model_counts output files from quantify_lr_rna"
+        discovered_transcript_counts: "array of discovered_transcript_counts output files from quantify_lr_rna"
 
         # outputs
         updated_tracking: "TODO"
@@ -350,19 +350,19 @@ task process_tracking_file {
         String sample_set_id
         File tracking_file
         Array[String] sample_ids
-        Array[File] model_counts
+        Array[File] discovered_transcript_counts
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
         Int cpu = 2
-        Int mem_gb = 8
+        Int mem_gb = 32
         Int preemptible = 2
         Int additional_disk_gb = 0
         Int max_retries = 0
     }
 
     Int disk_space = (
-        ceil(size(tracking_file, "GiB") * 3 + size(model_counts, "GiB"))
+        ceil(size(tracking_file, "GiB") * 3 + size(discovered_transcript_counts, "GiB"))
         + 20 + additional_disk_gb
     )
 
@@ -394,7 +394,7 @@ task process_tracking_file {
             sample_id = filename.split(".")[0]
             return sample_id
 
-        transcript_model_tpms = "~{sep=',' model_counts}".split(',')
+        transcript_model_tpms = "~{sep=',' discovered_transcript_counts}".split(',')
 
         sample_to_tpm = {extract_sample_id(path): path for path in transcript_model_tpms}
 
@@ -405,14 +405,14 @@ task process_tracking_file {
                 print(f"Warning: No count file found for sample {sample}")
                 continue
 
-            model_counts_path = sample_to_tpm[sample]
-            print(f"Processing sample {sample} with TPM file {model_counts_path}")
+            discovered_transcript_counts_path = sample_to_tpm[sample]
+            print(f"Processing sample {sample} with TPM file {discovered_transcript_counts_path}")
 
-            model_counts = pd.read_csv(model_counts_path, sep='\t', comment='#', header=None, compression='gzip')
-            model_counts = model_counts.rename(columns={0: 'id1', 1: 'count'})
+            discovered_transcript_counts = pd.read_csv(discovered_transcript_counts_path, sep='\t', comment='#', header=None, compression='gzip')
+            discovered_transcript_counts = discovered_transcript_counts.rename(columns={0: 'id1', 1: 'count'})
 
             tracking_m_mask = tracking_m[tracking_m['sample'] == sample]
-            tracking_m_mask = tracking_m_mask.merge(model_counts, on='id1', how='left')
+            tracking_m_mask = tracking_m_mask.merge(discovered_transcript_counts, on='id1', how='left')
             tracking_m_mask = tracking_m_mask[tracking_m_mask['count'] >= 5]
             tracking_m_mask['sample'] = sample
             updated_tracking = pd.concat([updated_tracking, tracking_m_mask], ignore_index=True)
@@ -535,8 +535,6 @@ task gffread {
 
         updated_tracking['transcript_id'] = updated_tracking['transcript_id'].str.split('|').str[0]
         updated_tracking = updated_tracking[updated_tracking['transcript_id'].isin(sq_filtered_tracking['isoform'])]
-
-
         updated_tracking.to_csv("~{sample_set_id}_updated_tracking_sq_filtered.tsv", sep='\t', index=False)
 
         # Load GTF
@@ -624,7 +622,7 @@ task process_gtf {
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
         String docker_image_hash_or_tag = ":production"
         Int cpu = 2
-        Int mem_gb = 8
+        Int mem_gb = 32
         Int preemptible = 2
         Int max_retries = 0
         Int additional_disk_gb = 0
