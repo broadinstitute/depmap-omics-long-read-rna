@@ -164,6 +164,111 @@ def process_tracking_file(
     updated_tracking.to_parquet(tracking_out, index=False)
 
 
+@app.command()
+def filter_gtf_and_tracking(
+    updated_tracking: Annotated[
+        Path, typer.Option(help="path to updated tracking file (parquet format)")
+    ],
+    squanti_classification: Annotated[
+        Path, typer.Option(help="path to SQANTI3 classification file")
+    ],
+    annotation_filtered_gtf: Annotated[
+        Path, typer.Option(help="path to input filtered GTF file")
+    ],
+    prefix: Annotated[str, typer.Option(help="transcript prefix (e.g., TCONS)")],
+    updated_tracking_out: Annotated[
+        Path, typer.Option(help="path to write filtered tracking file")
+    ],
+    filtered_gtf_out: Annotated[
+        Path, typer.Option(help="path to write filtered GTF file")
+    ],
+) -> None:
+    import pandas as pd
+
+    # Load updated tracking
+    updated_tracking_df = pd.read_parquet(updated_tracking)
+    updated_tracking_nodups = updated_tracking_df[["transcript_id"]].drop_duplicates()
+    updated_tracking_nodups["transcript_id"] = (
+        updated_tracking_nodups["transcript_id"].str.split("|").str[0]
+    )
+
+    # Load classification
+    sq = pd.read_csv(squanti_classification, sep="\t")
+    sq_annotated = sq[sq["isoform"].str.startswith("ENST")]
+
+    # Filter TCONS + novel_*_catalog + coding
+    sq_filtered = sq[
+        sq["isoform"].str.startswith(prefix)
+        & sq["structural_category"].isin(["novel_not_in_catalog", "novel_in_catalog"])
+        & (sq["coding"] == "coding")
+    ]
+    sq_annotated_sm = sq_annotated[["ORF_seq", "isoform"]]
+    merged_sq = sq_filtered.merge(
+        sq_annotated_sm,
+        on="ORF_seq",
+        how="left",
+        suffixes=("_tcons", "_enst"),
+        indicator=True,
+    )
+    merged_sq = merged_sq[
+        merged_sq["_merge"] == "left_only"
+    ]  # orf in novel and not in annotated
+
+    sq_filtered = sq_filtered[sq_filtered["isoform"].isin(merged_sq["isoform_tcons"])]
+    sq_filtered = sq_filtered[sq_filtered["RTS_stage"] == False]  # Filter for RTS_stage
+    sq_filtered = sq_filtered[
+        sq_filtered["isoform"].isin(updated_tracking_nodups["transcript_id"])
+    ]
+
+    sq_filtered_previouslyfound = sq[
+        sq["structural_category"].isin(["full-splice_match"])
+        & ~(
+            (sq["associated_transcript"].str.startswith("ENST"))
+            | (sq["associated_transcript"] == "novel")
+        )
+        & (sq["coding"] == "coding")
+    ]
+
+    sq_filtered_tracking = pd.concat([sq_filtered, sq_filtered_previouslyfound])
+
+    updated_tracking_df["transcript_id"] = (
+        updated_tracking_df["transcript_id"].str.split("|").str[0]
+    )
+    updated_tracking_df = updated_tracking_df[
+        updated_tracking_df["transcript_id"].isin(sq_filtered_tracking["isoform"])
+    ]
+    updated_tracking_df.to_csv(updated_tracking_out, sep="\t", index=False)
+
+    # Load GTF
+    gtf = pd.read_csv(annotation_filtered_gtf, sep="\t", comment="#", header=None)
+
+    # Extract transcript_id from attributes column
+    gtf["transcript_id"] = gtf[8].str.extract(r'transcript_id "([^"]+)"')
+
+    # Filter GTF
+    gtf_filtered = gtf[gtf["transcript_id"].isin(sq_filtered["isoform"])].copy()
+    gtf_filtered.drop(columns=["transcript_id"], inplace=True)
+
+    # Write output
+    gtf_filtered.to_csv(
+        filtered_gtf_out, sep="\t", index=False, header=False, quoting=3
+    )
+
+    # Add GTF header
+    header = """##gff-version 3
+##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)
+##provider: GENCODE
+##contact: gencode-help@ebi.ac.uk
+##format: gtf
+##date: 2021-03-12"""
+
+    with open(filtered_gtf_out, "r") as f:
+        lines = f.readlines()
+    with open(filtered_gtf_out, "w") as f:
+        f.write(header + "\n")
+        f.writelines(lines)
+
+
 @app.callback(result_callback=done)
 def main():
     logger = logging.getLogger()
