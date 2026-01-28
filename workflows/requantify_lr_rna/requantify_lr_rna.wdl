@@ -105,7 +105,7 @@ task filter_gtf_per_sample {
         File combined_sorted_gtf
         File updated_tracking_sq_filtered
 
-        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
         Int cpu = 2
         Int mem_gb = 8
@@ -199,7 +199,7 @@ task gtf_to_db {
     input {
         File gtf
 
-        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
         Int cpu = 2
         Int mem_gb = 16
