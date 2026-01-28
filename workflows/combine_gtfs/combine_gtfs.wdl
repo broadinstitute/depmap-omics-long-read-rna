@@ -349,12 +349,13 @@ task process_tracking_file {
     input {
         String sample_set_id
         File tracking_file
+        Int min_count = 5
         Array[String] sample_ids
         Array[File] discovered_transcript_counts
 
-        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/python-pandas-gffcompare-gffutils-gawk"
+        String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
-        Int cpu = 2
+        Int cpu = 8
         Int mem_gb = 32
         Int preemptible = 2
         Int additional_disk_gb = 0
@@ -369,65 +370,24 @@ task process_tracking_file {
     command <<<
         set -euo pipefail
 
-        python3 <<EOF
-        import pandas as pd
+        # Write sample_ids to newline-delimited text file
+        printf '%s\n' ~{sep=' ' sample_ids} > sample_ids.txt
 
-        tracking = pd.read_csv("~{tracking_file}", sep='\t', header=None)
+        # Write discovered_transcript_counts file paths to newline-delimited text file
+        printf '%s\n' ~{sep=' ' discovered_transcript_counts} \
+            > discovered_transcript_counts_files.txt
 
-        sample_cols = "~{sep=',' sample_ids}".split(',')
-
-        fixed_cols = ['transcript_id', 'loc', 'gene_id', 'val']
-        all_cols = fixed_cols + sample_cols
-        tracking.columns = all_cols
-
-        tracking_m = tracking.melt(id_vars=fixed_cols, var_name='sample', value_name='id')
-        tracking_m = tracking_m[tracking_m['id'] != "-"]
-        tracking_m['id1'] = tracking_m['id'].str.split('|').str[1]
-
-        updated_tracking = pd.DataFrame()
-
-        sample_ids = "~{sep=',' sample_ids}".split(',')
-
-        def extract_sample_id(path):
-            filename = path.split('/')[-1]
-            #take the part before '.discovered_transcript_tpm.tsv.gz'
-            sample_id = filename.split(".")[0]
-            return sample_id
-
-        transcript_model_tpms = "~{sep=',' discovered_transcript_counts}".split(',')
-
-        sample_to_tpm = {extract_sample_id(path): path for path in transcript_model_tpms}
-
-        # Process all samples, not just the first one
-        for sample in sample_ids:
-            if sample not in sample_to_tpm:
-                # No count file for this sample, skip
-                print(f"Warning: No count file found for sample {sample}")
-                continue
-
-            discovered_transcript_counts_path = sample_to_tpm[sample]
-            print(f"Processing sample {sample} with TPM file {discovered_transcript_counts_path}")
-
-            discovered_transcript_counts = pd.read_csv(discovered_transcript_counts_path, sep='\t', comment='#', header=None, compression='gzip')
-            discovered_transcript_counts = discovered_transcript_counts.rename(columns={0: 'id1', 1: 'count'})
-
-            tracking_m_mask = tracking_m[tracking_m['sample'] == sample]
-            tracking_m_mask = tracking_m_mask.merge(discovered_transcript_counts, on='id1', how='left')
-            tracking_m_mask = tracking_m_mask[tracking_m_mask['count'] >= 5]
-            tracking_m_mask['sample'] = sample
-            updated_tracking = pd.concat([updated_tracking, tracking_m_mask], ignore_index=True)
-
-        sample_counts = updated_tracking['sample'].value_counts()
-        print("Transcript counts per sample:")
-        for sample, count in sample_counts.items():
-            print(f"{sample}: {count} transcripts")
-
-        updated_tracking.to_csv("~{sample_set_id}_updated_tracking.tsv", sep='\t', index=False)
-        EOF
+        python -m combine_requantify_tools \
+            process-tracking-file \
+            --tracking-in="~{tracking_file}" \
+            --tracking-out="~{sample_set_id}_updated_tracking.parquet" \
+            --sample-ids-list="sample_ids.txt" \
+            --discovered-transcript-counts-file-list="discovered_transcript_counts_files.txt" \
+            --min-count=~{min_count}
     >>>
 
     output {
-        File updated_tracking = "~{sample_set_id}_updated_tracking.tsv"
+        File updated_tracking = "~{sample_set_id}_updated_tracking.parquet"
     }
 
     runtime {

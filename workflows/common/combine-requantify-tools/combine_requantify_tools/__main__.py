@@ -33,21 +33,23 @@ def process_tracking_file(
     tracking_in: Annotated[
         Path,
         typer.Option(
-            "path to input tracking file (from combine_gtfs.run_gffcompare task)"
+            help="path to input tracking file (from combine_gtfs.run_gffcompare task)"
         ),
     ],
-    tracking_out: Annotated[Path, typer.Option("path to write output tracking file")],
+    tracking_out: Annotated[
+        Path, typer.Option(help="path to write output tracking file")
+    ],
     sample_ids_list: Annotated[
-        Path, typer.Option("path to text file containing list of sample IDs")
+        Path, typer.Option(help="path to text file containing list of sample IDs")
     ],
     discovered_transcript_counts_file_list: Annotated[
         Path,
         typer.Option(
-            "path to text file containing paths to samples' "
+            help="path to text file containing paths to samples' "
             "discovered_transcript_counts files (from quantify_lr_rna workflow)"
         ),
     ],
-    min_count: Annotated[int, typer.Option("min value to use to filter counts")],
+    min_count: Annotated[int, typer.Option(help="min value to use to filter counts")],
 ) -> None:
     import pandas as pd
 
@@ -91,14 +93,14 @@ def process_tracking_file(
     def extract_sample_id(path: str) -> str:
         """
         Extract the sample/sequencing ID from a transcript counts file's name, e.g.
-        "CDS-ABCDEF" from "path/CDS-ABCDEF.discovered_transcript_tpm.tsv.gz".
+        "CDS-ABCDEF" from "path/CDS-ABCDEF/CDS-ABCDEF.discovered_transcript_tpm.tsv.gz".
 
         :param path: path to a transcript counts file
         :return: the CDS-* sample ID
         """
 
         m = re.findall(r"CDS-[A-Z a-z 0-9]{6}", path)
-        assert len(m) == 1, f"Couldn't find single sample ID in '{path}'"
+        assert len(set(m)) == 1, f"Couldn't find single sample ID in '{path}'"
         return m[0]
 
     # make mapping from sample ID to transcript count file
