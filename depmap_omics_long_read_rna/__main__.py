@@ -29,7 +29,7 @@ pd.set_option("display.width", 200)
 pd.set_option("expand_frame_repr", True)
 pd.set_option("mode.chained_assignment", "warn")
 
-app = typer.Typer()
+app = typer.Typer(rich_markup_mode=None, pretty_exceptions_enable=False)
 
 config: dict[str, Any] = {}
 

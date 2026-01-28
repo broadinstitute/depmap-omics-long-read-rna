@@ -1,0 +1,29 @@
+[project]
+name = "combine-requantify-tools"
+version = "0.1.0"
+description = "CLI for misc. Python-based tasks in quantification workflows"
+readme = "README.md"
+requires-python = ">=3.11, <3.12"
+dependencies = [
+    "gffutils>=0.13",
+    "pandas>=3.0.0",
+    "pyarrow>=23.0.0",
+    "tqdm>=4.67.1",
+    "typer>=0.21.1",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.408",
+    "ruff>=0.14.14",
+]
+
+[tool.ruff]
+select = [
+    "I",  # isort formatting
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+include = ["combine_requantify_tools"]
