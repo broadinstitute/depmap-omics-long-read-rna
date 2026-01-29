@@ -28,7 +28,7 @@ def do_process_tracking_file(
     fixed_cols = ["transcript_id", "loc", "gene_id", "val"]
 
     logging.info(f"Reading {tracking_in}")
-    tracking = pd.read_csv(
+    tracking = pd.read_table(
         tracking_in,
         sep="\t",
         header=None,
@@ -75,6 +75,7 @@ def do_process_tracking_file(
             names=["id1", "count"],
             compression="gzip",
             dtype={"id1": "string", "count": "int64"},
+            low_memory=False,
         )
 
         tracking_sample = tracking.loc[tracking["sample"].eq(sample_id)]
@@ -90,7 +91,7 @@ def do_process_tracking_file(
 
     with ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(process_single_sample, sample_id, tpm_file, min_count)
+            executor.submit(process_single_sample, sample_id, tpm_file)
             for sample_id, tpm_file in sample_to_tpm_file.items()
         ]
 
