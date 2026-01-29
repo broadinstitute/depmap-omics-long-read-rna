@@ -91,6 +91,7 @@ def run(cloud_event: CloudEvent) -> None:
         refresh_terra_samples(
             terra_workspace=terra_workspace,
             short_read_terra_workspace=short_read_terra_workspace,
+            sr_ref_urls=config["sr_ref"],
             gumbo_client=gumbo_client,
         )
 

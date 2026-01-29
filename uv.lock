@@ -360,7 +360,7 @@ requires-dist = [
     { name = "google-cloud-logging", specifier = ">=3.11.4,<4" },
     { name = "google-cloud-secret-manager", specifier = ">=2.23.2,<3" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
-    { name = "nebelung", specifier = ">=2.12.1" },
+    { name = "nebelung", specifier = ">=2.13.1" },
     { name = "numpy", specifier = ">=2.2.4,<3" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
     { name = "pandera", extras = ["strategies"], specifier = ">=0.22.1,<0.23" },
@@ -397,16 +397,16 @@ wheels = [
 [[package]]
 name = "firecloud-api-cds"
 version = "0.2.0"
-source = { registry = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/simple/" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-auth" },
     { name = "google-cloud-storage" },
     { name = "pydot" },
     { name = "six" },
 ]
-sdist = { url = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/firecloud-api-cds/firecloud_api_cds-0.2.0.tar.gz", hash = "sha256:31611d3d2c08db08b28dc10f00ecc5eeb15600a3df8d38b38df98c95c5af13a9" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/f6/27160e4ff98bfe59d24dcaee05ff5a7204518fd5c2fa4a2d2b1ad4a7c4bd/firecloud_api_cds-0.2.0.tar.gz", hash = "sha256:5cbd17dfab2c96792dbed2e8aeb799520837ba8f3ecf06d643f33c54f75e7cc2", size = 66393, upload-time = "2026-01-06T18:18:25.79Z" }
 wheels = [
-    { url = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/firecloud-api-cds/firecloud_api_cds-0.2.0-py3-none-any.whl", hash = "sha256:c263ea9868670bce0e6d751de5c5c9271ae3180a604b918499c36f0ddcf2daa5" },
+    { url = "https://files.pythonhosted.org/packages/b4/03/771d9bd60856a5be507b51f972e3baa7b4f8a23ab5ce632e5cd0b8ffc7c5/firecloud_api_cds-0.2.0-py3-none-any.whl", hash = "sha256:41513aaec2b5bedf900996f3c04cccd438acda1b1266937ad41e66cd539402cd", size = 55003, upload-time = "2026-01-06T18:18:24.467Z" },
 ]
 
 [[package]]
@@ -885,7 +885,7 @@ wheels = [
 
 [[package]]
 name = "nebelung"
-version = "2.12.1"
+version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "firecloud-api-cds" },
@@ -895,9 +895,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pygithub" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/66/ce6c713d216bb93d7f25b52fc7cda11d1dae22d4513a08f4c0a30d37efb9/nebelung-2.12.1.tar.gz", hash = "sha256:d22157ffb56b6218a216decaea158d498cf9c9daed9bd45d67aeb4af4f55c542", size = 19867, upload-time = "2025-10-08T15:22:24.077Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/17/2a/3139965bd2f5b4e2501b531ed96be113c46dde90d25039019255a74488c8/nebelung-2.13.1.tar.gz", hash = "sha256:94ab7357b2c1efee3aa768d14546a3e956b6754c8248b3993947af95f1b828cc", size = 20381, upload-time = "2026-01-08T17:22:44.794Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/ef/9a66cd2de3d1be847199384bce81d4d1bf4641c6a108be7fb521fbbc3e60/nebelung-2.12.1-py3-none-any.whl", hash = "sha256:db35a2e24f2f2bef396ee0296967f3453f3d14605b986fd808b01638bb252776", size = 18800, upload-time = "2025-10-08T15:22:22.39Z" },
+    { url = "https://files.pythonhosted.org/packages/94/98/b1021e920493adbae43bffbf29856e5ff26b1c54de5db46a1a2f495c898f/nebelung-2.13.1-py3-none-any.whl", hash = "sha256:6e48499b33ec4867e68cd41a1666a7a1048d8870899814ce94304e18d474d1e3", size = 19423, upload-time = "2026-01-08T17:22:43.426Z" },
 ]
 
 [[package]]

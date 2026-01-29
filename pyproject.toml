@@ -20,7 +20,7 @@ dependencies = [
     "ariadne-codegen>=0.14.0,<0.15",
     "pd-flatten>=0.1.1,<0.2",
     "google-cloud-storage>=3.1.0",
-    "nebelung>=2.12.1",
+    "nebelung>=2.13.1",
 ]
 
 [dependency-groups]
@@ -32,10 +32,6 @@ dev = [
     "pyarrow>=20.0.0",
     "gffutils>=0.13",
 ]
-
-[[tool.uv.index]]
-name = "public-python"
-url = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/simple/"
 
 [build-system]
 requires = ["hatchling"]
