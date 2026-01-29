@@ -1,6 +1,10 @@
 version 1.0
 
 workflow combine_gtfs {
+    meta {
+        description: "TODO"
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -90,6 +94,11 @@ workflow combine_gtfs {
 }
 
 task filter_isoquant {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_id: "identifier for this sample"
@@ -152,13 +161,14 @@ task filter_isoquant {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task run_gffcompare {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -255,13 +265,14 @@ task run_gffcompare {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task run_sqanti3 {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -325,13 +336,14 @@ task run_sqanti3 {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task process_tracking_file {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -395,13 +407,14 @@ task process_tracking_file {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task gffread {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -449,26 +462,18 @@ task gffread {
 
     command <<<
         set -euo pipefail
-
-        # Step 1: Filter out features without a strand (column 7 = '.')
-        if file "~{combined_gtf}" | grep -q 'gzip compressed'; then
-            zcat "~{combined_gtf}" | awk '{ if ($7 != ".") print }' > combined_gtf_w_strand.gtf
-        else
-            awk '{ if ($7 != ".") print }' "~{combined_gtf}" > combined_gtf_w_strand.gtf
-        fi
-
         python -m combine_requantify_tools \
             filter-gtf-and-tracking \
             --updated-tracking="~{updated_tracking}" \
             --squanti-classification="~{squanti_classification}" \
-            --annotation-filtered-gtf="combined_gtf_w_strand.gtf" \
+            --annotation-filtered-gtf="~{combined_gtf}" \
             --prefix="~{prefix}" \
             --tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.tsv" \
             --gtf-out="~{sample_set_id}_filtered.gtf"
 
         cat "~{sample_set_id}_filtered.gtf" "~{gencode_gtf}" > recombined.gtf
 
-        # Step 3: Restrict to contigs present in the reference genome
+        # restrict to contigs present in the reference genome
         grep '^>' ~{ref_fasta} | cut -d ' ' -f1 | sed 's/^>//' > contigs.txt
         awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt recombined.gtf \
             > "~{sample_set_id}_filtered.gtf"
@@ -492,13 +497,14 @@ task gffread {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task process_gtf {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
@@ -589,9 +595,5 @@ task process_gtf {
         preemptible: preemptible
         maxRetries: max_retries
         cpu: cpu
-    }
-
-    meta {
-        allowNestedInputs: true
     }
 }

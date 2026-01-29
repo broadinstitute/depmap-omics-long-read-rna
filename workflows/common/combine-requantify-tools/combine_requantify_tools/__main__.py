@@ -107,7 +107,8 @@ def filter_gtf_and_tracking(
     # construct GTF header
     gtf_header = [
         "##gff-version 3",
-        "##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)",
+        "##description: evidence-based annotation of the human genome (GRCh38),"
+        " version 38 (Ensembl 104)",
         "##provider: GENCODE",
         "##contact: gencode-help@ebi.ac.uk",
         "##format: gtf",
