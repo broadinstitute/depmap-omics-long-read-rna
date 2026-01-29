@@ -1,6 +1,5 @@
 import csv
 import logging
-import textwrap
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -106,16 +105,17 @@ def filter_gtf_and_tracking(
     )
 
     # construct GTF header
-    gtf_header = textwrap.dedent("""##gff-version 3
-    ##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)
-    ##provider: GENCODE
-    ##contact: gencode-help@ebi.ac.uk
-    ##format: gtf
-    ##date: 2021-03-12""")
+    gtf_header = [
+        "##gff-version 3",
+        "##description: evidence-based annotation of the human genome (GRCh38), version 38 (Ensembl 104)",
+        "##provider: GENCODE",
+        "##contact: gencode-help@ebi.ac.uk",
+        "##format: gtf",
+        "##date: 2021-03-12",
+    ]
 
     with open(gtf_out, "w") as f:
-        f.write(gtf_header + "\n")
-        f.writelines(gtf_lines)
+        f.write("\n".join([*gtf_header, gtf_lines]))
 
 
 @app.callback(result_callback=done)

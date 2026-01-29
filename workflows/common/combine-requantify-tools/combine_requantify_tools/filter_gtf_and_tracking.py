@@ -2,65 +2,95 @@ from pathlib import Path
 
 import pandas as pd
 
+from combine_requantify_tools.types import (
+    GtfToFilter,
+    Sqanti3Classification,
+    TypedDataFrame,
+    UpdatedTracking,
+)
+from combine_requantify_tools.utils import type_data_frame
+
 
 def filter_tracking(
     tracking_in: Path, squanti_classification: Path, prefix: str
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    # Load updated tracking
-    updated_tracking = pd.read_parquet(tracking_in)
+) -> tuple[TypedDataFrame[UpdatedTracking], TypedDataFrame[Sqanti3Classification]]:
+    """
+    Load the tracking file (output from process_tracking_file) and the Sqanti3
+    classification file (output from combine_gtfs.run_sqanti3 task) TODO
 
+    :param tracking_in: output from process_tracking_file
+    :param squanti_classification: Sqanti3 classification file
+    :param prefix: prefix previously used for gffcompare
+    :return: filtered tracking and classification data frames
+    """
+
+    # load updated tracking
+    updated_tracking = type_data_frame(pd.read_parquet(tracking_in), UpdatedTracking)
+
+    # collect observed transcript IDs (i.e. "TCONS_*")
+    updated_tracking["transcript_id"] = (
+        updated_tracking["transcript_id"].str.split("|").str.get(0)
+    )
     transcript_ids = updated_tracking["transcript_id"].drop_duplicates()
-    transcript_ids = transcript_ids.str.split("|").str.get(0)
 
-    # Load classification
-    sq = pd.read_table(
-        squanti_classification,
-        sep="\t",
-        na_values=["NA"],
-        dtype={
-            "isoform": "string",
-            "structural_category": "string",
-            "associated_transcript": "string",
-            "RTS_stage": "boolean",
-            "coding": "string",
-            "ORF_seq": "string",
-        },
-        usecols=[
-            "isoform",
-            "structural_category",
-            "associated_transcript",
-            "RTS_stage",
-            "coding",
-            "ORF_seq",
-        ],
-        low_memory=False,
+    # load Sqanti3 classification file
+    sq = type_data_frame(
+        pd.read_table(
+            squanti_classification,
+            sep="\t",
+            na_values=["NA"],
+            dtype={
+                "isoform": "string",
+                "structural_category": "string",
+                "associated_transcript": "string",
+                "RTS_stage": "boolean",
+                "coding": "string",
+                "ORF_seq": "string",
+                # other columns aren't needed
+            },
+            usecols=[
+                "isoform",
+                "structural_category",
+                "associated_transcript",
+                "RTS_stage",
+                "coding",
+                "ORF_seq",
+            ],
+        ),
+        Sqanti3Classification,
     )
 
-    sq_annotated = sq[sq["isoform"].str.startswith("ENST")]
+    # split off known isoforms
+    sq_annotated = sq.loc[sq["isoform"].str.startswith("ENST")]
 
-    # Filter TCONS + novel_*_catalog + coding
-    sq_filtered = sq[
+    # split off TCONS + novel_*_catalog + coding
+    sq_filtered = sq.loc[
         sq["isoform"].str.startswith(prefix)
         & sq["structural_category"].isin(["novel_not_in_catalog", "novel_in_catalog"])
         & (sq["coding"] == "coding")
     ]
-    sq_annotated_sm = sq_annotated[["ORF_seq", "isoform"]]
+
+    # use ORF to join known isoform IDs to the filtered records
     merged_sq = sq_filtered.merge(
-        sq_annotated_sm,
+        sq_annotated.loc[:, ["ORF_seq", "isoform"]],
         on="ORF_seq",
         how="left",
         suffixes=("_tcons", "_enst"),
         indicator=True,
     )
-    merged_sq = merged_sq[
-        merged_sq["_merge"] == "left_only"
-    ]  # orf in novel and not in annotated
 
-    sq_filtered = sq_filtered[sq_filtered["isoform"].isin(merged_sq["isoform_tcons"])]
-    sq_filtered = sq_filtered[sq_filtered["RTS_stage"] == False]  # Filter for RTS_stage
-    sq_filtered = sq_filtered[sq_filtered["isoform"].isin(transcript_ids)]
+    # identify ORFs in novel but not in annotated
+    merged_sq = merged_sq.loc[merged_sq["_merge"].eq("left_only")]
 
-    sq_filtered_previouslyfound = sq[
+    # TODO
+    sq_filtered = sq_filtered.loc[
+        sq_filtered["isoform"].isin(merged_sq["isoform_tcons"])
+        & ~sq_filtered["RTS_stage"]
+        & sq_filtered["isoform"].isin(transcript_ids)
+    ]
+
+    # TODO
+    sq_existing = sq.loc[
         sq["structural_category"].isin(["full-splice_match"])
         & ~(
             (sq["associated_transcript"].str.startswith("ENST"))
@@ -69,21 +99,28 @@ def filter_tracking(
         & (sq["coding"] == "coding")
     ]
 
-    sq_filtered_tracking = pd.concat([sq_filtered, sq_filtered_previouslyfound])
+    sq_filtered_tracking = pd.concat([sq_filtered, sq_existing], ignore_index=True)
 
-    updated_tracking["transcript_id"] = (
-        updated_tracking["transcript_id"].str.split("|").str.get(0)
-    )
-    updated_tracking = updated_tracking[
+    updated_tracking = updated_tracking.loc[
         updated_tracking["transcript_id"].isin(sq_filtered_tracking["isoform"])
     ]
 
-    return updated_tracking, sq_filtered
+    return type_data_frame(updated_tracking, UpdatedTracking), type_data_frame(
+        sq_filtered, Sqanti3Classification
+    )
 
 
 def filter_gtf(
-    annotation_filtered_gtf: Path, sq_filtered: pd.DataFrame
-) -> pd.DataFrame:
+    annotation_filtered_gtf: Path, sq_filtered: TypedDataFrame[Sqanti3Classification]
+) -> TypedDataFrame[GtfToFilter]:
+    """
+    Filter combined GTF to features observed in filtered Sqanti3 classification file.
+
+    :param annotation_filtered_gtf: combined GTF
+    :param sq_filtered: filtered Sqanti3 classification from filter_tracking
+    :return: filtered GTF data frame
+    """
+
     gtf = pd.read_csv(
         annotation_filtered_gtf,
         sep="\t",
@@ -113,12 +150,15 @@ def filter_gtf(
         },
     )
 
-    # Extract transcript_id from attributes column
+    # remove features without a strand value (+/-)
+    gtf = gtf.loc[gtf["strand"].ne(".")]
+
+    # extract transcript_id from attributes column
     gtf["transcript_id"] = gtf["attribute"].str.extract(r'transcript_id "([^"]+)"')
     assert bool(gtf["transcript_id"].notna().all())
 
-    # Filter GTF
+    # filter GTF
     gtf = gtf.loc[gtf["transcript_id"].isin(sq_filtered["isoform"])]
     gtf = gtf.drop(columns=["transcript_id"])
 
-    return gtf
+    return type_data_frame(gtf, GtfToFilter)

@@ -6,6 +6,14 @@ from pathlib import Path
 import pandas as pd
 from tqdm.auto import tqdm
 
+from combine_requantify_tools.types import (
+    TrackingLong,
+    TrackingProcessed,
+    TrackingToProcess,
+    TranscriptCounts,
+)
+from combine_requantify_tools.utils import type_data_frame
+
 
 def do_process_tracking_file(
     tracking_in: Path,
@@ -28,13 +36,16 @@ def do_process_tracking_file(
     fixed_cols = ["transcript_id", "loc", "gene_id", "val"]
 
     logging.info(f"Reading {tracking_in}")
-    tracking = pd.read_table(
-        tracking_in,
-        sep="\t",
-        header=None,
-        names=[*fixed_cols, *sample_ids],
-        na_values="-",
-        dtype="string",
+    tracking = type_data_frame(
+        pd.read_table(
+            tracking_in,
+            sep="\t",
+            header=None,
+            names=[*fixed_cols, *sample_ids],
+            na_values="-",
+            dtype="string",
+        ),
+        TrackingToProcess,
     )
 
     tracking["gene_id"] = tracking["gene_id"].fillna(".")
@@ -46,6 +57,8 @@ def do_process_tracking_file(
 
     tracking["gene_id"] = tracking["gene_id"].replace({".": pd.NA})
     tracking["id1"] = tracking["id"].str.split("|").str.get(1)
+
+    tracking = type_data_frame(tracking, TrackingLong)
 
     # make mapping from sample ID to transcript count file
     sample_to_tpm_file = {
@@ -67,15 +80,17 @@ def do_process_tracking_file(
         :return: subset of the input tracking file with the sample's `count` values
         """
 
-        tc = pd.read_csv(
-            tpm_file,
-            sep="\t",
-            comment="#",
-            header=None,
-            names=["id1", "count"],
-            compression="gzip",
-            dtype={"id1": "string", "count": "int64"},
-            low_memory=False,
+        tc = type_data_frame(
+            pd.read_csv(
+                tpm_file,
+                sep="\t",
+                comment="#",
+                header=None,
+                names=["id1", "count"],
+                compression="gzip",
+                dtype={"id1": "string", "count": "int64"},
+            ),
+            TranscriptCounts,
         )
 
         tracking_sample = tracking.loc[tracking["sample"].eq(sample_id)]
@@ -106,7 +121,7 @@ def do_process_tracking_file(
         [x.result() for x in futures], ignore_index=True
     ).sort_values(["sample", "id"])
 
-    return updated_tracking
+    return type_data_frame(updated_tracking, TrackingProcessed)
 
 
 def extract_sample_id(path: str) -> str:
