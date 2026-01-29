@@ -242,7 +242,14 @@ def choose_matched_short_read_sample(
     # pick the best option within matching model condition when possible, then use the
     # omics_mapping priority, then a choose GP vs. CDS alignment file
     choices = (
-        pairs.sort_values(["mc_priority", "priority", "sequencing_alignment_priority"])
+        pairs.sort_values(
+            [
+                "mc_priority",
+                "priority",
+                "sequencing_alignment_priority",
+                "sequencing_alignment_id",
+            ]
+        )
         .groupby("sample_id")
         .nth(0)
     )
