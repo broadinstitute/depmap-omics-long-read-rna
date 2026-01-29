@@ -46,3 +46,35 @@ method_synopsis = "Call long read fusions"
 workflow_wdl_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.wdl"
 method_config_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions.json"
 workflow_inputs_json_path = "./workflows/call_lr_rna_fusions/call_lr_rna_fusions_inputs.json"
+
+[terra.combine_gtfs]
+method_namespace = "cds-pipelines"
+method_name = "combine_gtfs"
+method_config_namespace = "cds-pipelines"
+method_config_name = "combine_gtfs"
+method_synopsis = "Combine GTFs"
+workflow_wdl_path = "./workflows/combine_gtfs/combine_gtfs.wdl"
+method_config_json_path = "./workflows/combine_gtfs/combine_gtfs.json"
+workflow_inputs_json_path = "./workflows/combine_gtfs/combine_gtfs_inputs.json"
+
+[terra.requantify_lr_rna]
+method_namespace = "cds-pipelines"
+method_name = "requantify_lr_rna"
+method_config_namespace = "cds-pipelines"
+method_config_name = "requantify_lr_rna"
+method_synopsis = "Requantify long reads"
+workflow_wdl_path = "./workflows/requantify_lr_rna/requantify_lr_rna.wdl"
+method_config_json_path = "./workflows/requantify_lr_rna/requantify_lr_rna.json"
+workflow_inputs_json_path = "./workflows/requantify_lr_rna/requantify_lr_rna_inputs.json"
+
+[sr_ref.hg19]
+ref_fasta = "gs://ccleparams/reference/hg19/Homo_sapiens_assembly19.fasta"
+ref_fasta_index = "gs://ccleparams/reference/hg19/Homo_sapiens_assembly19.fasta.fai"
+
+[sr_ref.hg38_gp]
+ref_fasta = "gs://ccleparams/hg38.DRAGEN_GP_CRAM.fa"
+ref_fasta_index = "gs://ccleparams/hg38.DRAGEN_GP_CRAM.fa.fai"
+
+[sr_ref.hg38_cds]
+ref_fasta = "gs://ccleparams/hg38ref/Homo_sapiens_assembly38.fasta"
+ref_fasta_index = "gs://ccleparams/hg38ref/Homo_sapiens_assembly38.fasta.fai"

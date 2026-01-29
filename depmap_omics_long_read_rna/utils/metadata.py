@@ -20,6 +20,7 @@ from depmap_omics_long_read_rna.utils.utils import model_to_df
 def refresh_terra_samples(
     terra_workspace: TerraWorkspace,
     short_read_terra_workspace: TerraWorkspace,
+    sr_ref_urls: dict[str, dict[str, str]],
     gumbo_client: GumboClient,
 ) -> None:
     """
@@ -28,6 +29,8 @@ def refresh_terra_samples(
 
     :param terra_workspace: the Terra workspace for long read RNA samples
     :param short_read_terra_workspace: the Terra workspace for short read RNA samples
+    :param sr_ref_urls: a nested dictionary of genomes and their reference file URLs
+    (for matched short read RNA CRAM/BAMs)
     :param gumbo_client: an instance of the Gumbo GraphQL client
     """
 
@@ -42,16 +45,7 @@ def refresh_terra_samples(
     samples = collect_lr_alignments(alignments)
 
     # join short read data
-    samples = join_sr_data(samples, alignments, short_read_terra_workspace)
-
-    # delete obsolete samples (e.g. ones that have been blacklisted since the last sync)
-    terra_samples = terra_workspace.get_entities("sample")
-    terra_workspace.delete_entities(
-        entity_type="sample",
-        entity_ids=set(terra_samples["sample_id"]).difference(
-            set(samples["sample_id"])
-        ),
-    )
+    samples = join_sr_data(samples, alignments, short_read_terra_workspace, sr_ref_urls)
 
     terra_workspace.upload_entities(df=samples, delete_empty=False)
 
@@ -143,6 +137,7 @@ def join_sr_data(
     samples: TypedDataFrame[LongReadAlignmentMetadata],
     alignments: TypedDataFrame[AlignmentMetadataLong],
     short_read_terra_workspace: TerraWorkspace,
+    sr_ref_urls: dict[str, dict[str, str]],
 ) -> TypedDataFrame[LongReadTerraSamples]:
     """
     Collect data from Gumbo for short read RNA samples and join them to the long read
@@ -151,18 +146,19 @@ def join_sr_data(
     :param samples: a data frame of long read samples
     :param alignments: a data frame of sequencing_alignment metadata from Gumbo
     :param short_read_terra_workspace: the Terra workspace for short read RNA samples
+    :param sr_ref_urls: a nested dictionary of genomes and their reference file URLs
     :return: the long read samples with short read sample metaadata joined to it
     """
 
     # collect short read metadata from Gumbo
     sr_sequencings = alignments.loc[alignments["datatype"].eq("rna")]
 
-    # get short read outputs from Terra
+    # get short read outputs (currently, just the STAR junctions) from Terra
     sr_terra_samples = get_sr_terra_samples(short_read_terra_workspace)
 
     # join the best short read sample available to each long read sample
     samples_w_sr = choose_matched_short_read_sample(
-        samples, sr_sequencings, sr_terra_samples
+        samples, sr_sequencings, sr_terra_samples, sr_ref_urls
     )
 
     return type_data_frame(samples_w_sr, LongReadTerraSamples)
@@ -193,6 +189,7 @@ def choose_matched_short_read_sample(
     samples: pd.DataFrame,
     sr_sequencings: TypedDataFrame[AlignmentMetadataLong],
     sr_terra_samples: TypedDataFrame[ShortReadTerraSamples],
+    sr_ref_urls: dict[str, dict[str, str]],
 ) -> TypedDataFrame[LongReadTerraSamples]:
     """
     Choose short read RNA samples to map to long read ones.
@@ -200,10 +197,11 @@ def choose_matched_short_read_sample(
     :param samples: a data frame of long read samples
     :param sr_sequencings: a data frame of short read sequencings from Gumbo
     :param sr_terra_samples: a data frame of short read outputs from Terra
+    :param sr_ref_urls: a nested dictionary of genomes and their reference file URLs
     :return: long read samples with short read data joined when possible
     """
 
-    # collect IDs long read side
+    # collect IDs on long read side
     lr = samples.loc[
         :, ["sample_id", "model_id", "model_condition_id"]
     ].drop_duplicates()
@@ -251,7 +249,11 @@ def choose_matched_short_read_sample(
 
     # collect SR columns to include in the final LR sample data table
     sr_choices = (
-        choices.merge(sr_sequencings, how="inner", on="sequencing_alignment_id")
+        choices.merge(
+            sr_sequencings.drop(columns="sequencing_alignment_source"),
+            how="inner",
+            on="sequencing_alignment_id",
+        )
         .loc[
             :,
             [
@@ -260,6 +262,8 @@ def choose_matched_short_read_sample(
                 "omics_profile_id",
                 "omics_sequencing_id",
                 "sequencing_alignment_id",
+                "sequencing_alignment_source",
+                "reference_genome",
                 "crai_bai_url",
                 "cram_bam_url",
             ],
@@ -270,6 +274,8 @@ def choose_matched_short_read_sample(
                 "omics_profile_id": "sr_omics_profile_id",
                 "omics_sequencing_id": "sr_omics_sequencing_id",
                 "sequencing_alignment_id": "sr_sequencing_alignment_id",
+                "sequencing_alignment_source": "sr_sequencing_alignment_source",
+                "reference_genome": "sr_reference_genome",
                 "crai_bai_url": "sr_crai_bai",
                 "cram_bam_url": "sr_cram_bam",
             }
@@ -279,6 +285,40 @@ def choose_matched_short_read_sample(
     sr_choices["sr_file_format"] = (
         sr_choices["sr_cram_bam"].str.rsplit(".", n=1).str.get(1).str.upper()
     )
+
+    # need to identify the ref sequence for each short read sample (since we might be
+    # converting it from CRAM to FASTQ in the `call_lr_rna_fusions` workflow)
+    sr_choices[["sr_ref_fasta", "sr_ref_fasta_index"]] = pd.NA
+
+    # hg19 in Gumbo is just the standard hg19 ref
+    sr_choices.loc[
+        sr_choices["sr_reference_genome"].eq("hg19"),
+        ["sr_ref_fasta", "sr_ref_fasta_index"],
+    ] = [sr_ref_urls["hg19"]["ref_fasta"], sr_ref_urls["hg19"]["ref_fasta_index"]]
+
+    # hg38 for CRAMs delivered by GP use the DRAGEN hg38 ref
+    sr_choices.loc[
+        sr_choices["sr_reference_genome"].eq("hg38")
+        & sr_choices["sr_sequencing_alignment_source"].eq("GP"),
+        ["sr_ref_fasta", "sr_ref_fasta_index"],
+    ] = [sr_ref_urls["hg38_gp"]["ref_fasta"], sr_ref_urls["hg38_gp"]["ref_fasta_index"]]
+
+    # hg38 for CDS analysis ready BAMs (no longer saved) use the standard hg38 ref
+    sr_choices.loc[
+        sr_choices["sr_reference_genome"].eq("hg38")
+        & sr_choices["sr_sequencing_alignment_source"].eq("CDS"),
+        ["sr_ref_fasta", "sr_ref_fasta_index"],
+    ] = [
+        sr_ref_urls["hg38_cds"]["ref_fasta"],
+        sr_ref_urls["hg38_cds"]["ref_fasta_index"],
+    ]
+
+    # confirm we know the ref of all the matched SR samples
+    assert bool(
+        sr_choices[["sr_reference_genome", "sr_ref_fasta", "sr_ref_fasta_index"]]
+        .notna()
+        .all(axis=None)
+    ), "Couldn't assign ref fasta to some matched short read samples"
 
     # can now finally join SR data to LR data
     samples = samples.merge(sr_choices, how="left", on="sample_id")

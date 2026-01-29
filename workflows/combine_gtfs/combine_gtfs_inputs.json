@@ -1,0 +1,3 @@
+{
+  "combine_gtfs.gencode_gtf": "gs://ccleparams/gencode.v38.primary_assembly.annotation.gtf"
+}

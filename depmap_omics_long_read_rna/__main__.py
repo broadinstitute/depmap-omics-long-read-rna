@@ -29,7 +29,7 @@ pd.set_option("display.width", 200)
 pd.set_option("expand_frame_repr", True)
 pd.set_option("mode.chained_assignment", "warn")
 
-app = typer.Typer()
+app = typer.Typer(rich_markup_mode=None, pretty_exceptions_enable=False)
 
 config: dict[str, Any] = {}
 
@@ -128,6 +128,7 @@ def refresh_terra_samples(ctx: typer.Context) -> None:
             workspace_namespace=config["terra"]["short_read_workspace_namespace"],
             workspace_name=config["terra"]["short_read_workspace_name"],
         ),
+        sr_ref_urls=config["sr_ref"],
         gumbo_client=ctx.obj["get_gumbo_client"](),
     )
 

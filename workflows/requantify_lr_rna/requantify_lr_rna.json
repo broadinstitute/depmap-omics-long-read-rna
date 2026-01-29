@@ -1,0 +1,27 @@
+{
+  "deleted": false,
+  "inputs": { 
+    "requantify_lr_rna.input_bai": "this.aligned_crai_bai",
+    "requantify_lr_rna.input_bam": "this.aligned_cram_bam",
+    "requantify_lr_rna.ref_annotation_db": "this.ref_annotation_db",
+    "requantify_lr_rna.sample_id": "this.sample_id",
+    "requantify_lr_rna.transcript_counts": "this.transcript_counts"
+  },
+
+  "methodConfigVersion": 1,
+  "methodRepoMethod": {
+    "methodNamespace": "cds-pipelines",
+    "methodName": "requantify_lr_rna",
+    "methodVersion": 1
+  },
+  "namespace": "cds-pipelines",
+  "name": "requantify_lr_rna",
+  "outputs": {
+    "requantify_lr_rna.requantified_exon_counts": "this.requantified_exon_counts",
+    "requantify_lr_rna.requantified_intron_counts": "this.requantified_intron_counts",
+    "requantify_lr_rna.requantified_read_assignments": "this.requantified_read_assignments",
+    "requantify_lr_rna.requantified_transcript_counts": "this.requantified_transcript_counts",
+    "requantify_lr_rna.requantified_transcript_tpm": "this.requantified_transcript_tpm"
+  },
+  "rootEntityType": "sample"
+}

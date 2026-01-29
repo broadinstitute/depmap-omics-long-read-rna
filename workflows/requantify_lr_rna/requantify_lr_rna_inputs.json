@@ -1,0 +1,9 @@
+{
+  "requantify_lr_rna.data_type": "pacbio_ccs",
+  "requantify_lr_rna.gene_quantification": "unique_splicing_consistent",
+  "requantify_lr_rna.model_construction_strategy": "fl_pacbio",
+  "requantify_lr_rna.report_canonical": "auto",
+  "requantify_lr_rna.report_novel_unspliced": "true",
+  "requantify_lr_rna.stranded": "forward",
+  "requantify_lr_rna.transcript_quantification": "unique_only"
+}
