@@ -402,22 +402,22 @@ def rerun_on_sr_change(terra_workspace: TerraWorkspace) -> None:
         # blank out these columns if SR STAR junctions used previously is not what would
         # be used now
         quantify_output_cols = [
+            "discovered_transcript_counts",
+            "discovered_transcript_tpm",
             "exon_counts",
             "extended_annotation",
             "gene_counts",
             "gene_tpm",
             "intron_counts",
-            "model_counts",
-            "read_assignments_tsv",
+            "quantify_sr_star_junctions_used",
+            "quantify_used_sr_evidence",
+            "read_assignments",
             "sq_class",
             "sq_junctions",
             "sq_report_pdf",
-            "quantify_sr_star_junctions_used",
             "transcript_counts",
             "transcript_model_reads",
-            "transcript_model_tpm",
             "transcript_tpm",
-            "quantify_used_sr_evidence",
         ]
 
         # compare the current SR STAR junctions with the one stored during the previous
