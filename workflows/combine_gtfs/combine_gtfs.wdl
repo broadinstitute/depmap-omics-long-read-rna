@@ -158,7 +158,6 @@ task filter_isoquant {
     }
 }
 
-
 task run_gffcompare {
     parameter_meta {
         # inputs
@@ -170,7 +169,6 @@ task run_gffcompare {
         # outputs
         combined_gtf: "combined GTF from all samples"
         tracking_file: "tracking file showing transcript relationships"
-        stats: "statistics about the comparison"
     }
 
     input {
@@ -239,13 +237,12 @@ task run_gffcompare {
             }
         ' gffcomp_out.tracking gffcomp_out.combined.gtf > renamed.gtf
 
-        mv renamed.gtf "~{sample_set_id}_renamed.gtf"
+        mv renamed.gtf "~{sample_set_id}_gffcompared.gtf"
         mv gffcomp_out.newtracking.tsv "~{sample_set_id}_gffcomp_out.newtracking.tsv"
-        mv gffcomp_out.stats "~{sample_set_id}_gffcomp_out.stats"
     >>>
 
     output {
-        File combined_gtf = "~{sample_set_id}_renamed.gtf"
+        File combined_gtf = "~{sample_set_id}_gffcompared.gtf"
         File tracking_file = "~{sample_set_id}_gffcomp_out.newtracking.tsv"
         File stats = "~{sample_set_id}_gffcomp_out.stats"
     }
@@ -380,10 +377,10 @@ task process_tracking_file {
         python -m combine_requantify_tools \
             process-tracking-file \
             --tracking-in="~{tracking_file}" \
-            --tracking-out="~{sample_set_id}_updated_tracking.parquet" \
             --sample-ids-list="sample_ids.txt" \
             --discovered-transcript-counts-file-list="discovered_transcript_counts_files.txt" \
-            --min-count=~{min_count}
+            --min-count=~{min_count} \
+            --tracking-out="~{sample_set_id}_updated_tracking.parquet"
     >>>
 
     output {
@@ -455,26 +452,25 @@ task gffread {
 
         # Step 1: Filter out features without a strand (column 7 = '.')
         if file "~{combined_gtf}" | grep -q 'gzip compressed'; then
-            zcat "~{combined_gtf}" | awk '{ if ($7 != ".") print }' > annotation_filtered.gtf
+            zcat "~{combined_gtf}" | awk '{ if ($7 != ".") print }' > combined_gtf_w_strand.gtf
         else
-            awk '{ if ($7 != ".") print }' "~{combined_gtf}" > annotation_filtered.gtf
+            awk '{ if ($7 != ".") print }' "~{combined_gtf}" > combined_gtf_w_strand.gtf
         fi
 
         python -m combine_requantify_tools \
             filter-gtf-and-tracking \
             --updated-tracking="~{updated_tracking}" \
             --squanti-classification="~{squanti_classification}" \
-            --annotation-filtered-gtf="annotation_filtered.gtf" \
+            --annotation-filtered-gtf="combined_gtf_w_strand.gtf" \
             --prefix="~{prefix}" \
-            --updated-tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.tsv" \
-            --filtered-gtf-out="filtered1.gtf"
+            --tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.tsv" \
+            --gtf-out="~{sample_set_id}_filtered.gtf"
 
-        cat filtered1.gtf "~{gencode_gtf}" > combined.gtf
+        cat "~{sample_set_id}_filtered.gtf" "~{gencode_gtf}" > recombined.gtf
 
-        cp combined.gtf sorted.gtf
         # Step 3: Restrict to contigs present in the reference genome
         grep '^>' ~{ref_fasta} | cut -d ' ' -f1 | sed 's/^>//' > contigs.txt
-        awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt sorted.gtf \
+        awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt recombined.gtf \
             > "~{sample_set_id}_filtered.gtf"
 
         gffread "~{sample_set_id}_filtered.gtf" \
