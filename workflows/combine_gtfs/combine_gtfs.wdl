@@ -66,7 +66,7 @@ workflow combine_gtfs {
             discovered_transcript_counts = discovered_transcript_counts
    }
 
-    call gffread {
+    call filter_gtf_and_tracking {
         input:
             sample_set_id = sample_set_id,
             combined_gtf = run_gffcompare.combined_gtf,
@@ -80,7 +80,7 @@ workflow combine_gtfs {
     call process_gtf {
         input:
             sample_set_id = sample_set_id,
-            filtered_gtf = gffread.filtered_gtf,
+            filtered_gtf = filter_gtf_and_tracking.filtered_gtf,
             gencode_gtf = gencode_gtf,
             ref_fasta = ref_fasta
    }
@@ -88,8 +88,8 @@ workflow combine_gtfs {
     output {
         File combined_sorted_gtf = process_gtf.sorted_gtf
         File sq_class = run_sqanti3.sq_class
-        File transcriptome_fasta = gffread.transcriptome_fasta
-        File updated_tracking_sq_filtered = gffread.updated_tracking_sq_filtered
+        File transcriptome_fasta = filter_gtf_and_tracking.transcriptome_fasta
+        File updated_tracking_sq_filtered = filter_gtf_and_tracking.updated_tracking_sq_filtered
     }
 }
 
@@ -409,7 +409,7 @@ task process_tracking_file {
     }
 }
 
-task gffread {
+task filter_gtf_and_tracking {
     meta {
         description: "TODO"
         allowNestedInputs: true
@@ -462,22 +462,26 @@ task gffread {
 
     command <<<
         set -euo pipefail
+
         python -m combine_requantify_tools \
             filter-gtf-and-tracking \
-            --updated-tracking="~{updated_tracking}" \
+            --tracking-in="~{updated_tracking}" \
             --squanti-classification="~{squanti_classification}" \
-            --annotation-filtered-gtf="~{combined_gtf}" \
+            --gtf-in="~{combined_gtf}" \
             --prefix="~{prefix}" \
             --tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.tsv" \
             --gtf-out="~{sample_set_id}_filtered.gtf"
 
+        echo "Recombining GTFs"
         cat "~{sample_set_id}_filtered.gtf" "~{gencode_gtf}" > recombined.gtf
 
         # restrict to contigs present in the reference genome
+        echo "Filtering GTF contigs"
         grep '^>' ~{ref_fasta} | cut -d ' ' -f1 | sed 's/^>//' > contigs.txt
         awk 'NR==FNR {contigs[$1]; next} $1 in contigs' contigs.txt recombined.gtf \
             > "~{sample_set_id}_filtered.gtf"
 
+        echo "Creating transcriptome FASTA"
         gffread "~{sample_set_id}_filtered.gtf" \
             -g "~{ref_fasta}" \
             -w "~{sample_set_id}_transcriptome.fa"
@@ -508,7 +512,7 @@ task process_gtf {
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
-        filtered_gtf: "filtered_gtf file from gffread"
+        filtered_gtf: "filtered_gtf file from filter_gtf_and_tracking"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         ref_fasta: "reference sequence FASTA"
 

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -25,6 +26,7 @@ def filter_tracking(
     """
 
     # load updated tracking
+    logging.info(f"Loading tracking file from {tracking_in}")
     updated_tracking = type_data_frame(pd.read_parquet(tracking_in), UpdatedTracking)
 
     # collect observed transcript IDs (i.e. "TCONS_*")
@@ -34,6 +36,7 @@ def filter_tracking(
     transcript_ids = updated_tracking["transcript_id"].drop_duplicates()
 
     # load Sqanti3 classification file
+    logging.info(f"Loading Sqanti3 classification file from {squanti_classification}")
     sq = type_data_frame(
         pd.read_table(
             squanti_classification,
@@ -111,18 +114,20 @@ def filter_tracking(
 
 
 def filter_gtf(
-    annotation_filtered_gtf: Path, sq_filtered: TypedDataFrame[Sqanti3Classification]
+    gtf_in: Path, sq_filtered: TypedDataFrame[Sqanti3Classification]
 ) -> TypedDataFrame[GtfToFilter]:
     """
     Filter combined GTF to features observed in filtered Sqanti3 classification file.
 
-    :param annotation_filtered_gtf: combined GTF
+    :param gtf_in: combined GTF
     :param sq_filtered: filtered Sqanti3 classification from filter_tracking
     :return: filtered GTF data frame
     """
 
+    logging.info(f"Loading GTF from {gtf_in}")
+
     gtf = pd.read_csv(
-        annotation_filtered_gtf,
+        gtf_in,
         sep="\t",
         comment="#",
         header=None,

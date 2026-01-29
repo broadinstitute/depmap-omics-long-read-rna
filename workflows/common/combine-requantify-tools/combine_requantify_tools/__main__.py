@@ -83,9 +83,7 @@ def filter_gtf_and_tracking(
     squanti_classification: Annotated[
         Path, typer.Option(help="path to SQANTI3 classification file")
     ],
-    annotation_filtered_gtf: Annotated[
-        Path, typer.Option(help="path to input filtered GTF file")
-    ],
+    gtf_in: Annotated[Path, typer.Option(help="path to input filtered GTF file")],
     prefix: Annotated[str, typer.Option(help="transcript prefix (e.g. 'TCONS')")],
     tracking_out: Annotated[
         Path, typer.Option(help="path to write filtered tracking file")
@@ -96,27 +94,15 @@ def filter_gtf_and_tracking(
         tracking_in, squanti_classification, prefix
     )
 
-    gtf_filtered = filter_gtf(annotation_filtered_gtf, sq_filtered)
+    gtf_filtered = filter_gtf(gtf_in, sq_filtered)
 
+    logging.info(f"Writing {tracking_out}")
     updated_tracking.to_parquet(tracking_out, index=False)
 
-    gtf_lines = gtf_filtered.to_csv(
-        sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
+    logging.info(f"Writing {gtf_out}")
+    gtf_filtered.to_csv(
+        gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
     )
-
-    # construct GTF header
-    gtf_header = [
-        "##gff-version 3",
-        "##description: evidence-based annotation of the human genome (GRCh38),"
-        " version 38 (Ensembl 104)",
-        "##provider: GENCODE",
-        "##contact: gencode-help@ebi.ac.uk",
-        "##format: gtf",
-        "##date: 2021-03-12",
-    ]
-
-    with open(gtf_out, "w") as f:
-        f.write("\n".join([*gtf_header, gtf_lines]))
 
 
 @app.callback(result_callback=done)
