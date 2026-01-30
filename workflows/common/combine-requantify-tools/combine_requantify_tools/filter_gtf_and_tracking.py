@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from combine_requantify_tools.types import (
-    GtfToFilter,
+    Gtf,
     Sqanti3Classification,
     TypedDataFrame,
     UpdatedTracking,
@@ -115,7 +115,7 @@ def filter_tracking(
 
 def filter_gtf(
     gtf_in: Path, sq_filtered: TypedDataFrame[Sqanti3Classification]
-) -> TypedDataFrame[GtfToFilter]:
+) -> TypedDataFrame[Gtf]:
     """
     Filter combined GTF to features observed in filtered Sqanti3 classification file.
 
@@ -126,33 +126,36 @@ def filter_gtf(
 
     logging.info(f"Loading GTF from {gtf_in}")
 
-    gtf = pd.read_csv(
-        gtf_in,
-        sep="\t",
-        comment="#",
-        header=None,
-        names=[
-            "seqname",
-            "source",
-            "feature",
-            "start",
-            "end",
-            "score",
-            "strand",
-            "frame",
-            "attribute",
-        ],
-        dtype={
-            "seqname": "string",
-            "source": "string",
-            "feature": "string",
-            "start": "int64",
-            "end": "int64",
-            "score": "string",
-            "strand": "string",
-            "frame": "string",
-            "attribute": "string",
-        },
+    gtf = type_data_frame(
+        pd.read_csv(
+            gtf_in,
+            sep="\t",
+            comment="#",
+            header=None,
+            names=[
+                "seqname",
+                "source",
+                "feature",
+                "start",
+                "end",
+                "score",
+                "strand",
+                "frame",
+                "attribute",
+            ],
+            dtype={
+                "seqname": "string",
+                "source": "string",
+                "feature": "string",
+                "start": "int64",
+                "end": "int64",
+                "score": "string",
+                "strand": "string",
+                "frame": "string",
+                "attribute": "string",
+            },
+        ),
+        Gtf,
     )
 
     # remove features without a strand value (+/-)
@@ -166,4 +169,4 @@ def filter_gtf(
     gtf = gtf.loc[gtf["transcript_id"].isin(sq_filtered["isoform"])]
     gtf = gtf.drop(columns=["transcript_id"])
 
-    return type_data_frame(gtf, GtfToFilter)
+    return type_data_frame(gtf, Gtf)

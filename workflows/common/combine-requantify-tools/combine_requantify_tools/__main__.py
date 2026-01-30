@@ -7,6 +7,7 @@ import pandas as pd
 import typer
 
 from combine_requantify_tools.filter_gtf_and_tracking import filter_gtf, filter_tracking
+from combine_requantify_tools.map_transcript_ids import do_map_transcript_ids
 from combine_requantify_tools.process_tracking_file import do_process_tracking_file
 
 pd.set_option("display.max_columns", 30)
@@ -27,6 +28,43 @@ config: dict[str, Any] = {}
 # noinspection PyUnusedLocal
 def done(*args, **kwargs):
     logging.info("Done.")
+
+
+@app.command()
+def map_transcript_ids(
+    tracking_in: Annotated[
+        Path,
+        typer.Option(help="path to input tracking file (from gffcompare)"),
+    ],
+    gtf_in: Annotated[
+        Path,
+        typer.Option(help="path to input GTF file (from gffcompare)"),
+    ],
+    sample_ids_list: Annotated[
+        Path, typer.Option(help="path to text file containing list of sample IDs")
+    ],
+    tracking_out: Annotated[
+        Path, typer.Option(help="path to write output tracking file")
+    ],
+    gtf_out: Annotated[
+        Path,
+        typer.Option(help="path to  write output GTF file"),
+    ],
+) -> None:
+    # read file containing list of sample IDs
+    logging.info(f"Reading {sample_ids_list}")
+    with open(sample_ids_list, "r") as f:
+        sample_ids = f.read().splitlines()
+
+    tracking_mapped, gtf_mapped = do_map_transcript_ids(tracking_in, gtf_in, sample_ids)
+
+    logging.info(f"Writing {tracking_out}")
+    tracking_mapped.to_parquet(tracking_out, index=False)
+
+    logging.info(f"Writing {gtf_out}")
+    gtf_mapped.to_csv(
+        gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
+    )
 
 
 @app.command()

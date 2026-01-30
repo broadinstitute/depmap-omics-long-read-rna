@@ -11,6 +11,7 @@ from combine_requantify_tools.types import (
     TrackingProcessed,
     TrackingToProcess,
     TranscriptCounts,
+    TypedDataFrame,
 )
 from combine_requantify_tools.utils import type_data_frame
 
@@ -20,7 +21,7 @@ def do_process_tracking_file(
     sample_ids: list[str],
     discovered_transcript_counts: list[str],
     min_count: int,
-) -> pd.DataFrame:
+) -> TypedDataFrame[TrackingProcessed]:
     """
     Update the input tracking file with counts from the samples' transcript counts
     files.

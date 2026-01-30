@@ -65,14 +65,14 @@ class Sqanti3Classification(CoercedDataFrame):
     ORF_seq: Series[pd.StringDtype] = pa.Field(nullable=True)
 
 
-class GtfToFilter(NonemptyDataFrame):
+class Gtf(NonemptyDataFrame):
     seqname: Series[pd.StringDtype]
     source: Series[pd.StringDtype]
     feature: Series[pd.StringDtype] = pa.Field(isin=["exon", "transcript"])
     start: Series[pd.StringDtype]
     end: Series[pd.StringDtype]
     score: Series[pd.StringDtype]
-    strand: Series[pd.StringDtype] = pa.Field(isin=["+", "-"])
+    strand: Series[pd.StringDtype] = pa.Field(isin=["+", "-", "."])
     frame: Series[pd.StringDtype]
     attribute: Series[pd.StringDtype]
 

@@ -247,7 +247,7 @@ def choose_matched_short_read_sample(
                 "mc_priority",
                 "priority",
                 "sequencing_alignment_priority",
-                "sequencing_alignment_id",
+                "sequencing_alignment_id",  # tiebreaker
             ]
         )
         .groupby("sample_id")
