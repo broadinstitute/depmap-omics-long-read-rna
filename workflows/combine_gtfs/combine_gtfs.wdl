@@ -42,10 +42,11 @@ workflow combine_gtfs {
         }
     }
 
-    call run_gffcompare {
+    call replace_transcript_ids {
         input:
             sample_set_id = sample_set_id,
             gtf_list = filter_isoquant.filtered_gtf,
+            sample_ids = sample_ids,
             gencode_gtf = gencode_gtf,
             prefix = prefix
     }
@@ -53,7 +54,7 @@ workflow combine_gtfs {
     call run_sqanti3 {
         input:
             sample_set_id = sample_set_id,
-            isoquant_gtf = run_gffcompare.combined_gtf,
+            isoquant_gtf = replace_transcript_ids.gtf_out,
             gencode_gtf = gencode_gtf,
             ref_fasta = ref_fasta
     }
@@ -61,7 +62,7 @@ workflow combine_gtfs {
     call process_tracking_file {
         input:
             sample_set_id = sample_set_id,
-            tracking_file = run_gffcompare.tracking_file,
+            tracking_file = replace_transcript_ids.tracking_file,
             sample_ids = sample_ids,
             discovered_transcript_counts = discovered_transcript_counts
    }
@@ -69,7 +70,7 @@ workflow combine_gtfs {
     call filter_gtf_and_tracking {
         input:
             sample_set_id = sample_set_id,
-            combined_gtf = run_gffcompare.combined_gtf,
+            combined_gtf = replace_transcript_ids.gtf_out,
             gencode_gtf = gencode_gtf,
             squanti_classification = run_sqanti3.sq_class,
             updated_tracking = process_tracking_file.updated_tracking,
@@ -163,7 +164,7 @@ task filter_isoquant {
     }
 }
 
-task run_gffcompare {
+task replace_transcript_ids {
     meta {
         description: "TODO"
         allowNestedInputs: true
@@ -173,17 +174,19 @@ task run_gffcompare {
         # inputs
         sample_set_id: "identifier for this set of samples"
         gtf_list: "array of the filtered GTFs from filter_isoquant"
+        sample_ids: "array of the sample IDs in this sample set"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
 
         # outputs
-        combined_gtf: "combined GTF from all samples"
         tracking_file: "tracking file showing transcript relationships"
+        gtf_out: "combined GTF from all samples"
     }
 
     input {
         String sample_set_id
         Array[File] gtf_list
+        Array[String] sample_ids
         File gencode_gtf
         String prefix
 
@@ -201,60 +204,26 @@ task run_gffcompare {
     )
 
     command <<<
-        echo "Running gffcompare with the following GTFs:"
+        set -euo pipefail
 
+        echo "Running gffcompare"
         gffcompare -r "~{gencode_gtf}" -X -p "~{prefix}" -V -S -o gffcomp_out ~{sep=' ' gtf_list}
 
-        awk -F'\t' '
-            FNR==NR && $4 == "=" {
-                split($3,a,"|"); new_id=a[2];
-                split($1,b,"|"); old_id=b[1];
-                map[old_id]=new_id;
-                next
-            }
-            FNR != NR {
-                split($1,c,"|"); prefix=c[1]; rest=(index($1,"|")?substr($1,index($1,"|")+1):"");
-                if(prefix in map) $1=map[prefix]"|"rest;
-                print $0
-            }
-        ' OFS='\t' gffcomp_out.tracking gffcomp_out.tracking > gffcomp_out.newtracking.tsv
+        # Write sample_ids to newline-delimited text file
+        printf '%s\n' ~{sep=' ' sample_ids} > sample_ids.txt
 
-        awk -F'\t' '
-            FNR==NR {
-                if ($4=="=") {
-                    split($3,a,"|"); new_id=a[2];
-                    split($1,b,"|"); old_id=b[1];
-                    map[old_id]=new_id;
-                    print "[DEBUG] Mapping added:", old_id, "->", new_id > "/dev/stderr"
-                }
-                next; # skip printing tracking lines
-            }
-
-            FNR!=NR {
-                line=$0
-                while (match(line, /transcript_id "[^"]+"/)) {
-                    tid = substr(line, RSTART+15, RLENGTH-16)  # extract transcript_id value
-                    if (tid in map) {
-                        replacement = "transcript_id \"" map[tid] "\""
-                        line = substr(line, 1, RSTART-1) replacement substr(line, RSTART+RLENGTH)
-                        print "[DEBUG] Replacing transcript_id:", tid, "->", map[tid] > "/dev/stderr"
-                    } else {
-                        print "[DEBUG] transcript_id not in map:", tid > "/dev/stderr"
-                        break
-                    }
-                }
-                print line
-            }
-        ' gffcomp_out.tracking gffcomp_out.combined.gtf > renamed.gtf
-
-        mv renamed.gtf "~{sample_set_id}_gffcompared.gtf"
-        mv gffcomp_out.newtracking.tsv "~{sample_set_id}_gffcomp_out.newtracking.tsv"
+        python -m combine_requantify_tools \
+            map-transcript-ids \
+            --tracking-in="gffcomp_out.tracking" \
+            --gtf-in="gffcomp_out.combined.gtf" \
+            --sample-ids-list="sample_ids.txt" \
+            --tracking-out="~{sample_set_id}_gffcompared.tracking.parquet" \
+            --gtf-out="~{sample_set_id}_gffcompared.gtf"
     >>>
 
     output {
-        File combined_gtf = "~{sample_set_id}_gffcompared.gtf"
-        File tracking_file = "~{sample_set_id}_gffcomp_out.newtracking.tsv"
-        File stats = "~{sample_set_id}_gffcomp_out.stats"
+        File tracking_file = "~{sample_set_id}_gffcompared.tracking.parquet"
+        File gtf_out = "~{sample_set_id}_gffcompared.gtf"
     }
 
     runtime {
@@ -276,7 +245,7 @@ task run_sqanti3 {
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
-        isoquant_gtf: "combined GTF from run_gffcompare"
+        isoquant_gtf: "combined GTF from replace_transcript_ids"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         ref_fasta: "reference sequence FASTA"
 
@@ -347,7 +316,7 @@ task process_tracking_file {
     parameter_meta {
         # inputs
         sample_set_id: "identifier for this set of samples"
-        tracking_file: "output tracking_file from run_gffcompare"
+        tracking_file: "output tracking_file from replace_transcript_ids"
         sample_ids: "array of the sample IDs in this sample set"
         discovered_transcript_counts: "array of discovered_transcript_counts output files from quantify_lr_rna"
 
@@ -419,7 +388,7 @@ task filter_gtf_and_tracking {
         # inputs
         sample_set_id: "identifier for this set of samples"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
-        combined_gtf: "Combined GTF from run_gffcompare"
+        combined_gtf: "Combined GTF from replace_transcript_ids"
         squanti_classification: "sq_class file from run_sqanti3"
         updated_tracking: "updated_tracking file from process_tracking_file"
         prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
@@ -469,7 +438,7 @@ task filter_gtf_and_tracking {
             --squanti-classification="~{squanti_classification}" \
             --gtf-in="~{combined_gtf}" \
             --prefix="~{prefix}" \
-            --tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.tsv" \
+            --tracking-out="~{sample_set_id}_updated_tracking_sq_filtered.parquet" \
             --gtf-out="~{sample_set_id}_filtered.gtf"
 
         echo "Recombining GTFs"
@@ -490,7 +459,7 @@ task filter_gtf_and_tracking {
     output {
         File transcriptome_fasta = "~{sample_set_id}_transcriptome.fa"
         File filtered_gtf = "~{sample_set_id}_filtered.gtf"
-        File updated_tracking_sq_filtered = "~{sample_set_id}_updated_tracking_sq_filtered.tsv"
+        File updated_tracking_sq_filtered = "~{sample_set_id}_updated_tracking_sq_filtered.parquet"
     }
 
     runtime {
