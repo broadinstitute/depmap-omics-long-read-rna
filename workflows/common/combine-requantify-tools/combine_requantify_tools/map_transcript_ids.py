@@ -2,11 +2,7 @@ import logging
 import re
 from pathlib import Path
 
-from combine_requantify_tools.types import (
-    Gtf,
-    TrackingToProcess,
-    TypedDataFrame,
-)
+from combine_requantify_tools.types import Gtf, Tracking, TypedDataFrame
 from combine_requantify_tools.utils import (
     read_gtf_from_file,
     read_tracking_file,
@@ -16,7 +12,7 @@ from combine_requantify_tools.utils import (
 
 def do_map_transcript_ids(
     tracking_in: Path, gtf_in: str | Path, sample_ids: list[str]
-) -> tuple[TypedDataFrame[TrackingToProcess], TypedDataFrame[Gtf]]:
+) -> tuple[TypedDataFrame[Tracking], TypedDataFrame[Gtf]]:
     """
     Replace TCONS_* with annotated ENST* transcript IDs in tracking and GTF data.
 
@@ -57,11 +53,11 @@ def do_map_transcript_ids(
 
     new_prefix = prefix.map(id_map).fillna(prefix)
 
-    tracking["transcript_id"] = new_prefix + suffix.fillna("|" + suffix)
+    tracking["transcript_id"] = new_prefix + suffix.where(suffix.isna(), "|" + suffix)
 
     # finished processing the tracking data frame
     tracking = tracking.drop(columns="transcript_id_parts")
-    tracking = type_data_frame(tracking, TrackingToProcess)
+    tracking = type_data_frame(tracking, Tracking)
 
     # load the GTF
     gtf = read_gtf_from_file(gtf_in)

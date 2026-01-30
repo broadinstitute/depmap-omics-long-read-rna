@@ -18,7 +18,7 @@ class NonemptyDataFrame(CoercedDataFrame):
         return len(df) > 0
 
 
-class TrackingToProcess(CoercedDataFrame):
+class Tracking(CoercedDataFrame):
     transcript_id: Series[pd.StringDtype]
     loc: Series[pd.StringDtype]
     gene_id: Series[pd.StringDtype] = pa.Field(nullable=True)

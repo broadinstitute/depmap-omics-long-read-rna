@@ -70,9 +70,7 @@ def map_transcript_ids(
 def process_tracking_file(
     tracking_in: Annotated[
         Path,
-        typer.Option(
-            help="path to input tracking file (from combine_gtfs.run_gffcompare task)"
-        ),
+        typer.Option(help="path to input tracking file (from process_tracking_file)"),
     ],
     sample_ids_list: Annotated[
         Path, typer.Option(help="path to text file containing list of sample IDs")

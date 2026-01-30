@@ -8,7 +8,7 @@ from combine_requantify_tools.types import (
     Gtf,
     PanderaBaseSchema,
     Sqanti3Classification,
-    TrackingToProcess,
+    Tracking,
     TypedDataFrame,
 )
 
@@ -108,7 +108,7 @@ def read_sample_ids_from_file(sample_ids_list: Path) -> list[str]:
 
 def read_tracking_file(
     tracking_in: Path, sample_ids: list[str]
-) -> TypedDataFrame[TrackingToProcess]:
+) -> TypedDataFrame[Tracking]:
     """
     Read a tracking file as a typed data frame.
 
@@ -118,17 +118,21 @@ def read_tracking_file(
     """
 
     logging.info(f"Reading {tracking_in}")
-    return type_data_frame(
-        pd.read_table(
-            tracking_in,
-            sep="\t",
-            header=None,
-            names=["transcript_id", "loc", "gene_id", "val", *sample_ids],
-            na_values="-",
-            dtype="string",
-        ),
-        TrackingToProcess,
-    )
+
+    if tracking_in.suffix == ".parquet":
+        return type_data_frame(pd.read_parquet(tracking_in), Tracking)
+    else:
+        return type_data_frame(
+            pd.read_table(
+                tracking_in,
+                sep="\t",
+                header=None,
+                names=["transcript_id", "loc", "gene_id", "val", *sample_ids],
+                na_values="-",
+                dtype="string",
+            ),
+            Tracking,
+        )
 
 
 def read_gtf_from_file(gtf_in: str | Path) -> TypedDataFrame[Gtf]:
