@@ -1,8 +1,16 @@
+import logging
+from pathlib import Path
 from typing import Type
 
 import pandas as pd
 
-from combine_requantify_tools.types import PanderaBaseSchema, TypedDataFrame
+from combine_requantify_tools.types import (
+    Gtf,
+    PanderaBaseSchema,
+    Sqanti3Classification,
+    TrackingToProcess,
+    TypedDataFrame,
+)
 
 
 def type_data_frame(
@@ -78,3 +86,126 @@ def type_data_frame(
         df = TypedDataFrame[pandera_schema](df.loc[:, all_cols])
 
     return df
+
+
+def read_sample_ids_from_file(sample_ids_list: Path) -> list[str]:
+    """
+    Read an ordered list of sample IDs from a text file.
+
+    :param sample_ids_list: path to the file
+    :return: a list of sample IDs
+    """
+
+    logging.info(f"Reading {sample_ids_list}")
+
+    with open(sample_ids_list, "r") as f:
+        sample_ids = f.read().splitlines()
+
+    sample_ids = [x.strip() for x in sample_ids]
+
+    return sample_ids
+
+
+def read_tracking_file(
+    tracking_in: Path, sample_ids: list[str]
+) -> TypedDataFrame[TrackingToProcess]:
+    """
+    Read a tracking file as a typed data frame.
+
+    :param tracking_in: path to the tracking file
+    :param sample_ids: the names of the sample ID columns
+    :return: a data frame of tracking data
+    """
+
+    logging.info(f"Reading {tracking_in}")
+    return type_data_frame(
+        pd.read_table(
+            tracking_in,
+            sep="\t",
+            header=None,
+            names=["transcript_id", "loc", "gene_id", "val", *sample_ids],
+            na_values="-",
+            dtype="string",
+        ),
+        TrackingToProcess,
+    )
+
+
+def read_gtf_from_file(gtf_in: str | Path) -> TypedDataFrame[Gtf]:
+    """
+    Read a GTF file as a typed data frame.
+
+    :param gtf_in: path to the GTF file
+    :return: a data frame of GTF data
+    """
+
+    logging.info(f"Reading {gtf_in}")
+    return type_data_frame(
+        pd.read_csv(
+            gtf_in,
+            sep="\t",
+            comment="#",
+            header=None,
+            names=[
+                "seqname",
+                "source",
+                "feature",
+                "start",
+                "end",
+                "score",
+                "strand",
+                "frame",
+                "attribute",
+            ],
+            dtype={
+                "seqname": "string",
+                "source": "string",
+                "feature": "string",
+                "start": "int64",
+                "end": "int64",
+                "score": "string",
+                "strand": "string",
+                "frame": "string",
+                "attribute": "string",
+            },
+        ),
+        Gtf,
+    )
+
+
+def read_sqanti3_classification_file(
+    squanti_classification: str | Path,
+) -> TypedDataFrame[Sqanti3Classification]:
+    """
+    Read a Sqanti3 classication file as a typed data frame.
+
+    :param squanti_classification: path to the tracking file
+    :return: a data frame of classication data
+    """
+
+    logging.info(f"Loading Sqanti3 classification file from {squanti_classification}")
+    return type_data_frame(
+        pd.read_table(
+            squanti_classification,
+            sep="\t",
+            na_values=["NA"],
+            dtype={
+                "isoform": "string",
+                "structural_category": "string",
+                "associated_transcript": "string",
+                "RTS_stage": "boolean",
+                "coding": "string",
+                "ORF_seq": "string",
+                # other columns aren't needed
+            },
+            usecols=[
+                "isoform",
+                "structural_category",
+                "associated_transcript",
+                "RTS_stage",
+                "coding",
+                "ORF_seq",
+            ],
+        ),
+        Sqanti3Classification,
+    )

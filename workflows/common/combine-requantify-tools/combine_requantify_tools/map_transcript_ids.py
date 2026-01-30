@@ -2,34 +2,32 @@ import logging
 import re
 from pathlib import Path
 
-import pandas as pd
-
 from combine_requantify_tools.types import (
     Gtf,
     TrackingToProcess,
     TypedDataFrame,
 )
-from combine_requantify_tools.utils import type_data_frame
+from combine_requantify_tools.utils import (
+    read_gtf_from_file,
+    read_tracking_file,
+    type_data_frame,
+)
 
 
 def do_map_transcript_ids(
     tracking_in: Path, gtf_in: str | Path, sample_ids: list[str]
 ) -> tuple[TypedDataFrame[TrackingToProcess], TypedDataFrame[Gtf]]:
-    # read the input tracking file
-    fixed_cols = ["transcript_id", "loc", "gene_id", "val"]
+    """
+    Replace TCONS_* with annotated ENST* transcript IDs in tracking and GTF data.
 
-    logging.info(f"Reading {tracking_in}")
-    tracking = type_data_frame(
-        pd.read_table(
-            tracking_in,
-            sep="\t",
-            header=None,
-            names=[*fixed_cols, *sample_ids],
-            na_values="-",
-            dtype="string",
-        ),
-        TrackingToProcess,
-    )
+    :param tracking_in: path to the tracking file
+    :param gtf_in: path to the GTF file
+    :param sample_ids: list of sample IDs (in the order expected in the tracking file)
+    :return: updated data frames for tracking and GTF with updated transcript IDs
+    """
+
+    # read the input tracking file
+    tracking = read_tracking_file(tracking_in, sample_ids)
 
     logging.info("Making transcript ID map")
     # split the transcript ID column into components
@@ -66,38 +64,7 @@ def do_map_transcript_ids(
     tracking = type_data_frame(tracking, TrackingToProcess)
 
     # load the GTF
-    logging.info(f"Reading {gtf_in}")
-    gtf = type_data_frame(
-        pd.read_csv(
-            gtf_in,
-            sep="\t",
-            comment="#",
-            header=None,
-            names=[
-                "seqname",
-                "source",
-                "feature",
-                "start",
-                "end",
-                "score",
-                "strand",
-                "frame",
-                "attribute",
-            ],
-            dtype={
-                "seqname": "string",
-                "source": "string",
-                "feature": "string",
-                "start": "int64",
-                "end": "int64",
-                "score": "string",
-                "strand": "string",
-                "frame": "string",
-                "attribute": "string",
-            },
-        ),
-        Gtf,
-    )
+    gtf = read_gtf_from_file(gtf_in)
 
     # regex to find the transcript_id component and its quoted value
     tid_re = re.compile(r'transcript_id "([^"]+)"')

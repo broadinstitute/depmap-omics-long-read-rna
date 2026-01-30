@@ -13,7 +13,7 @@ from combine_requantify_tools.types import (
     TranscriptCounts,
     TypedDataFrame,
 )
-from combine_requantify_tools.utils import type_data_frame
+from combine_requantify_tools.utils import read_tracking_file, type_data_frame
 
 
 def do_process_tracking_file(
@@ -26,7 +26,7 @@ def do_process_tracking_file(
     Update the input tracking file with counts from the samples' transcript counts
     files.
 
-    :param tracking_in: input tracking file path
+    :param tracking_in: path to the tracking file
     :param sample_ids: list of sample IDs
     :param discovered_transcript_counts: list of paths to transcript counts files
     :param min_count: min value to use to filter counts
@@ -34,26 +34,15 @@ def do_process_tracking_file(
     """
 
     # read the input tracking file
-    fixed_cols = ["transcript_id", "loc", "gene_id", "val"]
-
-    logging.info(f"Reading {tracking_in}")
-    tracking = type_data_frame(
-        pd.read_table(
-            tracking_in,
-            sep="\t",
-            header=None,
-            names=[*fixed_cols, *sample_ids],
-            na_values="-",
-            dtype="string",
-        ),
-        TrackingToProcess,
-    )
+    tracking = read_tracking_file(tracking_in, sample_ids)
 
     tracking["gene_id"] = tracking["gene_id"].fillna(".")
 
     # make data frame long
     tracking = tracking.melt(
-        id_vars=fixed_cols, var_name="sample", value_name="id"
+        id_vars=["transcript_id", "loc", "gene_id", "val"],
+        var_name="sample",
+        value_name="id",
     ).dropna()
 
     tracking["gene_id"] = tracking["gene_id"].replace({".": pd.NA})

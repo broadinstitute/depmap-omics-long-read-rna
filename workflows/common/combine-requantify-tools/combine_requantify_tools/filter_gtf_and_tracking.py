@@ -9,7 +9,11 @@ from combine_requantify_tools.types import (
     TypedDataFrame,
     UpdatedTracking,
 )
-from combine_requantify_tools.utils import type_data_frame
+from combine_requantify_tools.utils import (
+    read_gtf_from_file,
+    read_sqanti3_classification_file,
+    type_data_frame,
+)
 
 
 def filter_tracking(
@@ -36,32 +40,7 @@ def filter_tracking(
     transcript_ids = updated_tracking["transcript_id"].drop_duplicates()
 
     # load Sqanti3 classification file
-    logging.info(f"Loading Sqanti3 classification file from {squanti_classification}")
-    sq = type_data_frame(
-        pd.read_table(
-            squanti_classification,
-            sep="\t",
-            na_values=["NA"],
-            dtype={
-                "isoform": "string",
-                "structural_category": "string",
-                "associated_transcript": "string",
-                "RTS_stage": "boolean",
-                "coding": "string",
-                "ORF_seq": "string",
-                # other columns aren't needed
-            },
-            usecols=[
-                "isoform",
-                "structural_category",
-                "associated_transcript",
-                "RTS_stage",
-                "coding",
-                "ORF_seq",
-            ],
-        ),
-        Sqanti3Classification,
-    )
+    sq = read_sqanti3_classification_file(squanti_classification)
 
     # split off known isoforms
     sq_annotated = sq.loc[sq["isoform"].str.startswith("ENST")]
@@ -124,39 +103,8 @@ def filter_gtf(
     :return: filtered GTF data frame
     """
 
-    logging.info(f"Loading GTF from {gtf_in}")
-
-    gtf = type_data_frame(
-        pd.read_csv(
-            gtf_in,
-            sep="\t",
-            comment="#",
-            header=None,
-            names=[
-                "seqname",
-                "source",
-                "feature",
-                "start",
-                "end",
-                "score",
-                "strand",
-                "frame",
-                "attribute",
-            ],
-            dtype={
-                "seqname": "string",
-                "source": "string",
-                "feature": "string",
-                "start": "int64",
-                "end": "int64",
-                "score": "string",
-                "strand": "string",
-                "frame": "string",
-                "attribute": "string",
-            },
-        ),
-        Gtf,
-    )
+    # load the GTF
+    gtf = read_gtf_from_file(gtf_in)
 
     # remove features without a strand value (+/-)
     gtf = gtf.loc[gtf["strand"].ne(".")]

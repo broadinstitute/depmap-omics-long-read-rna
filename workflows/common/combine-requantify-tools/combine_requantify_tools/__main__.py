@@ -9,6 +9,7 @@ import typer
 from combine_requantify_tools.filter_gtf_and_tracking import filter_gtf, filter_tracking
 from combine_requantify_tools.map_transcript_ids import do_map_transcript_ids
 from combine_requantify_tools.process_tracking_file import do_process_tracking_file
+from combine_requantify_tools.utils import read_sample_ids_from_file
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.max_colwidth", 50)
@@ -52,9 +53,7 @@ def map_transcript_ids(
     ],
 ) -> None:
     # read file containing list of sample IDs
-    logging.info(f"Reading {sample_ids_list}")
-    with open(sample_ids_list, "r") as f:
-        sample_ids = f.read().splitlines()
+    sample_ids = read_sample_ids_from_file(sample_ids_list)
 
     tracking_mapped, gtf_mapped = do_map_transcript_ids(tracking_in, gtf_in, sample_ids)
 
@@ -91,11 +90,7 @@ def process_tracking_file(
     ],
 ) -> None:
     # read file containing list of sample IDs
-    logging.info(f"Reading {sample_ids_list}")
-    with open(sample_ids_list, "r") as f:
-        sample_ids = f.read().splitlines()
-
-    sample_ids = [x.strip() for x in sample_ids]
+    sample_ids = read_sample_ids_from_file(sample_ids_list)
 
     # read file containing list of transcript count files
     logging.info(f"Reading {discovered_transcript_counts_file_list}")
