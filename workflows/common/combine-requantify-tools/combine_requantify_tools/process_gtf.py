@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import pandas as pd
+from tqdm.auto import tqdm
 
 from combine_requantify_tools.types import Gtf, TypedDataFrame
 from combine_requantify_tools.utils import read_gtf_from_file, type_data_frame
@@ -50,7 +51,8 @@ def do_process_gtf(gtf_in: Path) -> TypedDataFrame[Gtf]:
     current_gname = None
     new_attrs = []
 
-    for source, attr in zip(gtf["source"], gtf["attribute"]):
+    logging.info("Updating GTF attributes")
+    for source, attr in tqdm(zip(gtf["source"], gtf["attribute"])):
         gid = extract_gene_id(attr)
         gname = extract_gene_name(attr)
 
