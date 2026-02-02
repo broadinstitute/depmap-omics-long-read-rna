@@ -68,7 +68,7 @@ class Sqanti3Classification(CoercedDataFrame):
 class Gtf(NonemptyDataFrame):
     seqname: Series[pd.StringDtype]
     source: Series[pd.StringDtype]
-    feature: Series[pd.StringDtype] = pa.Field(isin=["exon", "transcript"])
+    feature: Series[pd.StringDtype]
     start: Series[pd.StringDtype]
     end: Series[pd.StringDtype]
     score: Series[pd.StringDtype]

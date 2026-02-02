@@ -23,7 +23,7 @@ def filter_tracking(
     Load the tracking file (output from process_tracking_file) and the Sqanti3
     classification file (output from combine_gtfs.run_sqanti3 task) TODO
 
-    :param tracking_in: output from process_tracking_file
+    :param tracking_in: path to output from process_tracking_file
     :param squanti_classification: Sqanti3 classification file
     :param prefix: prefix previously used for gffcompare
     :return: filtered tracking and classification data frames
@@ -98,7 +98,7 @@ def filter_gtf(
     """
     Filter combined GTF to features observed in filtered Sqanti3 classification file.
 
-    :param gtf_in: combined GTF
+    :param gtf_in: path to combined GTF
     :param sq_filtered: filtered Sqanti3 classification from filter_tracking
     :return: filtered GTF data frame
     """

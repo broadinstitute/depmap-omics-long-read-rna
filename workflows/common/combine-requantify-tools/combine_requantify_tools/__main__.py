@@ -8,6 +8,7 @@ import typer
 
 from combine_requantify_tools.filter_gtf_and_tracking import filter_gtf, filter_tracking
 from combine_requantify_tools.map_transcript_ids import do_map_transcript_ids
+from combine_requantify_tools.process_gtf import do_process_gtf
 from combine_requantify_tools.process_tracking_file import do_process_tracking_file
 from combine_requantify_tools.utils import read_sample_ids_from_file
 
@@ -132,6 +133,19 @@ def filter_gtf_and_tracking(
 
     logging.info(f"Writing {gtf_out}")
     gtf_filtered.to_csv(
+        gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
+    )
+
+
+@app.command()
+def process_gtf(
+    gtf_in: Annotated[Path, typer.Option(help="path to input GTF file")],
+    gtf_out: Annotated[Path, typer.Option(help="path to write GTF file")],
+) -> None:
+    gtf_processed = do_process_gtf(gtf_in)
+
+    logging.info(f"Writing {gtf_out}")
+    gtf_processed.to_csv(
         gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
     )
 
