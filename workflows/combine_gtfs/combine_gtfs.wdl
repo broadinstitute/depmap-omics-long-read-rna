@@ -514,51 +514,13 @@ task process_gtf {
     command <<<
         set -euo pipefail
 
-        grep -E 'HAVANA|ENSEMBL' "~{filtered_gtf}" | \
-            awk -F '\t' '
-            {
-                match($9, /gene_id "([^"]+)"/, gid);
-                match($9, /gene_name "([^"]+)"/, gname);
-                if (gid[1] && gname[1]) print gname[1] "\t" gid[1];
-            }' | sort -u > gene_name_to_id.tsv
-
-        awk -F '\t' -v OFS='\t' '
-            BEGIN {
-                # Build gene_name → gene_id map
-                while ((getline < "gene_name_to_id.tsv") > 0) {
-                    map[$1] = $2;
-                }
-            }
-
-            {
-                if ($0 ~ /^#/ || NF < 9) {
-                    print; next;
-                }
-
-                # Track last gene_name for multi-line transcript models
-                has_gid = match($9, /gene_id "([^"]+)"/, gid);
-                has_gname = match($9, /gene_name "([^"]+)"/, gname);
-
-                if (has_gname) {
-                    current_gname = gname[1];
-                }
-
-                if ($2 == "IsoQuant" && has_gid) {
-                    if (!has_gname && current_gname in map) {
-                        # No gene_name in this line, but we have a remembered one
-                        gsub("gene_id \"" gid[1] "\"", "gene_id \"" map[current_gname] "\"", $9);
-                    } else if (has_gname && gname[1] in map) {
-                        # Replace based on gene_name in this line
-                        gsub("gene_id \"" gid[1] "\"", "gene_id \"" map[gname[1]] "\"", $9);
-                    }
-                }
-
-                print;
-            }' "~{filtered_gtf}" > "~{sample_set_id}_updated.gtf"
+        python -m combine_requantify_tools \
+            process-gtf \
+            --gtf-in="~{filtered_gtf}" \
+            --gtf-out="~{sample_set_id}_processed.gtf"
     >>>
 
     output {
-        File sorted_gtf = "~{sample_set_id}_updated.gtf"
     }
 
     runtime {
