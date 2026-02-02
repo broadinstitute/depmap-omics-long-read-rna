@@ -14,6 +14,7 @@ workflow combine_gtfs {
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
         ref_fasta: "reference sequence FASTA"
+        ref_fasta_index: "reference sequence FASTA index"
 
         # outputs
         combined_sorted_gtf: "TODO"
@@ -30,6 +31,7 @@ workflow combine_gtfs {
         File gencode_gtf
         String prefix = "TCONS"
         File ref_fasta = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa"
+        File ref_fasta_index = "gs://ccleparams/hg38ref_no_alt/GRCh38_no_alt.fa.fai"
     }
 
     Array[Pair[String, File]] sample_ids_annots = zip(sample_ids, extended_annotation)
@@ -56,7 +58,8 @@ workflow combine_gtfs {
             sample_set_id = sample_set_id,
             isoquant_gtf = replace_transcript_ids.gtf_out,
             gencode_gtf = gencode_gtf,
-            ref_fasta = ref_fasta
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index
     }
 
     call process_tracking_file {
@@ -75,15 +78,14 @@ workflow combine_gtfs {
             squanti_classification = run_sqanti3.sq_class,
             updated_tracking = process_tracking_file.updated_tracking,
             prefix = prefix,
-            ref_fasta = ref_fasta
+            ref_fasta = ref_fasta,
+            ref_fasta_index = ref_fasta_index
    }
 
     call process_gtf {
         input:
             sample_set_id = sample_set_id,
-            filtered_gtf = filter_gtf_and_tracking.filtered_gtf,
-            gencode_gtf = gencode_gtf,
-            ref_fasta = ref_fasta
+            filtered_gtf = filter_gtf_and_tracking.filtered_gtf
    }
 
     output {
@@ -122,7 +124,7 @@ task filter_isoquant {
         Int additional_disk_gb = 0
     }
 
-    Int disk_space = ceil(size(extended_annotation, "GiB")) + 20 + additional_disk_gb
+    Int disk_space = ceil(2 * size(extended_annotation, "GiB")) + 20 + additional_disk_gb
 
     command <<<
         set -euo pipefail
@@ -200,7 +202,7 @@ task replace_transcript_ids {
     }
 
     Int disk_space = (
-        ceil(size(gtf_list, "GiB") + size(gencode_gtf, "GiB")) + 20 + additional_disk_gb
+        ceil(3 * size(gtf_list, "GiB") + size(gencode_gtf, "GiB")) + 20 + additional_disk_gb
     )
 
     command <<<
@@ -248,6 +250,7 @@ task run_sqanti3 {
         isoquant_gtf: "combined GTF from replace_transcript_ids"
         gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
         ref_fasta: "reference sequence FASTA"
+        ref_fasta_index: "reference sequence FASTA index"
 
         # outputs
         sq_class: "TODO"
@@ -259,6 +262,7 @@ task run_sqanti3 {
         File isoquant_gtf
         File gencode_gtf
         File ref_fasta
+        File ref_fasta_index
 
         String docker_image = "us-central1-docker.pkg.dev/methods-dev-lab/lrtools-sqanti3/lrtools-sqanti3-plus"
         String docker_image_hash_or_tag = "@sha256:796ba14856e0e2bc55b3e4770fdc8d2b18af48251fba2a08747144501041437b"
@@ -271,7 +275,7 @@ task run_sqanti3 {
 
     Int disk_space = (
         ceil(
-            size(isoquant_gtf, "GiB")
+            2 * size(isoquant_gtf, "GiB")
             + size(gencode_gtf, "GiB")
             + size(ref_fasta, "GiB")
         )
@@ -341,7 +345,7 @@ task process_tracking_file {
     }
 
     Int disk_space = (
-        ceil(size(tracking_file, "GiB") * 3 + size(discovered_transcript_counts, "GiB"))
+        ceil(3 * size(tracking_file, "GiB") + size(discovered_transcript_counts, "GiB"))
         + 20 + additional_disk_gb
     )
 
@@ -393,6 +397,7 @@ task filter_gtf_and_tracking {
         updated_tracking: "updated_tracking file from process_tracking_file"
         prefix: "annotation for transcripts identified in this run (mostly for internal consistency between tasks)"
         ref_fasta: "reference sequence FASTA"
+        ref_fasta_index: "reference sequence FASTA index"
 
         # outputs
         transcriptome_fasta: "TODO"
@@ -408,6 +413,7 @@ task filter_gtf_and_tracking {
         File updated_tracking
         String prefix
         File ref_fasta
+        File ref_fasta_index
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
@@ -420,10 +426,10 @@ task filter_gtf_and_tracking {
 
     Int disk_space = (
         ceil(
-            size(gencode_gtf, "GiB")
-            + size(combined_gtf, "GiB")
+            2 * size(gencode_gtf, "GiB")
+            + 3 * size(combined_gtf, "GiB")
             + size(squanti_classification, "GiB")
-            + size(updated_tracking, "GiB")
+            + 2 * size(updated_tracking, "GiB")
             + size(ref_fasta, "GiB")
         )
         + 20 + additional_disk_gb
@@ -482,8 +488,6 @@ task process_gtf {
         # inputs
         sample_set_id: "identifier for this set of samples"
         filtered_gtf: "filtered_gtf file from filter_gtf_and_tracking"
-        gencode_gtf: "Gencode GTF file (if this is the initial run), or a combined_sorted_gtf (from a previous run)"
-        ref_fasta: "reference sequence FASTA"
 
         # outputs
         sorted_gtf: "TODO"
@@ -492,8 +496,6 @@ task process_gtf {
     input {
         String sample_set_id
         File filtered_gtf
-        File gencode_gtf
-        File ref_fasta
 
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
@@ -504,12 +506,7 @@ task process_gtf {
         Int additional_disk_gb = 0
    }
 
-    Int disk_space = (
-        ceil(
-            size(gencode_gtf, "GiB")
-            + size(filtered_gtf, "GiB")
-            + size(gencode_gtf, "GiB")
-    )  + 20 + additional_disk_gb)
+    Int disk_space = ceil(2 * size(filtered_gtf, "GiB")) + 20 + additional_disk_gb
 
     command <<<
         set -euo pipefail
@@ -521,6 +518,7 @@ task process_gtf {
     >>>
 
     output {
+        File sorted_gtf = "~{sample_set_id}_processed.gtf"
     }
 
     runtime {
