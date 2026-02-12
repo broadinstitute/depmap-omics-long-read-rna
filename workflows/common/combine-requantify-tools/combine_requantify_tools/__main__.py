@@ -7,6 +7,7 @@ import pandas as pd
 import typer
 
 from combine_requantify_tools.filter_gtf_and_tracking import filter_gtf, filter_tracking
+from combine_requantify_tools.filter_sample_gtf import do_filter_sample_gtf
 from combine_requantify_tools.map_transcript_ids import do_map_transcript_ids
 from combine_requantify_tools.process_gtf import do_process_gtf
 from combine_requantify_tools.process_tracking_file import do_process_tracking_file
@@ -36,11 +37,11 @@ def done(*args, **kwargs):
 def map_transcript_ids(
     tracking_in: Annotated[
         Path,
-        typer.Option(help="path to input tracking file (from gffcompare)"),
+        typer.Option(help="path to input tracking file (from gffcompare)", exists=True),
     ],
     gtf_in: Annotated[
         Path,
-        typer.Option(help="path to input GTF file (from gffcompare)"),
+        typer.Option(help="path to input GTF file (from gffcompare)", exists=True),
     ],
     sample_ids_list: Annotated[
         Path, typer.Option(help="path to text file containing list of sample IDs")
@@ -71,7 +72,9 @@ def map_transcript_ids(
 def process_tracking_file(
     tracking_in: Annotated[
         Path,
-        typer.Option(help="path to input tracking file (from process_tracking_file)"),
+        typer.Option(
+            help="path to input tracking file (from process_tracking_file)", exists=True
+        ),
     ],
     sample_ids_list: Annotated[
         Path, typer.Option(help="path to text file containing list of sample IDs")
@@ -80,7 +83,8 @@ def process_tracking_file(
         Path,
         typer.Option(
             help="path to text file containing paths to samples' "
-            "discovered_transcript_counts files (from quantify_lr_rna workflow)"
+            "discovered_transcript_counts files (from quantify_lr_rna workflow)",
+            exists=True,
         ),
     ],
     min_count: Annotated[int, typer.Option(help="min value to use to filter counts")],
@@ -110,12 +114,17 @@ def process_tracking_file(
 def filter_gtf_and_tracking(
     tracking_in: Annotated[
         Path,
-        typer.Option(help="path to updated tracking file (from process_tracking_file)"),
+        typer.Option(
+            help="path to updated tracking file (from process_tracking_file)",
+            exists=True,
+        ),
     ],
     squanti_classification: Annotated[
-        Path, typer.Option(help="path to SQANTI3 classification file")
+        Path, typer.Option(help="path to SQANTI3 classification file", exists=True)
     ],
-    gtf_in: Annotated[Path, typer.Option(help="path to input filtered GTF file")],
+    gtf_in: Annotated[
+        Path, typer.Option(help="path to input filtered GTF file", exists=True)
+    ],
     prefix: Annotated[str, typer.Option(help="transcript prefix (e.g. 'TCONS')")],
     tracking_out: Annotated[
         Path, typer.Option(help="path to write filtered tracking file")
@@ -139,7 +148,7 @@ def filter_gtf_and_tracking(
 
 @app.command()
 def process_gtf(
-    gtf_in: Annotated[Path, typer.Option(help="path to input GTF file")],
+    gtf_in: Annotated[Path, typer.Option(help="path to input GTF file", exists=True)],
     gtf_out: Annotated[Path, typer.Option(help="path to write GTF file")],
 ) -> None:
     gtf_processed = do_process_gtf(gtf_in)
@@ -147,6 +156,67 @@ def process_gtf(
     logging.info(f"Writing {gtf_out}")
     gtf_processed.to_csv(
         gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
+    )
+
+
+@app.command()
+def filter_sample_gtf(
+    gtf_in: Annotated[
+        Path,
+        typer.Option(
+            help="path to input GTF file (from combine_gtfs workflow)", exists=True
+        ),
+    ],
+    tracking: Annotated[
+        Path,
+        typer.Option(
+            help="path to updated tracking file (from combine_gtfs workflow)",
+            exists=True,
+        ),
+    ],
+    sample_id: Annotated[
+        str, typer.Option(help="sample ID associated with this transcript counts file")
+    ],
+    transcript_counts: Annotated[
+        Path,
+        typer.Option(
+            help="path to sample's transcript counts file from initial Isoquant run",
+            exists=True,
+        ),
+    ],
+    gtf_out: Annotated[Path, typer.Option(help="path to write GTF file")],
+) -> None:
+    gtf_updated = do_filter_sample_gtf(
+        gtf_in,
+        tracking_in=tracking,
+        sample_id=sample_id,
+        transcript_counts_in=transcript_counts,
+    )
+
+    logging.info(f"Writing {gtf_out}")
+    gtf_updated.to_csv(
+        gtf_out, sep="\t", index=False, header=False, quoting=csv.QUOTE_NONE
+    )
+
+
+@app.command()
+def gtf_to_db(
+    gtf_in: Annotated[Path, typer.Option(help="path to input GTF file", exists=True)],
+    db_out: Annotated[Path, typer.Option(help="path to write DB file")],
+) -> None:
+    import gffutils
+
+    logging.info(f"Converting {gtf_in} (GTF) to {db_out} (SQLite3)")
+    _ = gffutils.create_db(
+        data=str(gtf_in),
+        dbfn=str(db_out),
+        from_string=False,
+        force=True,
+        keep_order=False,
+        merge_strategy="merge",
+        disable_infer_transcripts=True,
+        disable_infer_genes=True,
+        id_spec={"transcript": "transcript_id", "gene": "gene_id"},
     )
 
 

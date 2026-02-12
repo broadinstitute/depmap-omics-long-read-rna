@@ -1,6 +1,10 @@
 version 1.0
 
 workflow requantify_lr_rna {
+    meta {
+        description: "TODO"
+    }
+
     parameter_meta {
         # inputs
         sample_id: "ID of this sample"
@@ -88,11 +92,16 @@ workflow requantify_lr_rna {
 }
 
 task filter_gtf_per_sample {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_id: "ID of this sample"
         transcript_counts: "transcript counts from first-pass of IsoQuant"
-        combined_sorted_gtf: "combined+sorted GTF from `combin_gtfs`"
+        combined_sorted_gtf: "combined+sorted GTF from `combine_gtfs`"
         updated_tracking_sq_filtered: "TODO"
 
         # outputs
@@ -117,7 +126,7 @@ task filter_gtf_per_sample {
     Int disk_space = (
         ceil(
             size(transcript_counts, "GiB")
-            + size(combined_sorted_gtf, "GiB")
+            + 2 * size(combined_sorted_gtf, "GiB")
             + size(updated_tracking_sq_filtered, "GiB")
         ) + 20 + additional_disk_gb
     )
@@ -125,52 +134,17 @@ task filter_gtf_per_sample {
     command <<<
         set -euo pipefail
 
-        python3 <<EOF
-        import pandas as pd
-
-        # Filter tracking file for this sample
-        updated_tracking = pd.read_csv("~{updated_tracking_sq_filtered}", sep="\\t")
-        updated_tracking = updated_tracking[updated_tracking['sample'] == "~{sample_id}"]
-        updated_tracking = updated_tracking['transcript_id']
-
-        # Get transcripts with non-zero counts
-        transcript_counts = pd.read_csv("~{transcript_counts}", sep='\t', comment='#', header=None, compression='gzip')
-        transcript_counts = transcript_counts[transcript_counts[1] > 0] # Filter for counts > 0
-        transcript_counts = transcript_counts[0]
-        transcript_counts = transcript_counts.rename('transcript_id')
-
-        # Combine transcripts from tracking and counts
-        concat_tx = pd.concat([transcript_counts, updated_tracking], axis=0)
-        transcript_list = concat_tx.drop_duplicates().tolist()
-
-        # Parse GTF file
-        gtf = pd.read_csv("~{combined_sorted_gtf}", sep='\t', comment='#', header=None)
-        gtf['transcript_id'] = gtf[8].str.extract(r'transcript_id "([^"]+)"')
-        gtf['gene_id'] = gtf[8].str.extract('gene_id "([^"]+)"')
-
-        # Get gene IDs for the transcripts we want to keep
-        match_tx_gene_id = gtf[gtf['transcript_id'].isin(transcript_list)]
-        match_tx_gene_id = match_tx_gene_id[['transcript_id', 'gene_id']].drop_duplicates()
-
-        # Get gene entries for these transcripts
-        filtered_gene = gtf[(gtf[2] == 'gene') & (gtf['gene_id'].isin(match_tx_gene_id['gene_id']))]
-
-        # Get transcript entries
-        gtf_filtered = gtf[gtf['transcript_id'].isin(transcript_list)]
-
-        # Combine gene and transcript entries
-        final_gtf = pd.concat([filtered_gene, gtf_filtered])
-
-        # Write filtered GTF
-        final_gtf.drop(columns=['transcript_id']).drop(columns=['gene_id']).to_csv(
-            "~{sample_id}_filtered_sample.gtf", sep='\\t',
-            index=False, header=False, quoting=3
-        )
-        EOF
+        python -m combine_requantify_tools \
+            filter-sample-gtf \
+            --gtf-in="~{combined_sorted_gtf}" \
+            --tracking="~{updated_tracking_sq_filtered}" \
+            --sample-id="~{sample_id}" \
+            --transcript-counts="~{transcript_counts}" \
+            --gtf-out="~{sample_id}_filtered.gtf"
     >>>
 
     output {
-        File filtered_gtf = "~{sample_id}_filtered_sample.gtf"
+        File filtered_gtf = "~{sample_id}_filtered.gtf"
     }
 
     runtime {
@@ -181,16 +155,17 @@ task filter_gtf_per_sample {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task gtf_to_db {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
-        gft: "GTF convert to SQLite"
+        gtf: "GTF convert to SQLite"
 
         # outputs
         db: "SQLite version of the input GTF"
@@ -217,21 +192,10 @@ task gtf_to_db {
     command <<<
         set -euo pipefail
 
-        python3 <<EOF
-        import gffutils
-
-        # Create a database from the GTF file
-        db = gffutils.create_db(
-            "~{gtf}",
-            dbfn="~{db_name}.db",
-            force=True,
-            keep_order=False,
-            merge_strategy="merge",
-            disable_infer_transcripts=True,
-            disable_infer_genes=True,
-            id_spec={"transcript": "transcript_id", "gene": "gene_id"}
-        )
-        EOF
+        python -m combine_requantify_tools \
+            gtf-to-db \
+            --gtf-in="~{gtf}" \
+            --db-out="~{db_name}.db"
     >>>
 
     output {
@@ -246,13 +210,14 @@ task gtf_to_db {
         maxRetries: max_retries
         cpu: cpu
     }
-
-    meta {
-        allowNestedInputs: true
-    }
 }
 
 task run_isoquant {
+    meta {
+        description: "TODO"
+        allowNestedInputs: true
+    }
+
     parameter_meta {
         # inputs
         sample_id: "ID of this sample"
@@ -348,9 +313,5 @@ task run_isoquant {
         preemptible: preemptible
         maxRetries: max_retries
         cpu: cpu
-    }
-
-    meta {
-        allowNestedInputs: true
     }
 }

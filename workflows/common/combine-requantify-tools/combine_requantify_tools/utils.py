@@ -107,7 +107,7 @@ def read_sample_ids_from_file(sample_ids_list: Path) -> list[str]:
 
 
 def read_tracking_file(
-    tracking_in: Path, sample_ids: list[str]
+    tracking_in: Path, sample_ids: None | list[str] = None
 ) -> TypedDataFrame[Tracking]:
     """
     Read a tracking file as a typed data frame.
@@ -122,6 +122,9 @@ def read_tracking_file(
     if tracking_in.suffix == ".parquet":
         return type_data_frame(pd.read_parquet(tracking_in), Tracking)
     else:
+        # we need the names of the sample ID columns since there's no header
+        assert sample_ids is not None
+
         return type_data_frame(
             pd.read_table(
                 tracking_in,

@@ -338,7 +338,7 @@ task process_tracking_file {
         String docker_image  = "us-central1-docker.pkg.dev/depmap-omics/terra-images/combine-requantify-tools"
         String docker_image_hash_or_tag = ":production"
         Int cpu = 8
-        Int mem_gb = 32
+        Int mem_gb = 64
         Int preemptible = 2
         Int additional_disk_gb = 0
         Int max_retries = 0
