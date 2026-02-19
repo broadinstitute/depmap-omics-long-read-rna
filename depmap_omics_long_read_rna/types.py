@@ -114,8 +114,6 @@ class DeliveryBams(CoercedDataFrame):
     delivery_bam_crc32c: Series[pd.StringDtype] = pa.Field(unique=True)
     delivery_bam_size: Series[pd.Int64Dtype] = pa.Field(unique=True)
     delivery_bam_updated_at: Series[pd.StringDtype]
-    aligned_cram_bam: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
-    aligned_crai_bai: Optional[Series[pd.StringDtype]] = pa.Field(nullable=True)
     omics_profile_id: Series[pd.StringDtype] = pa.Field(unique=True)
 
 

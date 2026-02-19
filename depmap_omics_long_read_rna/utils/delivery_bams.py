@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import pandas as pd
 from nebelung.terra_workspace import TerraWorkspace
 from nebelung.utils import type_data_frame
 from pandera.typing import DataFrame as TypedDataFrame
@@ -16,7 +17,7 @@ from depmap_omics_long_read_rna.utils.utils import assign_hashed_uuids, uuid_to_
 
 def upsert_delivery_bams(
     gcs_source_bucket: str,
-    gcs_source_glob: str,
+    gcs_source_globs: str,
     uuid_namespace: str,
     terra_workspace: TerraWorkspace,
     dry_run: bool,
@@ -26,15 +27,20 @@ def upsert_delivery_bams(
     on Terra.
 
     :param gcs_source_bucket: the GCS bucket where GP delivers uBAMs
-    :param gcs_source_glob: a glob expression to search for uBAMs in the bucket
+    :param gcs_source_globs: a list of glob expressions to search for uBAMs in the
+    bucket
     :param uuid_namespace: a namespace for generated UUIDv3s
     :param terra_workspace: a TerraWorkspace instance
     :param dry_run: whether to skip updates to external data stores
     """
 
     # get delivered (u)BAM file metadata
-    src_bams = list_blobs(bucket_name=gcs_source_bucket, glob=gcs_source_glob)
-    bams = make_delivery_bam_df(src_bams)
+    src_bams_dfs = []
+
+    for glob in gcs_source_globs:
+        src_bams_dfs.append(list_blobs(bucket_name=gcs_source_bucket, glob=glob))
+
+    bams = make_delivery_bam_df(pd.concat(src_bams_dfs, ignore_index=True))
 
     # generate sample/sequencing/CDS IDs
     bams = assign_cds_ids(bams, uuid_namespace)
@@ -91,6 +97,8 @@ def make_delivery_bam_df(
             "gcs_obj_updated_at": "delivery_bam_updated_at",
         }
     )
+
+    bams_w_ids = bams_w_ids.drop_duplicates()
 
     return type_data_frame(bams_w_ids, DeliveryBams)
 

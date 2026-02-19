@@ -95,7 +95,7 @@ def update_workflow(workflow_name: Annotated[str, typer.Option()]) -> None:
 def upsert_delivery_bams() -> None:
     delivery_bams.upsert_delivery_bams(
         gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
-        gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
+        gcs_source_globs=config["alignment"]["gcs_source"]["globs"],
         uuid_namespace=config["uuid_namespace"],
         terra_workspace=TerraWorkspace(
             workspace_namespace=config["terra"]["delivery_workspace_namespace"],

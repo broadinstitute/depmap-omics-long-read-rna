@@ -7,7 +7,7 @@ dry_run = false
 
 [alignment.gcs_source]
 bucket = "fc-aaf4de93-c104-45c4-a01a-a036869119c6"
-glob = "tag*/**/merge/PR-*.bam"
+globs = ["tag*/**/merge/PR-*.bam", "PDO-102675/**/merge/PR-*.bam"]
 
 [terra]
 delivery_workspace_namespace = "broad-firecloud-ccle"
@@ -15,7 +15,7 @@ delivery_workspace_name = "Long_Read_Omics"
 short_read_workspace_namespace = "broad-firecloud-ccle"
 short_read_workspace_name = "depmap-omics-rna"
 workspace_namespace = "broad-firecloud-ccle"
-workspace_name = "depmap-omics-long-read-rna-dev"
+workspace_name = "depmap-omics-long-read-rna"
 
 [terra.align_lr_rna]
 method_namespace = "cds-pipelines"
