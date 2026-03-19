@@ -74,7 +74,7 @@ def run(cloud_event: CloudEvent) -> None:
     if ce_data["cmd"] == "upsert-delivery-bams":
         upsert_delivery_bams(
             gcs_source_bucket=config["alignment"]["gcs_source"]["bucket"],
-            gcs_source_glob=config["alignment"]["gcs_source"]["glob"],
+            gcs_source_globs=config["alignment"]["gcs_source"]["globs"],
             uuid_namespace=config["uuid_namespace"],
             terra_workspace=terra_delivery_workspace,
             dry_run=config["onboarding"]["dry_run"],
@@ -96,6 +96,13 @@ def run(cloud_event: CloudEvent) -> None:
         )
 
     elif ce_data["cmd"] == "submit-delta-job":
+        refresh_terra_samples(
+            terra_workspace=terra_workspace,
+            short_read_terra_workspace=short_read_terra_workspace,
+            sr_ref_urls=config["sr_ref"],
+            gumbo_client=gumbo_client,
+        )
+
         failed_submissions = []
         entities = {}  # only get each entity type once while iterating over jobs
 
